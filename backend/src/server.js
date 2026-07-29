@@ -1,0 +1,41 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+
+const authRoutes = require('./routes/authRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const accountRoutes = require('./routes/accountRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const recurringRoutes = require('./routes/recurringRoutes');
+const pushRoutes = require('./routes/pushRoutes');
+const { startRecurringScheduler } = require('./jobs/recurringScheduler');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/recurring-items', recurringRoutes);
+app.use('/api/push-subscriptions', pushRoutes);
+
+// 404 fallback
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Central error handler (routes should still try/catch and respond themselves;
+// this is a safety net for anything that slips through)
+app.use((err, req, res, next) => {
+  console.error('[unhandled error]', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Backend listening on port ${PORT}`);
+  startRecurringScheduler();
+});
