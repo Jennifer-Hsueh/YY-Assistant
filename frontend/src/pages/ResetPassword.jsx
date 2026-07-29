@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const email = searchParams.get('email') || '';
   const token = searchParams.get('token') || '';
-
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,44 +33,35 @@ export default function ResetPassword() {
 
   if (!email || !token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <p className="text-sm text-gray-500">
+      <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
+        <p className="text-sm text-muted-foreground">
           這個連結無效或已過期,請重新
-          <Link to="/forgot-password" className="text-gray-900 underline">
-            {' '}
-            申請重設密碼
-          </Link>
-          。
+          <Link to="/forgot-password" className="text-foreground underline"> 申請重設密碼</Link>。
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl bg-white p-6 shadow-sm">
-        <h1 className="mb-6 text-xl font-semibold">設定新密碼</h1>
-        {done && <p className="mb-4 text-sm text-green-600">密碼已重設,正在前往登入頁…</p>}
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-        <label className="mb-4 block text-sm">
-          新密碼(至少 8 碼)
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={loading || done}
-          className="w-full rounded-md bg-gray-900 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {loading ? '設定中…' : '重設密碼'}
-        </button>
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">設定新密碼</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {done && <p className="text-sm text-green-600">密碼已重設,正在前往登入頁…</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <div className="space-y-1.5">
+              <Label htmlFor="newPassword">新密碼(至少 8 碼)</Label>
+              <Input id="newPassword" type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            </div>
+            <Button type="submit" disabled={loading || done} className="w-full">
+              {loading ? '設定中…' : '重設密碼'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
