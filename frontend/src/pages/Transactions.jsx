@@ -8,14 +8,19 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 export default function Transactions() {
   const [view, setView] = useState('list');
   const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ type: 'expense', amount: '', category: '', note: '' });
+  const [form, setForm] = useState({ type: 'expense', amount: '', category: '', note: '', account_id: '' });
 
   async function load() {
     setLoading(true);
     try {
-      const { transactions } = await api.listTransactions();
+      const [{ transactions }, { accounts }] = await Promise.all([
+        api.listTransactions(),
+        api.listAccounts(),
+      ]);
       setTransactions(transactions);
+      setAccounts(accounts);
     } catch (err) {
       console.error(err);
     } finally {
@@ -28,8 +33,15 @@ export default function Transactions() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!form.amount) return;
-    await api.createTransaction({ type: form.type, amount: Number(form.amount), category: form.category || null, note: form.note || null, occurred_at: new Date().toISOString() });
-    setForm({ type: 'expense', amount: '', category: '', note: '' });
+    await api.createTransaction({
+      type: form.type,
+      amount: Number(form.amount),
+      category: form.category || null,
+      note: form.note || null,
+      account_id: form.account_id || null,
+      occurred_at: new Date().toISOString(),
+    });
+    setForm({ ...form, amount: '', category: '' });
     load();
   }
 
@@ -38,6 +50,10 @@ export default function Transactions() {
     (acc[day] ||= []).push(t);
     return acc;
   }, {});
+
+  function accountName(id) {
+    return accounts.find((a) => a.id === id)?.name;
+  }
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32">
@@ -61,6 +77,18 @@ export default function Transactions() {
               </Select>
               <Input type="number" placeholder="金額" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </div>
+            <Select
+              value={form.account_id || 'none'}
+              onValueChange={(v) => setForm({ ...form, account_id: v === 'none' ? '' : v })}
+            >
+              <SelectTrigger><SelectValue placeholder="選擇帳戶(選填)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">不指定帳戶</SelectItem>
+                {accounts.map((acc) => (
+                  <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Input type="text" placeholder="分類(選填)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             <Button type="submit" className="w-full">新增紀錄</Button>
           </form>
@@ -77,7 +105,12 @@ export default function Transactions() {
                 <div className="divide-y divide-border">
                   {items.map((t) => (
                     <div key={t.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                      <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
+                      <div>
+                        <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
+                        {t.account_id && (
+                          <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
+                        )}
+                      </div>
                       <span className={t.type === 'income' ? 'text-green-600' : 'text-foreground'}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
                     </div>
                   ))}

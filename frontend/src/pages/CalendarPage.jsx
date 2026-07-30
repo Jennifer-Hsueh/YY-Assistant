@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import DateInputSegmented from '../components/DateInputSegmented';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -78,7 +79,7 @@ export default function CalendarPage() {
           <form onSubmit={handleAdd} className="space-y-2">
             <Input type="text" placeholder="事件標題" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <div className="flex gap-2">
-              <Input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
               <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
             </div>
             <Input type="text" placeholder="分類(選填,如:工作/個人)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />

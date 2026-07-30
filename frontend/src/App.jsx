@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomNav from './components/BottomNav';
-import FloatingAddButton from './components/FloatingAddButton';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -24,7 +23,6 @@ function ProtectedLayout({ children }) {
     <div className="min-h-screen bg-gray-50">
       {children}
       <BottomNav />
-      <FloatingAddButton />
     </div>
   );
 }

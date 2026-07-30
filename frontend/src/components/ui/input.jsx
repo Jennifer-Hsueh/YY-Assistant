@@ -1,8 +1,10 @@
+import { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-function Input({ className, type, ...props }) {
+const Input = forwardRef(function Input({ className, type, ...props }, ref) {
   return (
     <input
+      ref={ref}
       type={type}
       className={cn(
         'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors',
@@ -14,6 +16,6 @@ function Input({ className, type, ...props }) {
       {...props}
     />
   );
-}
+});
 
 export { Input };
