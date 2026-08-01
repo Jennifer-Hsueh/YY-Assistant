@@ -33,6 +33,68 @@ async function createAccount(req, res) {
   }
 }
 
+// Rename an account and/or manually adjust its balance.
+async function updateAccount(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, balance } = req.body;
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from('yy_accounts')
+      .select('id, user_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    if (!existing || existing.user_id !== req.user.id) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (balance !== undefined) updates.balance = balance;
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+
+    const { data, error } = await supabase
+      .from('yy_accounts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json({ account: data });
+  } catch (err) {
+    console.error('[accountController.updateAccount]', err);
+    return res.status(500).json({ error: 'Failed to update account' });
+  }
+}
+
+// Deleting an account leaves past transactions intact — the FK is
+// `on delete set null`, so those rows just lose their account reference
+// rather than being deleted.
+async function deleteAccount(req, res) {
+  try {
+    const { id } = req.params;
+    const { data: existing, error: fetchErr } = await supabase
+      .from('yy_accounts')
+      .select('id, user_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    if (!existing || existing.user_id !== req.user.id) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    const { error } = await supabase.from('yy_accounts').delete().eq('id', id);
+    if (error) throw error;
+    return res.json({ message: 'Account deleted' });
+  } catch (err) {
+    console.error('[accountController.deleteAccount]', err);
+    return res.status(500).json({ error: 'Failed to delete account' });
+  }
+}
+
 // Direct transfer between two of the user's own accounts.
 async function transferBetweenAccounts(req, res) {
   try {
@@ -66,4 +128,4 @@ async function transferBetweenAccounts(req, res) {
   }
 }
 
-module.exports = { listAccounts, createAccount, transferBetweenAccounts };
+module.exports = { listAccounts, createAccount, updateAccount, deleteAccount, transferBetweenAccounts };

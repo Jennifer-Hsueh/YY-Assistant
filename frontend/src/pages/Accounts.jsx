@@ -2,14 +2,29 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Card, CardContent } from '../components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
 const CARD_COLORS = ['bg-primary', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
 
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // mode: 'add' | 'transfer' | 'edit' | 'delete'
+  const [mode, setMode] = useState('add');
+
+  const [newName, setNewName] = useState('');
+
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferError, setTransferError] = useState('');
+
+  const [pickedId, setPickedId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [actionError, setActionError] = useState('');
 
   async function load() {
     setLoading(true);
@@ -25,17 +40,83 @@ export default function Accounts() {
 
   useEffect(() => { load(); }, []);
 
+  function switchMode(newMode) {
+    setMode(newMode);
+    setPickedId(null);
+    setEditName('');
+    setActionError('');
+    setTransferError('');
+  }
+
   async function handleAdd(e) {
     e.preventDefault();
-    if (!name) return;
-    await api.createAccount({ name, balance: 0 });
-    setName('');
+    if (!newName) return;
+    await api.createAccount({ name: newName, balance: 0 });
+    setNewName('');
     load();
   }
+
+  async function handleTransfer(e) {
+    e.preventDefault();
+    setTransferError('');
+    if (!transferFrom || !transferTo || !transferAmount) return;
+    if (transferFrom === transferTo) {
+      setTransferError('轉出與轉入帳戶不能相同');
+      return;
+    }
+    try {
+      await api.transferBetweenAccounts({
+        from_account_id: transferFrom,
+        to_account_id: transferTo,
+        amount: Number(transferAmount),
+      });
+      setTransferFrom('');
+      setTransferTo('');
+      setTransferAmount('');
+      load();
+    } catch (err) {
+      console.error(err);
+      setTransferError('轉帳失敗,請確認金額與帳戶是否正確');
+    }
+  }
+
+  function pickForEdit(acc) {
+    setPickedId(acc.id);
+    setEditName(acc.name);
+  }
+
+  async function saveEdit() {
+    if (!editName.trim()) return;
+    setActionError('');
+    try {
+      await api.updateAccount(pickedId, { name: editName.trim() });
+      switchMode('edit');
+      load();
+    } catch (err) {
+      console.error(err);
+      setActionError('更新失敗');
+    }
+  }
+
+  async function confirmDelete() {
+    setActionError('');
+    try {
+      await api.deleteAccount(pickedId);
+      switchMode('delete');
+      load();
+    } catch (err) {
+      console.error(err);
+      setActionError('刪除失敗');
+    }
+  }
+
+  const pickingMode = (mode === 'edit' || mode === 'delete') && !pickedId;
+  const pickedAccount = accounts.find((a) => a.id === pickedId);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24">
       <h1 className="mb-4 text-lg font-semibold">帳戶管理</h1>
+
       {loading ? (
         <p className="text-sm text-muted-foreground">載入中…</p>
       ) : accounts.length === 0 ? (
@@ -59,10 +140,106 @@ export default function Accounts() {
           })}
         </div>
       )}
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <Input type="text" placeholder="新帳戶名稱" value={name} onChange={(e) => setName(e.target.value)} />
-        <Button type="submit">新增</Button>
-      </form>
+
+      {/* Mode switch: 新增 / 轉帳 / 編輯 / 刪除 */}
+      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
+        <button onClick={() => switchMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>新增</button>
+        <button onClick={() => switchMode('transfer')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'transfer' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>轉帳</button>
+        <button onClick={() => switchMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>編輯</button>
+        <button onClick={() => switchMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>刪除</button>
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          {mode === 'add' && (
+            <form onSubmit={handleAdd} className="flex gap-2">
+              <Input type="text" placeholder="新帳戶名稱" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <Button type="submit">新增</Button>
+            </form>
+          )}
+
+          {mode === 'transfer' && (
+            <form onSubmit={handleTransfer} className="space-y-2">
+              {transferError && <p className="text-sm text-red-500">{transferError}</p>}
+              <Select value={transferFrom || 'none'} onValueChange={(v) => setTransferFrom(v === 'none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="從哪個帳戶轉出" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">選擇轉出帳戶</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={transferTo || 'none'} onValueChange={(v) => setTransferTo(v === 'none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="轉入哪個帳戶" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">選擇轉入帳戶</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="number" placeholder="轉帳金額" required value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
+              <Button type="submit" className="w-full">確認轉帳</Button>
+            </form>
+          )}
+
+          {mode === 'edit' && pickingMode && (
+            <div className="space-y-1">
+              <p className="mb-2 text-sm text-muted-foreground">請點選要重新命名的帳戶</p>
+              {accounts.map((acc) => (
+                <button
+                  key={acc.id}
+                  onClick={() => pickForEdit(acc)}
+                  className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  <span>{acc.name}</span>
+                  <span className="text-muted-foreground">NT$ {Number(acc.balance).toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {mode === 'edit' && pickedId && (
+            <div className="space-y-2">
+              {actionError && <p className="text-sm text-red-500">{actionError}</p>}
+              <Input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <div className="flex gap-2">
+                <Button type="button" className="flex-1" onClick={saveEdit}>儲存</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>重新選擇</Button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'delete' && pickingMode && (
+            <div className="space-y-1">
+              <p className="mb-2 text-sm text-muted-foreground">請點選要刪除的帳戶</p>
+              {accounts.map((acc) => (
+                <button
+                  key={acc.id}
+                  onClick={() => setPickedId(acc.id)}
+                  className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  <span>{acc.name}</span>
+                  <span className="text-muted-foreground">NT$ {Number(acc.balance).toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {mode === 'delete' && pickedId && (
+            <div className="space-y-2">
+              {actionError && <p className="text-sm text-red-500">{actionError}</p>}
+              <p className="text-sm font-medium">確定要刪除「{pickedAccount?.name}」嗎?</p>
+              <p className="text-xs text-muted-foreground">過去這個帳戶的交易紀錄仍會保留,只是不再顯示所屬帳戶。</p>
+              <div className="flex gap-2">
+                <Button type="button" variant="destructive" className="flex-1" onClick={confirmDelete}>確認刪除</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>重新選擇</Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

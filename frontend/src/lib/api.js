@@ -44,6 +44,8 @@ export const api = {
   listAccounts: () => request('/accounts'),
   createAccount: (payload) => request('/accounts', { method: 'POST', body: payload }),
   transferBetweenAccounts: (payload) => request('/accounts/transfer', { method: 'POST', body: payload }),
+  updateAccount: (id, payload) => request(`/accounts/${id}`, { method: 'PUT', body: payload }),
+deleteAccount: (id) => request(`/accounts/${id}`, { method: 'DELETE' }),
 
   listEvents: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
