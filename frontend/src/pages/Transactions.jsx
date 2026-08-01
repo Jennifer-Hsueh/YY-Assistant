@@ -19,6 +19,7 @@ function toLocalDateInput(isoString) {
 }
 
 const emptyForm = { type: 'expense', amount: '', category: '', note: '', account_id: '', occurred_at: todayLocal() };
+const emptyTransfer = { from: '', to: '', amount: '' };
 
 export default function Transactions() {
   const [view, setView] = useState('list');
@@ -28,10 +29,13 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
 
-  // actionMode: 'add' | 'edit' | 'delete' — controls the top button group
+  // actionMode: 'add' | 'edit' | 'delete' | 'transfer' — controls the top button group
   const [actionMode, setActionMode] = useState('add');
   // activeId: which transaction the user picked from the list (for edit/delete)
   const [activeId, setActiveId] = useState(null);
+
+  const [transfer, setTransfer] = useState(emptyTransfer);
+  const [transferError, setTransferError] = useState('');
 
   async function load() {
     setLoading(true);
@@ -57,6 +61,8 @@ export default function Transactions() {
     setActionMode(newMode);
     setActiveId(null);
     setForm(emptyForm);
+    setTransfer(emptyTransfer);
+    setTransferError('');
   }
 
   function pickTransaction(t) {
@@ -105,6 +111,28 @@ export default function Transactions() {
     load();
   }
 
+  async function handleTransfer(e) {
+    e.preventDefault();
+    setTransferError('');
+    if (!transfer.from || !transfer.to || !transfer.amount) return;
+    if (transfer.from === transfer.to) {
+      setTransferError('轉出與轉入帳戶不能相同');
+      return;
+    }
+    try {
+      await api.transferBetweenAccounts({
+        from_account_id: transfer.from,
+        to_account_id: transfer.to,
+        amount: Number(transfer.amount),
+      });
+      setTransfer(emptyTransfer);
+      load();
+    } catch (err) {
+      console.error(err);
+      setTransferError('轉帳失敗,請確認金額與帳戶是否正確');
+    }
+  }
+
   const grouped = transactions.reduce((acc, t) => {
     const day = t.occurred_at.slice(0, 10);
     (acc[day] ||= []).push(t);
@@ -130,25 +158,53 @@ export default function Transactions() {
         </div>
       </div>
 
-      {/* Action mode switch: 新增 / 編輯 / 刪除 */}
+      {/* Action mode switch: 新增 / 編輯 / 刪除 / 轉帳 */}
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button
           onClick={() => switchActionMode('add')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
         >新增</button>
         <button
           onClick={() => switchActionMode('edit')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
         >編輯</button>
         <button
           onClick={() => switchActionMode('delete')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
         >刪除</button>
+        <button
+          onClick={() => switchActionMode('transfer')}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'transfer' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >轉帳</button>
       </div>
 
       <Card className="mb-6">
         <CardContent className="space-y-2 p-4">
-          {pickingMode ? (
+          {actionMode === 'transfer' ? (
+            <form onSubmit={handleTransfer} className="space-y-2">
+              {transferError && <p className="text-sm text-red-500">{transferError}</p>}
+              <Select value={transfer.from || 'none'} onValueChange={(v) => setTransfer({ ...transfer, from: v === 'none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="從哪個帳戶轉出" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">選擇轉出帳戶</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={transfer.to || 'none'} onValueChange={(v) => setTransfer({ ...transfer, to: v === 'none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="轉入哪個帳戶" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">選擇轉入帳戶</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="number" placeholder="轉帳金額" required value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
+              <Button type="submit" className="w-full">確認轉帳</Button>
+            </form>
+          ) : pickingMode ? (
             <p className="py-2 text-center text-sm text-muted-foreground">
               請從下方列表點選要{actionMode === 'edit' ? '編輯' : '刪除'}的紀錄
             </p>
