@@ -35,6 +35,18 @@ create table if not exists yy_transactions (
   created_at timestamptz not null default now()
 );
 
+-- Categories (分類管理) — shared list across transactions/events/recurring items.
+-- Those tables keep `category` as free text (no FK) to avoid a data migration;
+-- this table is the user-managed list that the frontend dropdown reads from.
+create table if not exists yy_categories (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  name text not null,
+  type text not null check (type in ('income', 'expense', 'general')) default 'general',
+  created_at timestamptz not null default now(),
+  unique (user_id, name)
+);
+
 -- Calendar events (行事曆) — Google sync fields are here but unused until phase 2
 create table if not exists yy_events (
   id uuid primary key default gen_random_uuid(),
@@ -93,6 +105,7 @@ create index if not exists idx_password_reset_token_hash on yy_password_reset_to
 create index if not exists idx_transactions_user_occurred on yy_transactions(user_id, occurred_at desc);
 create index if not exists idx_events_user_start on yy_events(user_id, start_at);
 create index if not exists idx_recurring_user_next on yy_recurring_items(user_id, next_trigger_date);
+create index if not exists idx_categories_user on yy_categories(user_id);
 
 -- ============================================================
 -- Row Level Security
@@ -103,6 +116,7 @@ create index if not exists idx_recurring_user_next on yy_recurring_items(user_id
 alter table yy_users enable row level security;
 alter table yy_accounts enable row level security;
 alter table yy_transactions enable row level security;
+alter table yy_categories enable row level security;
 alter table yy_events enable row level security;
 alter table yy_recurring_items enable row level security;
 alter table yy_password_reset_tokens enable row level security;
