@@ -158,6 +158,7 @@ export default function Transactions() {
               <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
                 <p>{form.type === 'income' ? '收入' : '支出'} · {form.category || '未分類'} · NT$ {Number(form.amount).toLocaleString()}</p>
                 <p>{form.occurred_at}</p>
+                {form.note && <p>{form.note}</p>}
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>確認刪除</Button>
@@ -209,6 +210,12 @@ export default function Transactions() {
                   ))}
                 </SelectContent>
               </Select>
+              <Input
+                type="text"
+                placeholder="說明(選填,例如:跟同事聚餐)"
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+              />
               <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
                 管理分類
               </Link>
@@ -241,13 +248,21 @@ export default function Transactions() {
                         onClick={selectable ? () => pickTransaction(t) : undefined}
                         className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
                       >
-                        <div>
-                          <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
-                          {t.account_id && (
-                            <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
-                          )}
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="text-xs text-muted-foreground">{accountName(t.account_id) || '未指定帳戶'}</span>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground">{t.type === 'income' ? '收入' : '支出'}</span>
+                            {t.category && (
+                              <>
+                                <span className="text-xs text-muted-foreground">·</span>
+                                <span className="text-xs text-muted-foreground">{t.category}</span>
+                              </>
+                            )}
+                          </div>
+                          <p className="truncate">{t.note || '（無說明）'}</p>
                         </div>
-                        <span className={t.type === 'income' ? 'text-green-600' : 'text-foreground'}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
+                        <span className={`shrink-0 pl-2 ${t.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
                       </div>
                     );
                   })}
