@@ -5,12 +5,18 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
+function todayLocal() {
+  const d = new Date();
+  const offset = d.getTimezoneOffset();
+  return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
+}
+
 export default function Transactions() {
   const [view, setView] = useState('list');
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ type: 'expense', amount: '', category: '', note: '', account_id: '' });
+  const [form, setForm] = useState({ type: 'expense', amount: '', category: '', note: '', account_id: '', occurred_at: todayLocal() });
 
   async function load() {
     setLoading(true);
@@ -33,15 +39,16 @@ export default function Transactions() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!form.amount) return;
+    const occurredAtIso = new Date(`${form.occurred_at}T12:00:00`).toISOString();
     await api.createTransaction({
       type: form.type,
       amount: Number(form.amount),
       category: form.category || null,
       note: form.note || null,
       account_id: form.account_id || null,
-      occurred_at: new Date().toISOString(),
+      occurred_at: occurredAtIso,
     });
-    setForm({ ...form, amount: '', category: '' });
+    setForm({ ...form, amount: '', category: '', occurred_at: todayLocal() });
     load();
   }
 
@@ -77,6 +84,12 @@ export default function Transactions() {
               </Select>
               <Input type="number" placeholder="金額" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </div>
+            <Input
+              type="date"
+              required
+              value={form.occurred_at}
+              onChange={(e) => setForm({ ...form, occurred_at: e.target.value })}
+            />
             <Select
               value={form.account_id || 'none'}
               onValueChange={(v) => setForm({ ...form, account_id: v === 'none' ? '' : v })}
