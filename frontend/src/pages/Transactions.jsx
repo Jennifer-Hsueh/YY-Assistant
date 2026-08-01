@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,6 +24,7 @@ export default function Transactions() {
   const [view, setView] = useState('list');
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
 
@@ -34,12 +36,14 @@ export default function Transactions() {
   async function load() {
     setLoading(true);
     try {
-      const [{ transactions }, { accounts }] = await Promise.all([
+      const [{ transactions }, { accounts }, { categories }] = await Promise.all([
         api.listTransactions(),
         api.listAccounts(),
+        api.listCategories(),
       ]);
       setTransactions(transactions);
       setAccounts(accounts);
+      setCategories(categories);
     } catch (err) {
       console.error(err);
     } finally {
@@ -113,6 +117,9 @@ export default function Transactions() {
 
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
 
+  // Categories relevant to the currently selected type (支出/收入), plus any 'general' ones.
+  const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
+
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32">
       <div className="mb-4 flex items-center justify-between">
@@ -163,7 +170,7 @@ export default function Transactions() {
                 <p className="text-xs font-medium text-muted-foreground">正在編輯這筆紀錄</p>
               )}
               <div className="flex gap-2">
-                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, category: '' })}>
                   <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="expense">支出</SelectItem>
@@ -190,7 +197,21 @@ export default function Transactions() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input type="text" placeholder="分類(選填)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <Select
+                value={form.category || 'none'}
+                onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger><SelectValue placeholder="選擇分類(選填)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">不指定分類</SelectItem>
+                  {relevantCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
+                管理分類
+              </Link>
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">{actionMode === 'edit' ? '儲存修改' : '新增紀錄'}</Button>
                 {actionMode === 'edit' && activeId && (

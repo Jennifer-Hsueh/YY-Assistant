@@ -60,4 +60,8 @@ export const api = {
 
   registerPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'POST', body: { fcm_token } }),
   unregisterPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'DELETE', body: { fcm_token } }),
+  listCategories: () => request('/categories'),
+createCategory: (payload) => request('/categories', { method: 'POST', body: payload }),
+updateCategory: (id, payload) => request(`/categories/${id}`, { method: 'PUT', body: payload }),
+deleteCategory: (id) => request(`/categories/${id}`, { method: 'DELETE' }),
 };

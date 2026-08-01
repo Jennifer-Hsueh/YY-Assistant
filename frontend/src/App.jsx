@@ -10,6 +10,7 @@ import Transactions from './pages/Transactions';
 import CalendarPage from './pages/CalendarPage';
 import Accounts from './pages/Accounts';
 import Recurring from './pages/Recurring';
+import Categories from './pages/Categories';
 
 function ProtectedLayout({ children }) {
   const { user } = useAuth();
@@ -73,6 +74,14 @@ export default function App() {
             element={
               <ProtectedLayout>
                 <Recurring />
+              </ProtectedLayout>
+            }
+          />
+                    <Route
+            path="/categories"
+            element={
+              <ProtectedLayout>
+                <Categories />
               </ProtectedLayout>
             }
           />
