@@ -26,8 +26,9 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
 
-  // mode: 'add' | 'edit' | 'delete'
-  const [mode, setMode] = useState('add');
+  // actionMode: 'add' | 'edit' | 'delete' — controls the top button group
+  const [actionMode, setActionMode] = useState('add');
+  // activeId: which transaction the user picked from the list (for edit/delete)
   const [activeId, setActiveId] = useState(null);
 
   async function load() {
@@ -48,13 +49,14 @@ export default function Transactions() {
 
   useEffect(() => { load(); }, []);
 
-  function resetForm() {
-    setForm(emptyForm);
-    setMode('add');
+  function switchActionMode(newMode) {
+    setActionMode(newMode);
     setActiveId(null);
+    setForm(emptyForm);
   }
 
-  function selectForEdit(t) {
+  function pickTransaction(t) {
+    setActiveId(t.id);
     setForm({
       type: t.type,
       amount: String(t.amount),
@@ -63,23 +65,12 @@ export default function Transactions() {
       account_id: t.account_id || '',
       occurred_at: toLocalDateInput(t.occurred_at),
     });
-    setMode('edit');
-    setActiveId(t.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function selectForDelete(t) {
-    setForm({
-      type: t.type,
-      amount: String(t.amount),
-      category: t.category || '',
-      note: t.note || '',
-      account_id: t.account_id || '',
-      occurred_at: toLocalDateInput(t.occurred_at),
-    });
-    setMode('delete');
-    setActiveId(t.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function resetAfterAction() {
+    setForm(emptyForm);
+    setActionMode('add');
+    setActiveId(null);
   }
 
   async function handleSubmit(e) {
@@ -95,18 +86,18 @@ export default function Transactions() {
       occurred_at: occurredAtIso,
     };
 
-    if (mode === 'edit') {
+    if (actionMode === 'edit' && activeId) {
       await api.updateTransaction(activeId, payload);
     } else {
       await api.createTransaction(payload);
     }
-    resetForm();
+    resetAfterAction();
     load();
   }
 
   async function handleConfirmDelete() {
     await api.deleteTransaction(activeId);
-    resetForm();
+    resetAfterAction();
     load();
   }
 
@@ -120,6 +111,8 @@ export default function Transactions() {
     return accounts.find((a) => a.id === id)?.name;
   }
 
+  const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
+
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32">
       <div className="mb-4 flex items-center justify-between">
@@ -130,11 +123,43 @@ export default function Transactions() {
         </div>
       </div>
 
+      {/* Action mode switch: 新增 / 編輯 / 刪除 */}
+      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
+        <button
+          onClick={() => switchActionMode('add')}
+          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >新增</button>
+        <button
+          onClick={() => switchActionMode('edit')}
+          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >編輯</button>
+        <button
+          onClick={() => switchActionMode('delete')}
+          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >刪除</button>
+      </div>
+
       <Card className="mb-6">
         <CardContent className="space-y-2 p-4">
-          {mode !== 'delete' ? (
+          {pickingMode ? (
+            <p className="py-2 text-center text-sm text-muted-foreground">
+              請從下方列表點選要{actionMode === 'edit' ? '編輯' : '刪除'}的紀錄
+            </p>
+          ) : actionMode === 'delete' && activeId ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">確定要刪除這筆紀錄嗎?</p>
+              <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
+                <p>{form.type === 'income' ? '收入' : '支出'} · {form.category || '未分類'} · NT$ {Number(form.amount).toLocaleString()}</p>
+                <p>{form.occurred_at}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>確認刪除</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => { setActiveId(null); setForm(emptyForm); }}>重新選擇</Button>
+              </div>
+            </div>
+          ) : (
             <form onSubmit={handleSubmit} className="space-y-2">
-              {mode === 'edit' && (
+              {actionMode === 'edit' && activeId && (
                 <p className="text-xs font-medium text-muted-foreground">正在編輯這筆紀錄</p>
               )}
               <div className="flex gap-2">
@@ -167,24 +192,12 @@ export default function Transactions() {
               </Select>
               <Input type="text" placeholder="分類(選填)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1">{mode === 'edit' ? '儲存修改' : '新增紀錄'}</Button>
-                {mode === 'edit' && (
-                  <Button type="button" variant="outline" onClick={resetForm}>取消</Button>
+                <Button type="submit" className="flex-1">{actionMode === 'edit' ? '儲存修改' : '新增紀錄'}</Button>
+                {actionMode === 'edit' && activeId && (
+                  <Button type="button" variant="outline" onClick={() => { setActiveId(null); setForm(emptyForm); }}>重新選擇</Button>
                 )}
               </div>
             </form>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">確定要刪除這筆紀錄嗎?</p>
-              <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                <p>{form.type === 'income' ? '收入' : '支出'} · {form.category || '未分類'} · NT$ {Number(form.amount).toLocaleString()}</p>
-                <p>{form.occurred_at}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>確認刪除</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={resetForm}>取消</Button>
-              </div>
-            </div>
           )}
         </CardContent>
       </Card>
@@ -198,24 +211,25 @@ export default function Transactions() {
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
               <Card>
                 <div className="divide-y divide-border">
-                  {items.map((t) => (
-                    <div
-                      key={t.id}
-                      className={`flex items-center justify-between px-4 py-2 text-sm ${activeId === t.id && mode !== 'add' ? 'bg-muted' : ''}`}
-                    >
-                      <div>
-                        <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
-                        {t.account_id && (
-                          <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
+                  {items.map((t) => {
+                    const selectable = actionMode === 'edit' || actionMode === 'delete';
+                    const isActive = activeId === t.id;
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={selectable ? () => pickTransaction(t) : undefined}
+                        className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
+                      >
+                        <div>
+                          <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
+                          {t.account_id && (
+                            <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
+                          )}
+                        </div>
                         <span className={t.type === 'income' ? 'text-green-600' : 'text-foreground'}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
-                        <button type="button" onClick={() => selectForEdit(t)} className="text-xs text-muted-foreground underline">編輯</button>
-                        <button type="button" onClick={() => selectForDelete(t)} className="text-xs text-red-500 underline">刪除</button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             </div>
