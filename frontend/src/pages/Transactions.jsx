@@ -11,12 +11,23 @@ function todayLocal() {
   return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
 }
 
+function toLocalDateInput(isoString) {
+  const d = new Date(isoString);
+  const offset = d.getTimezoneOffset();
+  return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
+}
+
 export default function Transactions() {
   const [view, setView] = useState('list');
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ type: 'expense', amount: '', category: '', note: '', account_id: '', occurred_at: todayLocal() });
+
+  // Editing state: which transaction id is being edited, and its draft values
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -49,6 +60,43 @@ export default function Transactions() {
       occurred_at: occurredAtIso,
     });
     setForm({ ...form, amount: '', category: '', occurred_at: todayLocal() });
+    load();
+  }
+
+  function startEdit(t) {
+    setEditingId(t.id);
+    setEditForm({
+      type: t.type,
+      amount: String(t.amount),
+      category: t.category || '',
+      account_id: t.account_id || '',
+      occurred_at: toLocalDateInput(t.occurred_at),
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm(null);
+  }
+
+  async function saveEdit(id) {
+    if (!editForm.amount) return;
+    const occurredAtIso = new Date(`${editForm.occurred_at}T12:00:00`).toISOString();
+    await api.updateTransaction(id, {
+      type: editForm.type,
+      amount: Number(editForm.amount),
+      category: editForm.category || null,
+      account_id: editForm.account_id || null,
+      occurred_at: occurredAtIso,
+    });
+    setEditingId(null);
+    setEditForm(null);
+    load();
+  }
+
+  async function confirmDelete(id) {
+    await api.deleteTransaction(id);
+    setDeletingId(null);
     load();
   }
 
@@ -117,14 +165,58 @@ export default function Transactions() {
               <Card>
                 <div className="divide-y divide-border">
                   {items.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                      <div>
-                        <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
-                        {t.account_id && (
-                          <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
-                        )}
-                      </div>
-                      <span className={t.type === 'income' ? 'text-green-600' : 'text-foreground'}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
+                    <div key={t.id} className="px-4 py-2 text-sm">
+                      {editingId === t.id ? (
+                        <div className="space-y-2 py-2">
+                          <div className="flex gap-2">
+                            <Select value={editForm.type} onValueChange={(v) => setEditForm({ ...editForm, type: v })}>
+                              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="expense">支出</SelectItem>
+                                <SelectItem value="income">收入</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
+                          </div>
+                          <Input type="date" value={editForm.occurred_at} onChange={(e) => setEditForm({ ...editForm, occurred_at: e.target.value })} />
+                          <Select value={editForm.account_id || 'none'} onValueChange={(v) => setEditForm({ ...editForm, account_id: v === 'none' ? '' : v })}>
+                            <SelectTrigger><SelectValue placeholder="選擇帳戶(選填)" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">不指定帳戶</SelectItem>
+                              {accounts.map((acc) => (
+                                <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input type="text" placeholder="分類(選填)" value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
+                          <div className="flex gap-2">
+                            <Button type="button" className="flex-1" onClick={() => saveEdit(t.id)}>儲存</Button>
+                            <Button type="button" variant="outline" className="flex-1" onClick={cancelEdit}>取消</Button>
+                          </div>
+                        </div>
+                      ) : deletingId === t.id ? (
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground">確定要刪除這筆紀錄嗎?</span>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="destructive" size="sm" onClick={() => confirmDelete(t.id)}>刪除</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => setDeletingId(null)}>取消</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span>{t.category || (t.type === 'income' ? '收入' : '支出')}</span>
+                            {t.account_id && (
+                              <span className="ml-2 text-xs text-muted-foreground">({accountName(t.account_id) || '帳戶'})</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={t.type === 'income' ? 'text-green-600' : 'text-foreground'}>{t.type === 'income' ? '+' : '-'}NT$ {Number(t.amount).toLocaleString()}</span>
+                            <button type="button" onClick={() => startEdit(t)} className="text-xs text-muted-foreground underline">編輯</button>
+                            <button type="button" onClick={() => setDeletingId(t.id)} className="text-xs text-red-500 underline">刪除</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
