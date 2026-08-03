@@ -15,7 +15,15 @@ export default function BottomNav() {
       <ul className="mx-auto flex max-w-xl justify-around">
         {tabs.map(({ to, label, Icon }) => (
           <li key={to} className="flex-1">
-            <NavLink to={to} end={to === '/'} className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2 text-xs ${isActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+            <NavLink
+              to={to}
+              end={to === '/'}
+              className="flex flex-col items-center gap-0.5 py-2 text-xs"
+              style={({ isActive }) => ({
+                color: isActive ? 'var(--expense)' : 'var(--muted-foreground)',
+                fontWeight: isActive ? 500 : 400,
+              })}
+            >
               <Icon className="h-5 w-5" />
               {label}
             </NavLink>

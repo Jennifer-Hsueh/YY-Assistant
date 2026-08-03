@@ -24,30 +24,46 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.65rem;
+  /* 米紙白 */
+  --background: #FBF8F2;
+  /* 深炭灰 */
+  --foreground: #2A2622;
+  --card: #FFFFFF;
+  --card-foreground: #2A2622;
+  /* 赤陶紅褐 — 主要 CTA 按鈕色 */
+  --primary: #C1666B;
+  --primary-foreground: #FBF8F2;
+  /* 淡靛藍色調 — 次要按鈕 */
+  --secondary: #DDE3EC;
+  --secondary-foreground: #33415C;
+  /* 靜音/說明文字用的暖灰 */
+  --muted: #F1EDE3;
+  --muted-foreground: #8A8578;
+  --accent: #F0EAE0;
+  --accent-foreground: #33415C;
+  --destructive: #B23A3A;
+  --destructive-foreground: #FBF8F2;
+  --border: rgba(51, 65, 92, 0.14);
+  --input: rgba(51, 65, 92, 0.14);
+  --ring: #33415C;
+  --radius: 0.75rem;
   color-scheme: light;
+
+  /* 手帳風格額外色票,供個別頁面直接取用 */
+  --ink: #33415C;
+  --income: #6E8B5D;
+  --income-bg: #DCE6D6;
+  --expense: #C1666B;
+  --expense-bg: #F0D9DB;
+  --highlight: #E3B23C;
+  --highlight-bg: #F5E4C3;
 }
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
   background-color: var(--background);
+  background-image: radial-gradient(rgba(51, 65, 92, 0.07) 1px, transparent 1px);
+  background-size: 14px 14px;
   color: var(--foreground);
 }
