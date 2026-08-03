@@ -83,7 +83,7 @@ export default function Accounts() {
   const pickedAccount = accounts.find((a) => a.id === pickedId);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
       <h1 className="mb-4 text-lg font-semibold">帳戶管理</h1>
 
       {loading ? (

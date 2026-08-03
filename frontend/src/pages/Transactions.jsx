@@ -149,7 +149,7 @@ export default function Transactions() {
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold">記帳</h1>
         <div className="flex rounded-lg bg-muted p-1 text-sm">

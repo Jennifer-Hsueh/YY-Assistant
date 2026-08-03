@@ -111,7 +111,7 @@ export default function Recurring() {
   const kindLabel = { expense: '循環支出', income: '循環收入', event: '循環行程' };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-recurring)', '--ring': 'var(--module-recurring)' }}>
       <h1 className="mb-4 text-lg font-semibold">循環記帳/行程提醒</h1>
       <Card className="mb-4">
         <CardContent className="p-3 text-sm">

@@ -104,7 +104,7 @@ export default function CalendarPage() {
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="mb-4 text-lg font-semibold">行事曆 — {year}年{month + 1}月</h1>
 
       <Card className="mb-3">
