@@ -49,7 +49,7 @@
   --radius: 0.75rem;
   color-scheme: light;
 
-  /* 手帳風格額外色票,供個別頁面直接取用 */
+  /* 手帳風格基礎色票 */
   --ink: #33415C;
   --income: #6E8B5D;
   --income-bg: #DCE6D6;
@@ -57,6 +57,16 @@
   --expense-bg: #F0D9DB;
   --highlight: #E3B23C;
   --highlight-bg: #F5E4C3;
+
+  /* 各模組專屬色 — 首頁與底部導覽依此呼應 */
+  --module-transactions: var(--expense);
+  --module-transactions-bg: var(--expense-bg);
+  --module-accounts: var(--income);
+  --module-accounts-bg: var(--income-bg);
+  --module-calendar: var(--ink);
+  --module-calendar-bg: #DDE3EC;
+  --module-recurring: var(--highlight);
+  --module-recurring-bg: var(--highlight-bg);
 }
 
 body {

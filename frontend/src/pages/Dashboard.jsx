@@ -57,23 +57,25 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      <Card className="mb-3">
+      {/* 本月支出 — 呼應「記帳」模組色 */}
+      <Card className="mb-3 border-l-4" style={{ borderLeftColor: 'var(--module-transactions)' }}>
         <CardContent className="p-4">
           <p className="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Wallet className="h-3.5 w-3.5" />
+            <Wallet className="h-3.5 w-3.5" style={{ color: 'var(--module-transactions)' }} />
             本月支出
           </p>
-          <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--expense)' }}>
+          <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--module-transactions)' }}>
             {loading ? '…' : `NT$ ${monthSpending?.toLocaleString() ?? 0}`}
           </p>
         </CardContent>
       </Card>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
-        <Card>
+        {/* 本月收入 — 呼應「記帳」模組色系裡的收入色 */}
+        <Card className="border-l-4" style={{ borderLeftColor: 'var(--income)' }}>
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3 w-3" style={{ color: 'var(--income)' }} />
               本月收入
             </p>
             <p className="font-mono text-base" style={{ color: 'var(--income)' }}>
@@ -81,23 +83,26 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* 總餘額 — 呼應「帳戶」模組色 */}
+        <Card className="border-l-4" style={{ borderLeftColor: 'var(--module-accounts)' }}>
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-              <PiggyBank className="h-3 w-3" />
+              <PiggyBank className="h-3 w-3" style={{ color: 'var(--module-accounts)' }} />
               總餘額
             </p>
-            <p className="font-mono text-base text-foreground">
+            <p className="font-mono text-base" style={{ color: 'var(--module-accounts)' }}>
               {loading ? '…' : `NT$ ${totalBalance?.toLocaleString() ?? 0}`}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      {/* 今日行程 — 呼應「行事曆」模組色 */}
+      <Card className="border-l-4" style={{ borderLeftColor: 'var(--module-calendar)' }}>
         <CardContent className="p-4">
           <p className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <CalendarDays className="h-4 w-4" />
+            <CalendarDays className="h-4 w-4" style={{ color: 'var(--module-calendar)' }} />
             今日行程
           </p>
           {loading ? (
