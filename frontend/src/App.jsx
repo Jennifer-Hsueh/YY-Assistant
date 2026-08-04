@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import BottomNav from './components/BottomNav';
+import TopBar from './components/TopBar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -22,6 +24,7 @@ function ProtectedLayout({ children }) {
 
   return (
     <div className="min-h-screen">
+      <TopBar />
       {children}
       <BottomNav />
     </div>
@@ -30,63 +33,65 @@ function ProtectedLayout({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedLayout>
-                <Dashboard />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/transactions"
-            element={
-              <ProtectedLayout>
-                <Transactions />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedLayout>
-                <CalendarPage />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/accounts"
-            element={
-              <ProtectedLayout>
-                <Accounts />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/recurring"
-            element={
-              <ProtectedLayout>
-                <Recurring />
-              </ProtectedLayout>
-            }
-          />
-                    <Route
-            path="/categories"
-            element={
-              <ProtectedLayout>
-                <Categories />
-              </ProtectedLayout>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedLayout>
+                  <Dashboard />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/transactions"
+              element={
+                <ProtectedLayout>
+                  <Transactions />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedLayout>
+                  <CalendarPage />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/accounts"
+              element={
+                <ProtectedLayout>
+                  <Accounts />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/recurring"
+              element={
+                <ProtectedLayout>
+                  <Recurring />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/categories"
+              element={
+                <ProtectedLayout>
+                  <Categories />
+                </ProtectedLayout>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

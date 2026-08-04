@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Wallet, TrendingUp, PiggyBank, CalendarDays } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank, CalendarDays } from 'lucide-react';
 import { api } from '../lib/api';
-import { useAuth } from '../context/AuthContext';
-import { Button } from '../components/ui/button';
+import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [monthSpending, setMonthSpending] = useState(null);
   const [monthIncome, setMonthIncome] = useState(null);
   const [totalBalance, setTotalBalance] = useState(null);
@@ -46,23 +45,14 @@ export default function Dashboard() {
         style={{ backgroundColor: 'color-mix(in oklab, var(--income) 60%, transparent)' }}
       />
 
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">儀表板</h1>
-          {user?.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
-        </div>
-        <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 text-muted-foreground">
-          <LogOut className="h-4 w-4" />
-          登出
-        </Button>
-      </div>
+      <h1 className="mb-4 text-lg font-semibold">{t('overview')}</h1>
 
-      {/* 本月支出 — 呼應「記帳」模組色 */}
-      <Card className="mb-3 border-l-4" style={{ borderLeftColor: 'var(--module-transactions)' }}>
+      {/* 本月支出 — 呼應「記帳」模組色,淡色底 */}
+      <Card className="mb-3 border-none" style={{ backgroundColor: 'var(--module-transactions-bg)' }}>
         <CardContent className="p-4">
-          <p className="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Wallet className="h-3.5 w-3.5" style={{ color: 'var(--module-transactions)' }} />
-            本月支出
+          <p className="mb-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--module-transactions)' }}>
+            <Wallet className="h-3.5 w-3.5" />
+            {t('month_expense')}
           </p>
           <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--module-transactions)' }}>
             {loading ? '…' : `NT$ ${monthSpending?.toLocaleString() ?? 0}`}
@@ -71,12 +61,12 @@ export default function Dashboard() {
       </Card>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
-        {/* 本月收入 — 呼應「記帳」模組色系裡的收入色 */}
-        <Card className="border-l-4" style={{ borderLeftColor: 'var(--income)' }}>
+        {/* 本月收入 */}
+        <Card className="border-none" style={{ backgroundColor: 'var(--income-bg)' }}>
           <CardContent className="p-3">
-            <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-              <TrendingUp className="h-3 w-3" style={{ color: 'var(--income)' }} />
-              本月收入
+            <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--income)' }}>
+              <TrendingUp className="h-3 w-3" />
+              {t('month_income')}
             </p>
             <p className="font-mono text-base" style={{ color: 'var(--income)' }}>
               {loading ? '…' : `NT$ ${monthIncome?.toLocaleString() ?? 0}`}
@@ -84,12 +74,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* 總餘額 — 呼應「帳戶」模組色 */}
-        <Card className="border-l-4" style={{ borderLeftColor: 'var(--module-accounts)' }}>
+        {/* 總餘額 — 呼應「帳戶」模組色,淡色底 */}
+        <Card className="border-none" style={{ backgroundColor: 'var(--module-accounts-bg)' }}>
           <CardContent className="p-3">
-            <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-              <PiggyBank className="h-3 w-3" style={{ color: 'var(--module-accounts)' }} />
-              總餘額
+            <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--module-accounts)' }}>
+              <PiggyBank className="h-3 w-3" />
+              {t('total_balance')}
             </p>
             <p className="font-mono text-base" style={{ color: 'var(--module-accounts)' }}>
               {loading ? '…' : `NT$ ${totalBalance?.toLocaleString() ?? 0}`}
@@ -98,21 +88,21 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* 今日行程 — 呼應「行事曆」模組色 */}
-      <Card className="border-l-4" style={{ borderLeftColor: 'var(--module-calendar)' }}>
+      {/* 今日行程 — 呼應「行事曆」模組色,淡色底 */}
+      <Card className="border-none" style={{ backgroundColor: 'var(--module-calendar-bg)' }}>
         <CardContent className="p-4">
-          <p className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <CalendarDays className="h-4 w-4" style={{ color: 'var(--module-calendar)' }} />
-            今日行程
+          <p className="mb-2 flex items-center gap-1.5 text-sm" style={{ color: 'var(--module-calendar)' }}>
+            <CalendarDays className="h-4 w-4" />
+            {t('today_events')}
           </p>
           {loading ? (
-            <p className="text-sm text-muted-foreground">載入中…</p>
+            <p className="text-sm text-muted-foreground">{t('loading')}</p>
           ) : todayEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">今天沒有安排的行程</p>
+            <p className="text-sm text-muted-foreground">{t('no_events_today')}</p>
           ) : (
             <ul className="space-y-2">
               {todayEvents.map((ev) => (
-                <li key={ev.id} className="flex items-center gap-2 text-sm">
+                <li key={ev.id} className="flex items-center gap-2 text-sm text-foreground">
                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
                   {ev.title}
                 </li>
