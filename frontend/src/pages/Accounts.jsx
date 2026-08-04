@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -7,11 +8,11 @@ import { Card, CardContent } from '../components/ui/card';
 const CARD_COLORS = ['bg-primary', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
 
 export default function Accounts() {
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // mode: 'add' | 'edit' | 'delete'
   const [mode, setMode] = useState('add');
 
   const [newName, setNewName] = useState('');
@@ -63,7 +64,7 @@ export default function Accounts() {
       load();
     } catch (err) {
       console.error(err);
-      setActionError('更新失敗');
+      setActionError(t('acc_update_failed'));
     }
   }
 
@@ -75,7 +76,7 @@ export default function Accounts() {
       load();
     } catch (err) {
       console.error(err);
-      setActionError('刪除失敗');
+      setActionError(t('acc_delete_failed'));
     }
   }
 
@@ -84,12 +85,12 @@ export default function Accounts() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
-      <h1 className="mb-4 text-lg font-semibold">帳戶管理</h1>
+      <h1 className="mb-4 text-lg font-semibold">{t('acc_pageTitle')}</h1>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">載入中…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : accounts.length === 0 ? (
-        <p className="mb-4 text-sm text-muted-foreground">還沒有任何帳戶,先新增一個吧</p>
+        <p className="mb-4 text-sm text-muted-foreground">{t('acc_no_accounts')}</p>
       ) : (
         <div className="relative mb-6 h-40">
           {accounts.map((acc, idx) => {
@@ -110,25 +111,24 @@ export default function Accounts() {
         </div>
       )}
 
-      {/* Mode switch: 新增 / 編輯 / 刪除 */}
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
-        <button onClick={() => switchMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>新增</button>
-        <button onClick={() => switchMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>編輯</button>
-        <button onClick={() => switchMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>刪除</button>
+        <button onClick={() => switchMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => switchMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
       <Card>
         <CardContent className="p-4">
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="flex gap-2">
-              <Input type="text" placeholder="新帳戶名稱" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <Button type="submit">新增</Button>
+              <Input type="text" placeholder={t('acc_new_name_placeholder')} value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <Button type="submit">{t('acc_add')}</Button>
             </form>
           )}
 
           {mode === 'edit' && pickingMode && (
             <div className="space-y-1">
-              <p className="mb-2 text-sm text-muted-foreground">請點選要重新命名的帳戶</p>
+              <p className="mb-2 text-sm text-muted-foreground">{t('acc_pick_rename')}</p>
               {accounts.map((acc) => (
                 <button
                   key={acc.id}
@@ -147,15 +147,15 @@ export default function Accounts() {
               {actionError && <p className="text-sm text-red-500">{actionError}</p>}
               <Input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
               <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={saveEdit}>儲存</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>重新選擇</Button>
+                <Button type="button" className="flex-1" onClick={saveEdit}>{t('save')}</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>{t('reselect')}</Button>
               </div>
             </div>
           )}
 
           {mode === 'delete' && pickingMode && (
             <div className="space-y-1">
-              <p className="mb-2 text-sm text-muted-foreground">請點選要刪除的帳戶</p>
+              <p className="mb-2 text-sm text-muted-foreground">{t('acc_pick_delete')}</p>
               {accounts.map((acc) => (
                 <button
                   key={acc.id}
@@ -172,11 +172,11 @@ export default function Accounts() {
           {mode === 'delete' && pickedId && (
             <div className="space-y-2">
               {actionError && <p className="text-sm text-red-500">{actionError}</p>}
-              <p className="text-sm font-medium">確定要刪除「{pickedAccount?.name}」嗎?</p>
-              <p className="text-xs text-muted-foreground">過去這個帳戶的交易紀錄仍會保留,只是不再顯示所屬帳戶。</p>
+              <p className="text-sm font-medium">{t('acc_confirm_delete_prefix')}{pickedAccount?.name}{t('acc_confirm_delete_suffix')}</p>
+              <p className="text-xs text-muted-foreground">{t('acc_delete_note')}</p>
               <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={confirmDelete}>確認刪除</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>重新選擇</Button>
+                <Button type="button" variant="destructive" className="flex-1" onClick={confirmDelete}>{t('tx_confirm_delete')}</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>{t('reselect')}</Button>
               </div>
             </div>
           )}

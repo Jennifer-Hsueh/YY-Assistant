@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -8,6 +9,7 @@ import DateInputSegmented from '../components/DateInputSegmented';
 const emptyForm = { title: '', date: '', category: '', color: '#4F46E5' };
 
 export default function CalendarPage() {
+  const { t } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -15,10 +17,9 @@ export default function CalendarPage() {
   const year = today.getFullYear();
   const month = today.getMonth();
 
-  // actionMode: 'add' | 'edit' | 'delete'
   const [actionMode, setActionMode] = useState('add');
   const [activeId, setActiveId] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(null); // dateKey string, e.g. '2026-08-01'
+  const [selectedDay, setSelectedDay] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -102,15 +103,16 @@ export default function CalendarPage() {
   }
 
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
+  const weekdays = t('cal_weekdays');
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
-      <h1 className="mb-4 text-lg font-semibold">行事曆 — {year}年{month + 1}月</h1>
+      <h1 className="mb-4 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
 
       <Card className="mb-3">
         <CardContent className="p-3">
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-            {['日', '一', '二', '三', '四', '五', '六'].map((d) => <div key={d}>{d}</div>)}
+            {weekdays.map((d) => <div key={d}>{d}</div>)}
           </div>
           <div className="mt-2 grid grid-cols-7 gap-1">
             {cells.map((day, idx) => {
@@ -141,49 +143,40 @@ export default function CalendarPage() {
       {!selectedDay ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            請先在上方月曆點選一個日期
+            {t('cal_select_date_prompt')}
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{selectedDay} 的行程</p>
+              <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
               <div className="flex rounded-lg bg-muted p-1 text-xs">
-                <button
-                  onClick={() => switchActionMode('add')}
-                  className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-                >新增</button>
-                <button
-                  onClick={() => switchActionMode('edit')}
-                  className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-                >編輯</button>
-                <button
-                  onClick={() => switchActionMode('delete')}
-                  className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-                >刪除</button>
+                <button onClick={() => switchActionMode('add')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+                <button onClick={() => switchActionMode('edit')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+                <button onClick={() => switchActionMode('delete')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
               </div>
             </div>
 
             {actionMode === 'add' && (
               <form onSubmit={handleSubmit} className="space-y-2">
-                <Input type="text" placeholder="事件標題" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 <div className="flex gap-2">
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
-                <Input type="text" placeholder="分類(選填,如:工作/個人)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-                <Button type="submit" className="w-full">新增事件</Button>
+                <Input type="text" placeholder={t('cal_category_placeholder')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Button type="submit" className="w-full">{t('cal_add_event')}</Button>
               </form>
             )}
 
             {actionMode === 'edit' && !activeId && (
               <div className="space-y-1">
                 {selectedDayEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">這天沒有任何行程</p>
+                  <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground">請點選要編輯的行程</p>
+                    <p className="text-xs text-muted-foreground">{t('cal_pick_edit')}</p>
                     {selectedDayEvents.map((ev) => (
                       <button
                         key={ev.id}
@@ -203,16 +196,16 @@ export default function CalendarPage() {
 
             {actionMode === 'edit' && activeId && (
               <form onSubmit={handleSubmit} className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">正在編輯這筆行程</p>
-                <Input type="text" placeholder="事件標題" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <p className="text-xs font-medium text-muted-foreground">{t('cal_editing')}</p>
+                <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 <div className="flex gap-2">
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
-                <Input type="text" placeholder="分類(選填,如:工作/個人)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Input type="text" placeholder={t('cal_category_placeholder')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">儲存修改</Button>
-                  <Button type="button" variant="outline" onClick={() => setActiveId(null)}>重新選擇</Button>
+                  <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
+                  <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
               </form>
             )}
@@ -220,10 +213,10 @@ export default function CalendarPage() {
             {actionMode === 'delete' && !activeId && (
               <div className="space-y-1">
                 {selectedDayEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">這天沒有任何行程</p>
+                  <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground">請點選要刪除的行程</p>
+                    <p className="text-xs text-muted-foreground">{t('cal_pick_delete')}</p>
                     {selectedDayEvents.map((ev) => (
                       <button
                         key={ev.id}
@@ -243,14 +236,14 @@ export default function CalendarPage() {
 
             {actionMode === 'delete' && activeId && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">確定要刪除這筆行程嗎?</p>
+                <p className="text-sm font-medium">{t('cal_confirm_delete_title')}</p>
                 <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
                   <p>{form.title}</p>
                   <p>{form.date} {form.category && `· ${form.category}`}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>確認刪除</Button>
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>重新選擇</Button>
+                  <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
               </div>
             )}
@@ -258,7 +251,7 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {loading && <p className="mt-4 text-sm text-muted-foreground">載入中…</p>}
+      {loading && <p className="mt-4 text-sm text-muted-foreground">{t('loading')}</p>}
     </div>
   );
 }

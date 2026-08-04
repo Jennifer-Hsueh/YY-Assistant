@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { requestPushToken } from '../lib/firebase';
+import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -9,12 +10,12 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 const emptyForm = { kind: 'expense', title: '', amount: '', frequency: 'monthly', day_of_month: '1', reminder_method: 'push' };
 
 export default function Recurring() {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pushStatus, setPushStatus] = useState('idle');
   const [form, setForm] = useState(emptyForm);
 
-  // actionMode: 'add' | 'edit' | 'delete'
   const [actionMode, setActionMode] = useState('add');
   const [activeId, setActiveId] = useState(null);
 
@@ -108,26 +109,26 @@ export default function Recurring() {
   }
 
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
-  const kindLabel = { expense: '循環支出', income: '循環收入', event: '循環行程' };
+  const kindLabel = { expense: t('rec_kind_expense'), income: t('rec_kind_income'), event: t('rec_kind_event') };
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-recurring)', '--ring': 'var(--module-recurring)' }}>
-      <h1 className="mb-4 text-lg font-semibold">循環記帳/行程提醒</h1>
+      <h1 className="mb-4 text-lg font-semibold">{t('rec_pageTitle')}</h1>
       <Card className="mb-4">
         <CardContent className="p-3 text-sm">
           {pushStatus === 'enabled' ? (
-            <p className="text-green-600">✓ 推播通知已啟用</p>
+            <p className="text-green-600">{t('rec_push_enabled')}</p>
           ) : (
             <Button size="sm" onClick={handleEnablePush} disabled={pushStatus === 'enabling'}>
-              {pushStatus === 'enabling' ? '設定中…' : '啟用推播通知'}
+              {pushStatus === 'enabling' ? t('rec_enabling') : t('rec_enable_push')}
             </Button>
           )}
-          {pushStatus === 'failed' && <p className="mt-1 text-xs text-destructive">未能啟用推播(可能是瀏覽器拒絕通知權限,或尚未設定 Firebase)</p>}
+          {pushStatus === 'failed' && <p className="mt-1 text-xs text-destructive">{t('rec_push_failed')}</p>}
         </CardContent>
       </Card>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">載入中…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
         <div className="mb-6 space-y-2">
           {items.map((item) => {
@@ -142,95 +143,87 @@ export default function Recurring() {
                 <CardContent className="flex items-center justify-between p-3 text-sm">
                   <div>
                     <p className="font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.frequency === 'monthly' ? `每月 ${item.day_of_month} 號` : '每週'} · 下次:{item.next_trigger_date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.frequency === 'monthly' ? `${t('rec_monthly_prefix')}${item.day_of_month}${t('rec_monthly_suffix')}` : t('rec_weekly')} · {t('rec_next')}{item.next_trigger_date}
+                    </p>
                   </div>
                   {!selectable && (
                     <Button size="sm" variant={item.is_active ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
-                      {item.is_active ? '啟用中' : '已停用'}
+                      {item.is_active ? t('rec_active') : t('rec_inactive')}
                     </Button>
                   )}
                 </CardContent>
               </Card>
             );
           })}
-          {items.length === 0 && <p className="text-sm text-muted-foreground">還沒有循環項目</p>}
+          {items.length === 0 && <p className="text-sm text-muted-foreground">{t('rec_no_items')}</p>}
         </div>
       )}
 
-      {/* Action mode switch: 新增 / 編輯 / 刪除 */}
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
-        <button
-          onClick={() => switchActionMode('add')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-        >新增</button>
-        <button
-          onClick={() => switchActionMode('edit')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-        >編輯</button>
-        <button
-          onClick={() => switchActionMode('delete')}
-          className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
-        >刪除</button>
+        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
       <Card>
         <CardContent className="space-y-2 p-4">
           {pickingMode ? (
             <p className="py-2 text-center text-sm text-muted-foreground">
-              請從上方列表點選要{actionMode === 'edit' ? '編輯' : '刪除'}的項目
+              {actionMode === 'edit' ? t('rec_pick_edit') : t('rec_pick_delete')}
             </p>
           ) : actionMode === 'delete' && activeId ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium">確定要刪除這個循環項目嗎?</p>
+              <p className="text-sm font-medium">{t('rec_confirm_delete_title')}</p>
               <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
                 <p>{kindLabel[form.kind]} · {form.title}</p>
-                <p>每月 {form.day_of_month} 號{form.amount && ` · NT$ ${Number(form.amount).toLocaleString()}`}</p>
+                <p>{t('rec_monthly_prefix')}{form.day_of_month}{t('rec_monthly_suffix')}{form.amount && ` · NT$ ${Number(form.amount).toLocaleString()}`}</p>
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>確認刪除</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>重新選擇</Button>
+                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-2">
               {actionMode === 'edit' && activeId && (
-                <p className="text-xs font-medium text-muted-foreground">正在編輯這個循環項目</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('rec_editing')}</p>
               )}
               <div className="flex gap-2">
                 <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
                   <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="expense">循環支出</SelectItem>
-                    <SelectItem value="income">循環收入</SelectItem>
-                    <SelectItem value="event">循環行程</SelectItem>
+                    <SelectItem value="expense">{t('rec_kind_expense')}</SelectItem>
+                    <SelectItem value="income">{t('rec_kind_income')}</SelectItem>
+                    <SelectItem value="event">{t('rec_kind_event')}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input type="text" placeholder="項目名稱" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <Input type="text" placeholder={t('rec_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               {form.kind !== 'event' && (
-                <Input type="number" placeholder="金額(選填)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <Input type="number" placeholder={t('rec_amount_placeholder')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               )}
               <div className="flex gap-2">
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs text-muted-foreground">每月第幾天</label>
+                  <label className="text-xs text-muted-foreground">{t('rec_day_of_month_label')}</label>
                   <Input type="number" min="1" max="28" value={form.day_of_month} onChange={(e) => setForm({ ...form, day_of_month: e.target.value })} />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs text-muted-foreground">提醒方式</label>
+                  <label className="text-xs text-muted-foreground">{t('rec_reminder_method_label')}</label>
                   <Select value={form.reminder_method} onValueChange={(v) => setForm({ ...form, reminder_method: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="push">推播通知</SelectItem>
-                      <SelectItem value="in_app">僅 APP 內顯示</SelectItem>
-                      <SelectItem value="both">兩者皆要</SelectItem>
+                      <SelectItem value="push">{t('rec_reminder_push')}</SelectItem>
+                      <SelectItem value="in_app">{t('rec_reminder_in_app')}</SelectItem>
+                      <SelectItem value="both">{t('rec_reminder_both')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1">{actionMode === 'edit' ? '儲存修改' : '新增循環項目'}</Button>
+                <Button type="submit" className="flex-1">{actionMode === 'edit' ? t('tx_save_edit') : t('rec_add')}</Button>
                 {actionMode === 'edit' && activeId && (
-                  <Button type="button" variant="outline" onClick={() => setActiveId(null)}>重新選擇</Button>
+                  <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 )}
               </div>
             </form>

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
 export default function Categories() {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,7 +28,7 @@ export default function Categories() {
       setCategories(categories);
     } catch (err) {
       console.error(err);
-      setError('無法載入分類清單');
+      setError(t('cat_error_load'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function Categories() {
       load();
     } catch (err) {
       console.error(err);
-      setError('新增失敗,可能是分類名稱重複');
+      setError(t('cat_error_create'));
     }
   }
 
@@ -65,7 +67,7 @@ export default function Categories() {
       load();
     } catch (err) {
       console.error(err);
-      setError('重新命名失敗,可能是名稱重複');
+      setError(t('cat_error_rename'));
     }
   }
 
@@ -76,17 +78,17 @@ export default function Categories() {
       load();
     } catch (err) {
       console.error(err);
-      setError('刪除失敗');
+      setError(t('cat_error_delete'));
     }
   }
 
-  const typeLabel = { expense: '支出', income: '收入', general: '通用' };
+  const typeLabel = { expense: t('type_expense'), income: t('type_income'), general: t('type_general') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">分類管理</h1>
-        <Link to="/transactions" className="text-sm text-muted-foreground underline">回記帳</Link>
+        <h1 className="text-lg font-semibold">{t('cat_pageTitle')}</h1>
+        <Link to="/transactions" className="text-sm text-muted-foreground underline">{t('cat_back_to_transactions')}</Link>
       </div>
 
       {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
@@ -96,7 +98,7 @@ export default function Categories() {
           <form onSubmit={handleCreate} className="flex gap-2">
             <Input
               type="text"
-              placeholder="新分類名稱"
+              placeholder={t('cat_new_name_placeholder')}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               required
@@ -104,18 +106,18 @@ export default function Categories() {
             <Select value={newType} onValueChange={setNewType}>
               <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">通用</SelectItem>
-                <SelectItem value="expense">支出</SelectItem>
-                <SelectItem value="income">收入</SelectItem>
+                <SelectItem value="general">{t('type_general')}</SelectItem>
+                <SelectItem value="expense">{t('type_expense')}</SelectItem>
+                <SelectItem value="income">{t('type_income')}</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="submit">新增</Button>
+            <Button type="submit">{t('acc_add')}</Button>
           </form>
         </CardContent>
       </Card>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">載入中…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
         <Card>
           <div className="divide-y divide-border">
@@ -129,15 +131,15 @@ export default function Categories() {
                       onChange={(e) => setEditName(e.target.value)}
                       className="flex-1"
                     />
-                    <Button type="button" size="sm" onClick={() => saveEdit(cat.id)}>儲存</Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingId(null)}>取消</Button>
+                    <Button type="button" size="sm" onClick={() => saveEdit(cat.id)}>{t('save')}</Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingId(null)}>{t('cancel')}</Button>
                   </div>
                 ) : deletingId === cat.id ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">確定刪除「{cat.name}」?</span>
+                    <span className="text-xs text-muted-foreground">{t('cat_confirm_delete_prefix')}{cat.name}{t('cat_confirm_delete_suffix')}</span>
                     <div className="flex gap-2">
-                      <Button type="button" size="sm" variant="destructive" onClick={() => confirmDelete(cat.id)}>刪除</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setDeletingId(null)}>取消</Button>
+                      <Button type="button" size="sm" variant="destructive" onClick={() => confirmDelete(cat.id)}>{t('mode_delete')}</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setDeletingId(null)}>{t('cancel')}</Button>
                     </div>
                   </div>
                 ) : (
@@ -147,15 +149,15 @@ export default function Categories() {
                       <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>
                     </div>
                     <div className="flex gap-3">
-                      <button type="button" onClick={() => startEdit(cat)} className="text-xs text-muted-foreground underline">重新命名</button>
-                      <button type="button" onClick={() => setDeletingId(cat.id)} className="text-xs text-red-500 underline">刪除</button>
+                      <button type="button" onClick={() => startEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_rename')}</button>
+                      <button type="button" onClick={() => setDeletingId(cat.id)} className="text-xs text-red-500 underline">{t('mode_delete')}</button>
                     </div>
                   </div>
                 )}
               </div>
             ))}
             {categories.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-muted-foreground">還沒有任何分類,新增第一個吧</p>
+              <p className="px-4 py-6 text-center text-sm text-muted-foreground">{t('cat_no_categories')}</p>
             )}
           </div>
         </Card>
