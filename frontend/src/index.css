@@ -79,3 +79,9 @@ body {
   background-size: 14px 14px;
   color: var(--foreground);
 }
+
+/* 金額數字統一用 Arial,搭配等寬數字方便對齊 */
+.font-amount {
+  font-family: Arial, Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
+}

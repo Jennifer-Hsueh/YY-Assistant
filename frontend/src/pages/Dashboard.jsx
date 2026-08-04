@@ -51,46 +51,58 @@ export default function Dashboard() {
 
       <h1 className="mb-4 text-lg font-semibold">{t('overview')}</h1>
 
-      {/* 本月支出 — 標頭維持飽和的記帳模組色,底色更淡 */}
-      <Card className="mb-3 border-none" style={{ backgroundColor: 'var(--module-transactions-bg)' }}>
+      {/* 本月支出 — 標頭維持飽和的記帳模組色,底色改漸層 */}
+      <Card
+        className="mb-3 border-none"
+        style={{ background: 'linear-gradient(180deg, color-mix(in srgb, var(--module-transactions) 6%, white), color-mix(in srgb, var(--module-transactions) 24%, white))' }}
+      >
         <CardContent className="p-4">
           <p className="mb-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--module-transactions)' }}>
             <Wallet className="h-3.5 w-3.5" />
             {t('month_expense')}
           </p>
-          <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--module-transactions)' }}>
+          <p className="font-amount text-2xl font-semibold" style={{ color: 'var(--module-transactions)' }}>
             {loading ? '…' : `NT$ ${monthSpending?.toLocaleString() ?? 0}`}
           </p>
         </CardContent>
       </Card>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
-        <Card className="border-none" style={{ backgroundColor: 'var(--income-bg)' }}>
+        <Card
+          className="border-none"
+          style={{ background: 'linear-gradient(180deg, color-mix(in srgb, var(--income) 6%, white), color-mix(in srgb, var(--income) 22%, white))' }}
+        >
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--income)' }}>
               <TrendingUp className="h-3 w-3" />
               {t('month_income')}
             </p>
-            <p className="font-mono text-base" style={{ color: 'var(--income)' }}>
+            <p className="font-amount text-base" style={{ color: 'var(--income)' }}>
               {loading ? '…' : `NT$ ${monthIncome?.toLocaleString() ?? 0}`}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-none" style={{ backgroundColor: 'var(--module-accounts-bg)' }}>
+        <Card
+          className="border-none"
+          style={{ background: 'linear-gradient(180deg, color-mix(in srgb, var(--module-accounts) 6%, white), color-mix(in srgb, var(--module-accounts) 22%, white))' }}
+        >
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--module-accounts)' }}>
               <PiggyBank className="h-3 w-3" />
               {t('total_balance')}
             </p>
-            <p className="font-mono text-base" style={{ color: 'var(--module-accounts)' }}>
+            <p className="font-amount text-base" style={{ color: 'var(--module-accounts)' }}>
               {loading ? '…' : `NT$ ${totalBalance?.toLocaleString() ?? 0}`}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-none" style={{ backgroundColor: 'var(--module-calendar-bg)' }}>
+      <Card
+        className="border-none"
+        style={{ background: 'linear-gradient(180deg, color-mix(in srgb, var(--module-calendar) 5%, white), color-mix(in srgb, var(--module-calendar) 16%, white))' }}
+      >
         <CardContent className="p-4">
           <p className="mb-2 flex items-center gap-1.5 text-sm" style={{ color: 'var(--module-calendar)' }}>
             <CalendarDays className="h-4 w-4" />

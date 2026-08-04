@@ -145,6 +145,18 @@ export default function Transactions() {
 
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredTransactions = searchQuery.trim()
+    ? transactions.filter((tx) => {
+        const q = searchQuery.trim().toLowerCase();
+        return (tx.note || '').toLowerCase().includes(q) || (tx.category || '').toLowerCase().includes(q);
+      })
+    : transactions;
+  const filteredGrouped = filteredTransactions.reduce((acc, t) => {
+    const day = t.occurred_at.slice(0, 10);
+    (acc[day] ||= []).push(t);
+    return acc;
+  }, {});
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
@@ -275,7 +287,13 @@ export default function Transactions() {
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'list' ? (
         <div className="space-y-4">
-          {Object.entries(grouped).map(([day, items]) => (
+          <Input
+            type="text"
+            placeholder={t('tx_search_placeholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
               <Card>
@@ -303,7 +321,7 @@ export default function Transactions() {
                           </div>
                           <p className="truncate">{tx.note || t('tx_no_note')}</p>
                         </div>
-                        <span className={`shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{tx.type === 'income' ? '+' : '-'}NT$ {Number(tx.amount).toLocaleString()}</span>
+                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{tx.type === 'income' ? '+' : '-'}NT$ {Number(tx.amount).toLocaleString()}</span>
                       </div>
                     );
                   })}
@@ -311,7 +329,7 @@ export default function Transactions() {
               </Card>
             </div>
           ))}
-          {transactions.length === 0 && <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>}
+          {filteredTransactions.length === 0 && <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>}
         </div>
       ) : (
         <CalendarView grouped={grouped} weekdays={t('cal_weekdays')} />

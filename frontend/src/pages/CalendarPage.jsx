@@ -105,9 +105,66 @@ export default function CalendarPage() {
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
   const weekdays = t('cal_weekdays');
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { events: allEvents } = await api.listEvents({});
+        const matched = allEvents.filter((ev) =>
+          ev.title.toLowerCase().includes(q.toLowerCase()) || (ev.category || '').toLowerCase().includes(q.toLowerCase())
+        );
+        setSearchResults(matched);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="mb-4 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
+
+      <Input
+        type="text"
+        placeholder={t('cal_search_placeholder')}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-3"
+      />
+
+      {searchQuery.trim() && (
+        <Card className="mb-3">
+          <CardContent className="space-y-1 p-3">
+            {searching ? (
+              <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            ) : searchResults.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('cal_no_search_results')}</p>
+            ) : (
+              searchResults.map((ev) => (
+                <div key={ev.id} className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                    <span>{ev.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-3">
         <CardContent className="p-3">
