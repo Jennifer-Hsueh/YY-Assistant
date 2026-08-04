@@ -24,8 +24,8 @@
 }
 
 :root {
-  /* 米紙白 */
-  --background: #FBF8F2;
+  /* 米紙白 — 加深一點,不要太蒼白 */
+  --background: #F5EFE3;
   /* 深炭灰 */
   --foreground: #2A2622;
   --card: #FFFFFF;
@@ -36,15 +36,14 @@
   /* 淡靛藍色調 — 次要按鈕 */
   --secondary: #DDE3EC;
   --secondary-foreground: #33415C;
-  /* 靜音/說明文字用的暖灰 */
-  --muted: #F1EDE3;
+  --muted: #EDE6D6;
   --muted-foreground: #8A8578;
   --accent: #F0EAE0;
   --accent-foreground: #33415C;
   --destructive: #B23A3A;
   --destructive-foreground: #FBF8F2;
-  --border: rgba(51, 65, 92, 0.14);
-  --input: rgba(51, 65, 92, 0.14);
+  --border: rgba(51, 65, 92, 0.16);
+  --input: rgba(51, 65, 92, 0.16);
   --ring: #33415C;
   --radius: 0.75rem;
   color-scheme: light;
@@ -52,28 +51,31 @@
   /* 手帳風格基礎色票 */
   --ink: #33415C;
   --income: #6E8B5D;
-  --income-bg: #DCE6D6;
   --expense: #C1666B;
-  --expense-bg: #F0D9DB;
-  --highlight: #E3B23C;
-  --highlight-bg: #F5E4C3;
+  /* 琥珀棕金 — 原本的向日葵黃太亮,對比度不夠,改柔和一點 */
+  --highlight: #B08238;
+
+  /* 各色的淡色底,用 color-mix 動態調淡,方便統一微調濃淡 */
+  --income-bg: color-mix(in srgb, var(--income) 12%, white);
+  --expense-bg: color-mix(in srgb, var(--expense) 12%, white);
+  --highlight-bg: color-mix(in srgb, var(--highlight) 14%, white);
 
   /* 各模組專屬色 — 首頁與底部導覽依此呼應 */
   --module-transactions: var(--expense);
-  --module-transactions-bg: var(--expense-bg);
+  --module-transactions-bg: color-mix(in srgb, var(--expense) 10%, white);
   --module-accounts: var(--income);
-  --module-accounts-bg: var(--income-bg);
+  --module-accounts-bg: color-mix(in srgb, var(--income) 10%, white);
   --module-calendar: var(--ink);
-  --module-calendar-bg: #DDE3EC;
+  --module-calendar-bg: color-mix(in srgb, var(--ink) 8%, white);
   --module-recurring: var(--highlight);
-  --module-recurring-bg: var(--highlight-bg);
+  --module-recurring-bg: color-mix(in srgb, var(--highlight) 12%, white);
 }
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
   background-color: var(--background);
-  background-image: radial-gradient(rgba(51, 65, 92, 0.07) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(51, 65, 92, 0.1) 1px, transparent 1px);
   background-size: 14px 14px;
   color: var(--foreground);
 }

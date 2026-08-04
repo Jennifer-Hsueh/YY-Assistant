@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Wallet, TrendingUp, PiggyBank, CalendarDays } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank, CalendarDays, Feather, Coffee } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -40,14 +40,18 @@ export default function Dashboard() {
 
   return (
     <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
+      {/* 紙膠帶裝飾 */}
       <div
         className="absolute -top-1 right-8 h-5 w-16 -rotate-3 rounded-sm"
         style={{ backgroundColor: 'color-mix(in oklab, var(--income) 60%, transparent)' }}
       />
+      {/* 裝飾插圖 — 放在卡片外的空白處,不影響內容判讀 */}
+      <Feather className="pointer-events-none absolute left-1 top-16 h-9 w-9 -rotate-12 opacity-[0.08]" style={{ color: 'var(--ink)' }} />
+      <Coffee className="pointer-events-none absolute bottom-2 right-1 h-10 w-10 rotate-6 opacity-[0.08]" style={{ color: 'var(--expense)' }} />
 
       <h1 className="mb-4 text-lg font-semibold">{t('overview')}</h1>
 
-      {/* 本月支出 — 呼應「記帳」模組色,淡色底 */}
+      {/* 本月支出 — 標頭維持飽和的記帳模組色,底色更淡 */}
       <Card className="mb-3 border-none" style={{ backgroundColor: 'var(--module-transactions-bg)' }}>
         <CardContent className="p-4">
           <p className="mb-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--module-transactions)' }}>
@@ -61,7 +65,6 @@ export default function Dashboard() {
       </Card>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
-        {/* 本月收入 */}
         <Card className="border-none" style={{ backgroundColor: 'var(--income-bg)' }}>
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--income)' }}>
@@ -74,7 +77,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* 總餘額 — 呼應「帳戶」模組色,淡色底 */}
         <Card className="border-none" style={{ backgroundColor: 'var(--module-accounts-bg)' }}>
           <CardContent className="p-3">
             <p className="mb-1 flex items-center gap-1 text-[11px]" style={{ color: 'var(--module-accounts)' }}>
@@ -88,7 +90,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* 今日行程 — 呼應「行事曆」模組色,淡色底 */}
       <Card className="border-none" style={{ backgroundColor: 'var(--module-calendar-bg)' }}>
         <CardContent className="p-4">
           <p className="mb-2 flex items-center gap-1.5 text-sm" style={{ color: 'var(--module-calendar)' }}>
