@@ -48,9 +48,9 @@ export default function Home() {
         style={{ width: '480px', maxWidth: 'none' }}
       />
 
-      <h1 className="mb-1 text-sm font-semibold">{t('nav_home')}</h1>
+      <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       {displayName && (
-        <p className="mb-5 text-sm text-muted-foreground">{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
+        <p className="mb-5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}
 
       <Link to="/announcements" className="mb-5 block">
