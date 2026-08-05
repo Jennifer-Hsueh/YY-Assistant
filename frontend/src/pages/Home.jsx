@@ -46,18 +46,18 @@ export default function Home() {
 
   return (
     <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
-      {/* 裝飾插圖 — 放在頁面邊角空白處,不疊在區塊上 */}
-      <Feather className="pointer-events-none absolute left-0 top-14 h-9 w-9 -rotate-12 opacity-[0.08]" style={{ color: 'var(--ink)' }} />
-      <Leaf className="pointer-events-none absolute right-1 top-24 h-8 w-8 rotate-12 opacity-[0.08]" style={{ color: 'var(--income)' }} />
-      <Sparkles className="pointer-events-none absolute left-2 top-1/2 h-7 w-7 -rotate-6 opacity-[0.08]" style={{ color: 'var(--highlight)' }} />
-      <BookOpen className="pointer-events-none absolute right-0 bottom-32 h-9 w-9 rotate-6 opacity-[0.08]" style={{ color: 'var(--module-calendar)' }} />
-      <Coffee className="pointer-events-none absolute bottom-4 left-4 h-10 w-10 -rotate-6 opacity-[0.08]" style={{ color: 'var(--expense)' }} />
+      {/* 裝飾插圖 — 放大 2 倍,放在頁面邊角空白處,不疊在區塊上 */}
+      <Feather className="pointer-events-none absolute left-0 top-14 h-16 w-16 -rotate-12 opacity-[0.08]" style={{ color: 'var(--ink)' }} />
+      <Leaf className="pointer-events-none absolute right-1 top-24 h-16 w-16 rotate-12 opacity-[0.08]" style={{ color: 'var(--income)' }} />
+      <Sparkles className="pointer-events-none absolute left-2 top-1/2 h-14 w-14 -rotate-6 opacity-[0.08]" style={{ color: 'var(--highlight)' }} />
+      <BookOpen className="pointer-events-none absolute right-0 bottom-32 h-16 w-16 rotate-6 opacity-[0.08]" style={{ color: 'var(--module-calendar)' }} />
+      <Coffee className="pointer-events-none absolute bottom-4 left-4 h-20 w-20 -rotate-6 opacity-[0.08]" style={{ color: 'var(--expense)' }} />
 
       <h1 className="mb-6 text-lg font-semibold">{t('nav_home')}</h1>
 
       <div className="space-y-5">
         {blocks.map(({ to, Icon, titleKey, subtitleKey, color }) => (
-          <Link key={to} to={to}>
+          <Link key={to} to={to} className="block">
             <Card
               className="border-none transition-transform active:scale-[0.99]"
               style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, white), color-mix(in srgb, ${color} 20%, white))` }}

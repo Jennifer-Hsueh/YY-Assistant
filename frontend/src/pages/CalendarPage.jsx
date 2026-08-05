@@ -7,6 +7,13 @@ import { Card, CardContent } from '../components/ui/card';
 import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 
+function pastelForDate(dateKey) {
+  const palette = ['#F3D9DC', '#D9E3F0', '#DCE8D9', '#F5EBC9', '#E6D9F0', '#F0DED2'];
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i++) hash = (hash * 31 + dateKey.charCodeAt(i)) % palette.length;
+  return palette[Math.abs(hash) % palette.length];
+}
+
 const emptyForm = { title: '', date: '', category: '', color: '#4F46E5' };
 
 export default function CalendarPage() {
@@ -179,17 +186,20 @@ export default function CalendarPage() {
               const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const dayEvents = eventsByDay[dateKey] || [];
               const isSelected = selectedDay === dateKey;
+              const hasEvents = dayEvents.length > 0;
               return (
                 <button
                   type="button"
                   key={idx}
                   onClick={() => handleDayClick(dateKey)}
-                  className={`flex min-h-14 flex-col items-center gap-0.5 rounded-md py-1 text-xs ${isSelected ? 'bg-muted ring-1 ring-primary' : 'hover:bg-muted/50'}`}
+                  className={`flex min-h-14 flex-col items-center gap-0.5 rounded-md py-1 text-xs ${isSelected ? 'ring-1 ring-primary' : 'hover:bg-muted/50'}`}
+                  style={hasEvents ? { backgroundColor: pastelForDate(dateKey) } : undefined}
                 >
                   <span>{day}</span>
                   {dayEvents.slice(0, 2).map((ev) => (
-                    <span key={ev.id} title={ev.title} className="w-full truncate rounded px-1 text-[10px] text-white" style={{ backgroundColor: ev.color || '#9CA3AF' }}>
-                      {ev.source === 'google' ? '📅' : ''}{ev.title}
+                    <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                      <span className="truncate">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
                     </span>
                   ))}
                 </button>
