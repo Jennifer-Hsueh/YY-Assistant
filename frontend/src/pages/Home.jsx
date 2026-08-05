@@ -48,7 +48,7 @@ export default function Home() {
         style={{ width: '480px', maxWidth: 'none' }}
       />
 
-      <h1 className="mb-1 text-lg font-semibold">{t('nav_home')}</h1>
+      <h1 className="mb-1 text-sm font-semibold">{t('nav_home')}</h1>
       {displayName && (
         <p className="mb-5 text-sm text-muted-foreground">{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}

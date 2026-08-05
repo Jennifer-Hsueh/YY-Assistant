@@ -18,7 +18,7 @@ function usePushPreference(storageKey) {
 
 export default function Settings() {
   const { user } = useAuth();
-  const { language, toggleLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [pushStatus, setPushStatus] = useState('idle');
   const [ledgerPref, setLedgerPref] = usePushPreference('notif_pref_ledger');
   const [calendarPref, setCalendarPref] = usePushPreference('notif_pref_calendar');
@@ -152,11 +152,8 @@ export default function Settings() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('settings_interface_lang')}</span>
-                <span className="flex items-center gap-2">
-                  {language === 'zh' ? '中文' : 'English'}
-                  <button type="button" onClick={toggleLanguage} className="text-xs text-muted-foreground underline">{t('mode_edit')}</button>
-                </span>
+                <span className="text-muted-foreground">{t('settings_interface')}</span>
+                <span className="text-xs text-muted-foreground">{t('settings_interface_placeholder')}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -173,8 +170,6 @@ export default function Settings() {
                 <span className="text-muted-foreground">{t('settings_last_payment')}</span>
                 <span>{profile?.last_payment_date || '—'}</span>
               </div>
-
-              <p className="pt-1 text-xs text-muted-foreground">{t('settings_locked_note')}</p>
             </div>
           )}
         </CardContent>
