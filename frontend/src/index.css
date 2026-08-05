@@ -72,14 +72,14 @@
 }
 
 html {
-  /* 全站文字放大一倍 —— 因為 Tailwind 的字級跟間距大多是 rem 為單位,
-     調整根字體大小會讓文字、圖示、間距一起等比放大。如果放大後版面
-     跑版(元素被擠出畫面),之後可以調整這個百分比縮小一點。 */
-  font-size: 200%;
+  /* 全站文字/圖示等比縮放 —— 從原本的 200% 縮小到目前的 55%(=110%)。
+     如果還想再調整,直接改這個百分比即可,不用逐頁改文字大小。 */
+  font-size: 110%;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
   background-color: var(--background);
   background-image: radial-gradient(rgba(51, 65, 92, 0.1) 1px, transparent 1px);

@@ -22,7 +22,7 @@ export default function BottomNav() {
             <NavLink
               to={to}
               end={end}
-              className="flex flex-col items-center gap-1 py-3 text-[11px]"
+              className="flex flex-col items-center gap-1 py-3 text-xs"
               style={({ isActive }) => ({
                 color: isActive ? color : 'var(--muted-foreground)',
                 fontWeight: isActive ? 500 : 400,

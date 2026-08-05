@@ -25,7 +25,7 @@ export default function Home() {
           api.listAnnouncements(),
           api.getProfile(),
         ]);
-        setAnnouncements(announcements.slice(0, 3));
+        setAnnouncements(announcements.slice(0, 4));
         setProfile(profile);
       } catch (err) {
         console.error(err);
@@ -39,12 +39,13 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
-    <div className="relative mx-auto max-w-xl overflow-hidden px-4 py-6 pb-24">
-      {/* 浮水印插圖 — 放在頁面右下角背景,不擋住任何按鈕內容 */}
+    <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
+      {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
       <img
         src="/watermark-girl.png"
         alt=""
-        className="pointer-events-none absolute -bottom-6 -right-8 w-40 opacity-[0.15]"
+        className="pointer-events-none absolute bottom-0 right-0 opacity-[0.08]"
+        style={{ width: '480px', maxWidth: 'none' }}
       />
 
       <h1 className="mb-1 text-lg font-semibold">{t('nav_home')}</h1>
