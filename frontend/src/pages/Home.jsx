@@ -59,14 +59,14 @@ export default function Home() {
           style={{ background: `linear-gradient(135deg, color-mix(in srgb, var(--module-recurring) 6%, white), color-mix(in srgb, var(--module-recurring) 20%, white))` }}
         >
           <CardContent className="p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--module-recurring)' }}>
+            <p className="mb-2 flex items-center gap-1.5 text-[1.3125rem] font-medium" style={{ color: 'var(--module-recurring)' }}>
               <Megaphone className="h-4 w-4" />
               {t('ann_latest')}
             </p>
             {loadingAnn ? (
               <p className="text-xs text-muted-foreground">{t('loading')}</p>
             ) : announcements.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t('ann_empty')}</p>
+              <p className="text-[0.975rem] text-muted-foreground">{t('ann_empty')}</p>
             ) : (
               <ul className="space-y-1.5">
                 {announcements.map((a) => (
@@ -93,7 +93,7 @@ export default function Home() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-medium" style={{ color }}>{t(titleKey)}</p>
-                  <p className="truncate text-xs text-muted-foreground">{t(subtitleKey)}</p>
+                  <p className="truncate text-[0.975rem] text-muted-foreground">{t(subtitleKey)}</p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0" style={{ color }} />
               </CardContent>
