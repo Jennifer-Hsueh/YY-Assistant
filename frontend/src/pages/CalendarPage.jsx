@@ -8,7 +8,7 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 
 function pastelForDate(dateKey) {
-  const palette = ['#F3D9DC', '#D9E3F0', '#DCE8D9', '#F5EBC9', '#E6D9F0', '#F0DED2'];
+  const palette = ['#DCE3F0', '#E3EDDC', '#F0E6DC', '#EAE0F0', '#DCEEF0', '#F0E3DC'];
   let hash = 0;
   for (let i = 0; i < dateKey.length; i++) hash = (hash * 31 + dateKey.charCodeAt(i)) % palette.length;
   return palette[Math.abs(hash) % palette.length];
@@ -198,8 +198,8 @@ export default function CalendarPage() {
                   <span>{day}</span>
                   {dayEvents.slice(0, 2).map((ev) => (
                     <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                      <span className="truncate">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
+                      <span className="ml-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                      <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
                     </span>
                   ))}
                 </button>

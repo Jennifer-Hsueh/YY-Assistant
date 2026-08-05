@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { requestPushToken } from '../lib/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -13,24 +12,10 @@ export default function RecurringEvents() {
   const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pushStatus, setPushStatus] = useState('idle');
   const [form, setForm] = useState(emptyForm);
 
   const [actionMode, setActionMode] = useState('add');
   const [activeId, setActiveId] = useState(null);
-
-  async function handleEnablePush() {
-    setPushStatus('enabling');
-    const token = await requestPushToken();
-    if (!token) { setPushStatus('failed'); return; }
-    try {
-      await api.registerPushSubscription(token);
-      setPushStatus('enabled');
-    } catch (err) {
-      console.error(err);
-      setPushStatus('failed');
-    }
-  }
 
   async function load() {
     setLoading(true);
@@ -110,19 +95,6 @@ export default function RecurringEvents() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <CalendarSubNav />
       <h1 className="mb-4 text-lg font-semibold">{t('sub_recurring_events')}</h1>
-
-      <Card className="mb-4">
-        <CardContent className="p-3 text-sm">
-          {pushStatus === 'enabled' ? (
-            <p className="text-green-600">{t('rec_push_enabled')}</p>
-          ) : (
-            <Button size="sm" onClick={handleEnablePush} disabled={pushStatus === 'enabling'}>
-              {pushStatus === 'enabling' ? t('rec_enabling') : t('rec_enable_push')}
-            </Button>
-          )}
-          {pushStatus === 'failed' && <p className="mt-1 text-xs text-destructive">{t('rec_push_failed')}</p>}
-        </CardContent>
-      </Card>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>

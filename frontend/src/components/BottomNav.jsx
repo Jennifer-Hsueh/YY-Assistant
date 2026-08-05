@@ -22,13 +22,13 @@ export default function BottomNav() {
             <NavLink
               to={to}
               end={end}
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px]"
+              className="flex flex-col items-center gap-1 py-3 text-[11px]"
               style={({ isActive }) => ({
                 color: isActive ? color : 'var(--muted-foreground)',
                 fontWeight: isActive ? 500 : 400,
               })}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-6 w-6" />
               {t(key)}
             </NavLink>
           </li>

@@ -1,27 +1,39 @@
 import { NavLink } from 'react-router-dom';
+import { Home as HomeIcon, Wallet, Calendar, Megaphone, Users, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const subTabs = [
-  { to: '/transactions', key: 'tx_pageTitle' },
-  { to: '/accounts', key: 'acc_pageTitle' },
-  { to: '/recurring-money', key: 'sub_recurring' },
+const tabs = [
+  { to: '/', key: 'nav_home', Icon: HomeIcon, color: 'var(--ink)', end: true },
+  { to: '/transactions', key: 'nav_ledger', Icon: Wallet, color: 'var(--module-transactions)' },
+  { to: '/calendar', key: 'nav_calendar', Icon: Calendar, color: 'var(--module-calendar)' },
+  { to: '/announcements', key: 'nav_announcements', Icon: Megaphone, color: 'var(--module-recurring)' },
+  { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)' },
+  { to: '/settings', key: 'nav_settings', Icon: Settings, color: 'var(--ink)' },
 ];
 
-export default function LedgerSubNav() {
+export default function BottomNav() {
   const { t } = useLanguage();
+
   return (
-    <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
-      {subTabs.map(({ to, key }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) =>
-            `flex-1 rounded-md px-2 py-1.5 text-center transition-colors ${isActive ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`
-          }
-        >
-          {t(key)}
-        </NavLink>
-      ))}
-    </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur">
+      <ul className="mx-auto flex max-w-xl justify-around">
+        {tabs.map(({ to, key, Icon, color, end }) => (
+          <li key={to} className="flex-1">
+            <NavLink
+              to={to}
+              end={end}
+              className="flex flex-col items-center gap-1 py-3 text-[11px]"
+              style={({ isActive }) => ({
+                color: isActive ? color : 'var(--muted-foreground)',
+                fontWeight: isActive ? 500 : 400,
+              })}
+            >
+              <Icon className="h-6 w-6" />
+              {t(key)}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
