@@ -10,7 +10,8 @@ const eventRoutes = require('./routes/eventRoutes');
 const recurringRoutes = require('./routes/recurringRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const { startRecurringScheduler } = require('./jobs/recurringScheduler');
-
+const profileRoutes = require('./routes/profileRoutes');
+const bugReportRoutes = require('./routes/bugReportRoutes');
 const app = express();
 const announcementRoutes = require('./routes/announcementRoutes');
 
@@ -27,7 +28,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/recurring-items', recurringRoutes);
 app.use('/api/push-subscriptions', pushRoutes);
 app.use('/api/announcements', announcementRoutes);
-
+app.use('/api/profile', profileRoutes);
+app.use('/api/bug-reports', bugReportRoutes);
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

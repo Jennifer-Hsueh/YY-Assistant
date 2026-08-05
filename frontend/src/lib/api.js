@@ -67,4 +67,8 @@ createCategory: (payload) => request('/categories', { method: 'POST', body: payl
 updateCategory: (id, payload) => request(`/categories/${id}`, { method: 'PUT', body: payload }),
 deleteCategory: (id) => request(`/categories/${id}`, { method: 'DELETE' }),
 listAnnouncements: () => request('/announcements'),
+getProfile: () => request('/profile'),
+updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }),
+submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
+
 };
