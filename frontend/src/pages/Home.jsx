@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Calendar, Megaphone, Users, Settings as SettingsIcon, ChevronRight, Feather, Coffee, Leaf, Sparkles, BookOpen } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, Users, Settings as SettingsIcon, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
@@ -16,12 +16,17 @@ export default function Home() {
   const { t } = useLanguage();
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAnn, setLoadingAnn] = useState(true);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const { announcements } = await api.listAnnouncements();
+        const [{ announcements }, { profile }] = await Promise.all([
+          api.listAnnouncements(),
+          api.getProfile(),
+        ]);
         setAnnouncements(announcements.slice(0, 3));
+        setProfile(profile);
       } catch (err) {
         console.error(err);
       } finally {
@@ -31,17 +36,22 @@ export default function Home() {
     load();
   }, []);
 
+  const displayName = profile?.username || profile?.email?.split('@')[0] || '';
+
   return (
-    <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
-      <Feather className="pointer-events-none absolute left-0 top-14 h-16 w-16 -rotate-12 opacity-[0.08]" style={{ color: 'var(--ink)' }} />
-      <Leaf className="pointer-events-none absolute right-1 top-24 h-16 w-16 rotate-12 opacity-[0.08]" style={{ color: 'var(--income)' }} />
-      <Sparkles className="pointer-events-none absolute left-2 top-1/2 h-14 w-14 -rotate-6 opacity-[0.08]" style={{ color: 'var(--highlight)' }} />
-      <BookOpen className="pointer-events-none absolute right-0 bottom-32 h-16 w-16 rotate-6 opacity-[0.08]" style={{ color: 'var(--module-calendar)' }} />
-      <Coffee className="pointer-events-none absolute bottom-4 left-4 h-20 w-20 -rotate-6 opacity-[0.08]" style={{ color: 'var(--expense)' }} />
+    <div className="relative mx-auto max-w-xl overflow-hidden px-4 py-6 pb-24">
+      {/* 浮水印插圖 — 放在頁面右下角背景,不擋住任何按鈕內容 */}
+      <img
+        src="/watermark-girl.png"
+        alt=""
+        className="pointer-events-none absolute -bottom-6 -right-8 w-40 opacity-[0.15]"
+      />
 
-      <h1 className="mb-6 text-lg font-semibold">{t('nav_home')}</h1>
+      <h1 className="mb-1 text-lg font-semibold">{t('nav_home')}</h1>
+      {displayName && (
+        <p className="mb-5 text-sm text-muted-foreground">{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
+      )}
 
-      {/* 公告直接顯示在首頁 */}
       <Link to="/announcements" className="mb-5 block">
         <Card
           className="border-none"
@@ -50,7 +60,7 @@ export default function Home() {
           <CardContent className="p-4">
             <p className="mb-2 flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--module-recurring)' }}>
               <Megaphone className="h-4 w-4" />
-              {t('nav_announcements')}
+              {t('ann_latest')}
             </p>
             {loadingAnn ? (
               <p className="text-xs text-muted-foreground">{t('loading')}</p>

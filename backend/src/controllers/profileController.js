@@ -15,26 +15,20 @@ async function getProfile(req, res) {
   }
 }
 
-// NOTE: role and plan are currently self-editable by the user because this
-// app only has one test account so far. Before opening this up to real
-// paying users, lock role/plan edits behind an admin-only check — a user
-// should never be able to upgrade their own plan or grant themselves admin.
+// role, plan, and last_payment_date are intentionally NOT accepted here —
+// those are set by the developer directly in Supabase (or later, an admin
+// panel). A regular user must never be able to grant themselves admin
+// access or upgrade their own plan by calling this endpoint.
 async function updateProfile(req, res) {
   try {
-    const { username, role, plan, last_payment_date } = req.body;
-    const updates = {};
-    if (username !== undefined) updates.username = username;
-    if (role !== undefined) updates.role = role;
-    if (plan !== undefined) updates.plan = plan;
-    if (last_payment_date !== undefined) updates.last_payment_date = last_payment_date;
-
-    if (Object.keys(updates).length === 0) {
+    const { username } = req.body;
+    if (username === undefined) {
       return res.status(400).json({ error: 'Nothing to update' });
     }
 
     const { data, error } = await supabase
       .from('yy_users')
-      .update(updates)
+      .update({ username })
       .eq('id', req.user.id)
       .select('id, email, username, role, plan, last_payment_date, created_at')
       .single();

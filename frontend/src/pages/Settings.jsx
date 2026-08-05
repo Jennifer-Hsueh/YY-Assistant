@@ -7,7 +7,6 @@ import { api } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
 function usePushPreference(storageKey) {
   const [enabled, setEnabled] = useState(() => localStorage.getItem(storageKey) === 'true');
@@ -24,14 +23,12 @@ export default function Settings() {
   const [ledgerPref, setLedgerPref] = usePushPreference('notif_pref_ledger');
   const [calendarPref, setCalendarPref] = usePushPreference('notif_pref_calendar');
 
-  // 個人資訊
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ username: '', role: 'user', plan: 'free', last_payment_date: '' });
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameDraft, setUsernameDraft] = useState('');
   const [profileError, setProfileError] = useState('');
 
-  // 故障通報
   const [reportOpen, setReportOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ title: '', description: '' });
   const [reportStatus, setReportStatus] = useState('idle');
@@ -42,12 +39,7 @@ export default function Settings() {
       try {
         const { profile } = await api.getProfile();
         setProfile(profile);
-        setProfileForm({
-          username: profile.username || '',
-          role: profile.role || 'user',
-          plan: profile.plan || 'free',
-          last_payment_date: profile.last_payment_date || '',
-        });
+        setUsernameDraft(profile.username || '');
       } catch (err) {
         console.error(err);
       } finally {
@@ -83,17 +75,12 @@ export default function Settings() {
     setCalendarPref((v) => !v);
   }
 
-  async function saveProfile() {
+  async function saveUsername() {
     setProfileError('');
     try {
-      const { profile } = await api.updateProfile({
-        username: profileForm.username || null,
-        role: profileForm.role,
-        plan: profileForm.plan,
-        last_payment_date: profileForm.last_payment_date || null,
-      });
+      const { profile } = await api.updateProfile({ username: usernameDraft || null });
       setProfile(profile);
-      setEditingProfile(false);
+      setEditingUsername(false);
     } catch (err) {
       console.error(err);
       setProfileError(t('settings_profile_error'));
@@ -124,7 +111,6 @@ export default function Settings() {
         {t('nav_settings')}
       </h1>
 
-      {/* 帳號資訊(唯讀 Email) */}
       <Card className="mb-3">
         <CardContent className="p-4">
           <p className="mb-2 text-sm font-medium">{t('settings_account')}</p>
@@ -135,80 +121,65 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* 個人資訊 */}
+      {/* 個人資訊 — 帳號名稱可編輯;身份/方案/付款日由後台設定,僅顯示 */}
       <Card className="mb-3">
         <CardContent className="p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="flex items-center gap-1.5 text-sm font-medium">
-              <User className="h-4 w-4" />
-              {t('settings_profile')}
-            </p>
-            {!editingProfile && !profileLoading && (
-              <button type="button" onClick={() => setEditingProfile(true)} className="text-xs text-muted-foreground underline">{t('mode_edit')}</button>
-            )}
-          </div>
+          <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+            <User className="h-4 w-4" />
+            {t('settings_profile')}
+          </p>
 
           {profileLoading ? (
             <p className="text-sm text-muted-foreground">{t('loading')}</p>
-          ) : editingProfile ? (
-            <div className="space-y-2">
-              {profileError && <p className="text-sm text-red-500">{profileError}</p>}
-              <div>
-                <label className="text-xs text-muted-foreground">{t('settings_username')}</label>
-                <Input value={profileForm.username} onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">{t('settings_interface_lang')}</label>
-                <div className="flex items-center justify-between rounded-md border border-input px-3 py-2 text-sm">
-                  <span>{language === 'zh' ? '中文' : 'English'}</span>
-                  <button type="button" onClick={toggleLanguage} className="text-xs underline text-muted-foreground">{t('mode_edit')}</button>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">{t('settings_role')}</label>
-                <Select value={profileForm.role} onValueChange={(v) => setProfileForm({ ...profileForm, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">{t('settings_role_user')}</SelectItem>
-                    <SelectItem value="admin">{t('settings_role_admin')}</SelectItem>
-                    <SelectItem value="tester">{t('settings_role_tester')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">{t('settings_plan')}</label>
-                <Select value={profileForm.plan} onValueChange={(v) => setProfileForm({ ...profileForm, plan: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">{t('settings_plan_free')}</SelectItem>
-                    <SelectItem value="ledger">{t('settings_plan_ledger')}</SelectItem>
-                    <SelectItem value="calendar">{t('settings_plan_calendar')}</SelectItem>
-                    <SelectItem value="full">{t('settings_plan_full')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">{t('settings_last_payment')}</label>
-                <Input type="date" value={profileForm.last_payment_date} onChange={(e) => setProfileForm({ ...profileForm, last_payment_date: e.target.value })} />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <Button type="button" className="flex-1" onClick={saveProfile}>{t('save')}</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingProfile(false)}>{t('cancel')}</Button>
-              </div>
-            </div>
           ) : (
-            <div className="space-y-1.5 text-sm">
-              <p><span className="text-muted-foreground">{t('settings_username')}: </span>{profile?.username || '—'}</p>
-              <p><span className="text-muted-foreground">{t('settings_interface_lang')}: </span>{language === 'zh' ? '中文' : 'English'}</p>
-              <p><span className="text-muted-foreground">{t('settings_role')}: </span>{roleLabel[profile?.role] || profile?.role}</p>
-              <p><span className="text-muted-foreground">{t('settings_plan')}: </span>{planLabel[profile?.plan] || profile?.plan}</p>
-              <p><span className="text-muted-foreground">{t('settings_last_payment')}: </span>{profile?.last_payment_date || '—'}</p>
+            <div className="space-y-2 text-sm">
+              {profileError && <p className="text-red-500">{profileError}</p>}
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_username')}</span>
+                {editingUsername ? (
+                  <div className="flex flex-1 items-center gap-2 pl-4">
+                    <Input value={usernameDraft} onChange={(e) => setUsernameDraft(e.target.value)} className="h-8" />
+                    <Button size="sm" onClick={saveUsername}>{t('save')}</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditingUsername(false); setUsernameDraft(profile?.username || ''); }}>{t('cancel')}</Button>
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    {profile?.username || '—'}
+                    <button type="button" onClick={() => setEditingUsername(true)} className="text-xs text-muted-foreground underline">{t('mode_edit')}</button>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_interface_lang')}</span>
+                <span className="flex items-center gap-2">
+                  {language === 'zh' ? '中文' : 'English'}
+                  <button type="button" onClick={toggleLanguage} className="text-xs text-muted-foreground underline">{t('mode_edit')}</button>
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_role')}</span>
+                <span>{roleLabel[profile?.role] || profile?.role}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_plan')}</span>
+                <span>{planLabel[profile?.plan] || profile?.plan}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_last_payment')}</span>
+                <span>{profile?.last_payment_date || '—'}</span>
+              </div>
+
+              <p className="pt-1 text-xs text-muted-foreground">{t('settings_locked_note')}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 通知設定 */}
       <Card className="mb-3">
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-medium">{t('settings_notifications')}</p>
@@ -237,7 +208,6 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* 故障通報 */}
       <Card>
         <CardContent className="p-4">
           <div className="mb-2 flex items-center justify-between">
