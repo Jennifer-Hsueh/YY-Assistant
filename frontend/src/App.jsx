@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Home from './pages/Home';
 import Transactions from './pages/Transactions';
 import CalendarPage from './pages/CalendarPage';
 import Accounts from './pages/Accounts';
@@ -45,8 +46,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* 登入後預設進入記帳 */}
-            <Route path="/" element={<Navigate to="/transactions" replace />} />
+            <Route path="/" element={<ProtectedLayout><Home /></ProtectedLayout>} />
 
             <Route path="/transactions" element={<ProtectedLayout><Transactions /></ProtectedLayout>} />
             <Route path="/accounts" element={<ProtectedLayout><Accounts /></ProtectedLayout>} />

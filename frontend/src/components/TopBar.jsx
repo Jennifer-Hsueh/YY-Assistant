@@ -8,8 +8,8 @@ export default function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-      <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-2.5">
-        <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{t('appName')}</span>
+      <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
+        <span className="text-xl font-semibold" style={{ color: 'var(--ink)' }}>{t('appName')}</span>
         <div className="flex items-center gap-3">
           <button
             type="button"
