@@ -66,4 +66,5 @@ deleteAccount: (id) => request(`/accounts/${id}`, { method: 'DELETE' }),
 createCategory: (payload) => request('/categories', { method: 'POST', body: payload }),
 updateCategory: (id, payload) => request(`/categories/${id}`, { method: 'PUT', body: payload }),
 deleteCategory: (id) => request(`/categories/${id}`, { method: 'DELETE' }),
+listAnnouncements: () => request('/announcements'),
 };

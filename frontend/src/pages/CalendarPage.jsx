@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import DateInputSegmented from '../components/DateInputSegmented';
+import CalendarSubNav from '../components/CalendarSubNav';
 
 const emptyForm = { title: '', date: '', category: '', color: '#4F46E5' };
 
@@ -134,6 +135,7 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+      <CalendarSubNav />
       <h1 className="mb-4 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
 
       <Input

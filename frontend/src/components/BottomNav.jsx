@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Wallet, Calendar, CreditCard, RefreshCw } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, Users, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const tabs = [
-  { to: '/', key: 'nav_home', Icon: Home, color: 'var(--ink)' },
-  { to: '/transactions', key: 'nav_transactions', Icon: Wallet, color: 'var(--module-transactions)' },
+  { to: '/transactions', key: 'nav_ledger', Icon: Wallet, color: 'var(--module-transactions)' },
   { to: '/calendar', key: 'nav_calendar', Icon: Calendar, color: 'var(--module-calendar)' },
-  { to: '/accounts', key: 'nav_accounts', Icon: CreditCard, color: 'var(--module-accounts)' },
-  { to: '/recurring', key: 'nav_recurring', Icon: RefreshCw, color: 'var(--module-recurring)' },
+  { to: '/announcements', key: 'nav_announcements', Icon: Megaphone, color: 'var(--module-recurring)' },
+  { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)' },
+  { to: '/settings', key: 'nav_settings', Icon: Settings, color: 'var(--ink)' },
 ];
 
 export default function BottomNav() {
@@ -20,7 +20,6 @@ export default function BottomNav() {
           <li key={to} className="flex-1">
             <NavLink
               to={to}
-              end={to === '/'}
               className="flex flex-col items-center gap-0.5 py-2 text-xs"
               style={({ isActive }) => ({
                 color: isActive ? color : 'var(--muted-foreground)',

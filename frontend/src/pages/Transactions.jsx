@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import LedgerSubNav from '../components/LedgerSubNav';
 
 function todayLocal() {
   const d = new Date();
@@ -160,6 +161,7 @@ export default function Transactions() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+      <LedgerSubNav />
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold">{t('tx_pageTitle')}</h1>
         <div className="flex rounded-lg bg-muted p-1 text-sm">

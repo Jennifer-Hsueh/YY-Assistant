@@ -1,42 +1,28 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { requestPushToken } from '../lib/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import LedgerSubNav from '../components/LedgerSubNav';
 
-const emptyForm = { kind: 'expense', title: '', amount: '', frequency: 'monthly', day_of_month: '1', reminder_method: 'push' };
+const emptyForm = { kind: 'expense', title: '', amount: '', day_of_month: '1', reminder_method: 'push' };
 
-export default function Recurring() {
+export default function RecurringMoney() {
   const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pushStatus, setPushStatus] = useState('idle');
   const [form, setForm] = useState(emptyForm);
 
   const [actionMode, setActionMode] = useState('add');
   const [activeId, setActiveId] = useState(null);
 
-  async function handleEnablePush() {
-    setPushStatus('enabling');
-    const token = await requestPushToken();
-    if (!token) { setPushStatus('failed'); return; }
-    try {
-      await api.registerPushSubscription(token);
-      setPushStatus('enabled');
-    } catch (err) {
-      console.error(err);
-      setPushStatus('failed');
-    }
-  }
-
   async function load() {
     setLoading(true);
     try {
       const { recurring_items } = await api.listRecurringItems();
-      setItems(recurring_items);
+      setItems(recurring_items.filter((i) => i.kind === 'expense' || i.kind === 'income'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -58,7 +44,6 @@ export default function Recurring() {
       kind: item.kind,
       title: item.title,
       amount: item.amount != null ? String(item.amount) : '',
-      frequency: item.frequency,
       day_of_month: item.day_of_month != null ? String(item.day_of_month) : '1',
       reminder_method: item.reminder_method,
     });
@@ -79,8 +64,8 @@ export default function Recurring() {
         kind: form.kind,
         title: form.title,
         amount: form.amount ? Number(form.amount) : null,
-        frequency: form.frequency,
-        day_of_month: form.frequency === 'monthly' ? Number(form.day_of_month) : null,
+        frequency: 'monthly',
+        day_of_month: Number(form.day_of_month),
         reminder_method: form.reminder_method,
       });
     } else {
@@ -89,7 +74,7 @@ export default function Recurring() {
       if (nextDate < now) nextDate.setMonth(nextDate.getMonth() + 1);
       await api.createRecurringItem({
         kind: form.kind, title: form.title, amount: form.amount ? Number(form.amount) : null,
-        frequency: form.frequency, day_of_month: form.frequency === 'monthly' ? Number(form.day_of_month) : null,
+        frequency: 'monthly', day_of_month: Number(form.day_of_month),
         next_trigger_date: nextDate.toISOString().slice(0, 10), reminder_method: form.reminder_method,
       });
     }
@@ -109,23 +94,12 @@ export default function Recurring() {
   }
 
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
-  const kindLabel = { expense: t('rec_kind_expense'), income: t('rec_kind_income'), event: t('rec_kind_event') };
+  const kindLabel = { expense: t('rec_kind_expense'), income: t('rec_kind_income') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-recurring)', '--ring': 'var(--module-recurring)' }}>
-      <h1 className="mb-4 text-lg font-semibold">{t('rec_pageTitle')}</h1>
-      <Card className="mb-4">
-        <CardContent className="p-3 text-sm">
-          {pushStatus === 'enabled' ? (
-            <p className="text-green-600">{t('rec_push_enabled')}</p>
-          ) : (
-            <Button size="sm" onClick={handleEnablePush} disabled={pushStatus === 'enabling'}>
-              {pushStatus === 'enabling' ? t('rec_enabling') : t('rec_enable_push')}
-            </Button>
-          )}
-          {pushStatus === 'failed' && <p className="mt-1 text-xs text-destructive">{t('rec_push_failed')}</p>}
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+      <LedgerSubNav />
+      <h1 className="mb-4 text-lg font-semibold">{t('sub_recurring')}</h1>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
@@ -144,7 +118,7 @@ export default function Recurring() {
                   <div>
                     <p className="font-medium">{item.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.frequency === 'monthly' ? `${t('rec_monthly_prefix')}${item.day_of_month}${t('rec_monthly_suffix')}` : t('rec_weekly')} · {t('rec_next')}{item.next_trigger_date}
+                      {t('rec_monthly_prefix')}{item.day_of_month}{t('rec_monthly_suffix')} · {t('rec_next')}{item.next_trigger_date}
                     </p>
                   </div>
                   {!selectable && (
@@ -195,14 +169,11 @@ export default function Recurring() {
                   <SelectContent>
                     <SelectItem value="expense">{t('rec_kind_expense')}</SelectItem>
                     <SelectItem value="income">{t('rec_kind_income')}</SelectItem>
-                    <SelectItem value="event">{t('rec_kind_event')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input type="text" placeholder={t('rec_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
-              {form.kind !== 'event' && (
-                <Input type="number" placeholder={t('rec_amount_placeholder')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-              )}
+              <Input type="number" placeholder={t('rec_amount_placeholder')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               <div className="flex gap-2">
                 <div className="flex-1 space-y-1">
                   <label className="text-xs text-muted-foreground">{t('rec_day_of_month_label')}</label>

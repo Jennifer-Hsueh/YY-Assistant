@@ -7,12 +7,15 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import CalendarPage from './pages/CalendarPage';
 import Accounts from './pages/Accounts';
-import Recurring from './pages/Recurring';
+import RecurringMoney from './pages/RecurringMoney';
+import RecurringEvents from './pages/RecurringEvents';
 import Categories from './pages/Categories';
+import Announcements from './pages/Announcements';
+import Community from './pages/Community';
+import Settings from './pages/Settings';
 
 function ProtectedLayout({ children }) {
   const { user } = useAuth();
@@ -41,54 +44,22 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedLayout>
-                  <Dashboard />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/transactions"
-              element={
-                <ProtectedLayout>
-                  <Transactions />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedLayout>
-                  <CalendarPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/accounts"
-              element={
-                <ProtectedLayout>
-                  <Accounts />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/recurring"
-              element={
-                <ProtectedLayout>
-                  <Recurring />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/categories"
-              element={
-                <ProtectedLayout>
-                  <Categories />
-                </ProtectedLayout>
-              }
-            />
+
+            {/* 登入後預設進入記帳 */}
+            <Route path="/" element={<Navigate to="/transactions" replace />} />
+
+            <Route path="/transactions" element={<ProtectedLayout><Transactions /></ProtectedLayout>} />
+            <Route path="/accounts" element={<ProtectedLayout><Accounts /></ProtectedLayout>} />
+            <Route path="/recurring-money" element={<ProtectedLayout><RecurringMoney /></ProtectedLayout>} />
+
+            <Route path="/calendar" element={<ProtectedLayout><CalendarPage /></ProtectedLayout>} />
+            <Route path="/recurring-events" element={<ProtectedLayout><RecurringEvents /></ProtectedLayout>} />
+
+            <Route path="/announcements" element={<ProtectedLayout><Announcements /></ProtectedLayout>} />
+            <Route path="/community" element={<ProtectedLayout><Community /></ProtectedLayout>} />
+            <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
+
+            <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

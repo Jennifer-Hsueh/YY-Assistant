@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import LedgerSubNav from '../components/LedgerSubNav';
 
 const CARD_COLORS = ['bg-primary', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
 
@@ -85,6 +86,7 @@ export default function Accounts() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
+      <LedgerSubNav />
       <h1 className="mb-4 text-lg font-semibold">{t('acc_pageTitle')}</h1>
 
       {loading ? (
