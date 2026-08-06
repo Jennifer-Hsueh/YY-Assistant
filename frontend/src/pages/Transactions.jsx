@@ -152,6 +152,10 @@ export default function Transactions() {
     return accounts.find((a) => a.id === id)?.name;
   }
 
+  function accountCurrency(id) {
+    return accounts.find((a) => a.id === id)?.currency || 'TWD';
+  }
+
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
   const [searchQuery, setSearchQuery] = useState('');
@@ -169,14 +173,14 @@ export default function Transactions() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
-      <LedgerSubNav />
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <h1 className="text-lg font-semibold">{t('tx_pageTitle')}</h1>
         <div className="flex rounded-lg bg-muted p-1 text-sm">
           <button onClick={() => setView('list')} className={`rounded-md px-3 py-1 transition-colors ${view === 'list' ? 'bg-card shadow-sm' : 'text-muted-foreground'}`}>{t('tx_view_list')}</button>
           <button onClick={() => setView('calendar')} className={`rounded-md px-3 py-1 transition-colors ${view === 'calendar' ? 'bg-card shadow-sm' : 'text-muted-foreground'}`}>{t('tx_view_calendar')}</button>
         </div>
       </div>
+      <LedgerSubNav />
 
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
@@ -245,7 +249,7 @@ export default function Transactions() {
             <div className="space-y-2">
               <p className="text-sm font-medium">{t('tx_confirm_delete_title')}</p>
               <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                <p>{form.type === 'income' ? t('type_income') : t('type_expense')} · {form.category || t('tx_no_category')} · NT$ {Number(form.amount).toLocaleString()}</p>
+                <p>{form.type === 'income' ? t('type_income') : t('type_expense')} · {form.category || t('tx_no_category')} · {accountCurrency(form.account_id)} {Number(form.amount).toLocaleString()}</p>
                 <p>{form.occurred_at}</p>
                 {form.note && <p>{form.note}</p>}
               </div>
@@ -267,7 +271,7 @@ export default function Transactions() {
                     <SelectItem value="income">{t('type_income')}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input type="number" placeholder={t('tx_amount')} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
               <Input
                 type="date"
@@ -283,7 +287,7 @@ export default function Transactions() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_no_account')}</SelectItem>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -354,7 +358,7 @@ export default function Transactions() {
                           </div>
                           <p className="truncate">{tx.note || t('tx_no_note')}</p>
                         </div>
-                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>NT$ {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
+                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{accountCurrency(tx.account_id)} {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
                       </div>
                     );
                   })}

@@ -90,8 +90,8 @@ export default function Accounts() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
+      <h1 className="mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
       <LedgerSubNav />
-      <h1 className="mb-4 text-lg font-semibold">{t('acc_pageTitle')}</h1>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
