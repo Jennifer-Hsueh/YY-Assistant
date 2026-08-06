@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 
@@ -19,6 +21,7 @@ const emptyForm = { title: '', date: '', category: '', color: '#4F46E5' };
 export default function CalendarPage() {
   const { t } = useLanguage();
   const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const today = new Date();
@@ -34,8 +37,12 @@ export default function CalendarPage() {
     try {
       const monthStart = new Date(year, month, 1).toISOString();
       const monthEnd = new Date(year, month + 1, 1).toISOString();
-      const { events } = await api.listEvents({ from: monthStart, to: monthEnd });
+      const [{ events }, { categories }] = await Promise.all([
+        api.listEvents({ from: monthStart, to: monthEnd }),
+        api.listCategories(),
+      ]);
       setEvents(events);
+      setCategories(categories.filter((c) => c.type === 'general'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -142,8 +149,8 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+      <h1 className="mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
-      <h1 className="mb-4 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
 
       <Input
         type="text"
@@ -234,7 +241,21 @@ export default function CalendarPage() {
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
-                <Input type="text" placeholder={t('cal_category_placeholder')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Select
+                  value={form.category || 'none'}
+                  onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder={t('cal_category_placeholder')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('tx_no_category')}</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
+                  {t('tx_manage_categories')}
+                </Link>
                 <Button type="submit" className="w-full">{t('cal_add_event')}</Button>
               </form>
             )}
@@ -271,7 +292,18 @@ export default function CalendarPage() {
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
-                <Input type="text" placeholder={t('cal_category_placeholder')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Select
+                  value={form.category || 'none'}
+                  onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder={t('cal_category_placeholder')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('tx_no_category')}</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>

@@ -21,7 +21,7 @@ function toLocalDateInput(isoString) {
 }
 
 const emptyForm = { type: 'expense', amount: '', category: '', note: '', account_id: '', occurred_at: todayLocal() };
-const emptyTransfer = { from: '', to: '', amount: '' };
+const emptyTransfer = { from: '', to: '', amount: '', exchangeRate: '' };
 
 export default function Transactions() {
   const { t } = useLanguage();
@@ -120,11 +120,19 @@ export default function Transactions() {
       setTransferError(t('tx_transfer_error_same'));
       return;
     }
+    const fromAcc = accounts.find((a) => a.id === transfer.from);
+    const toAcc = accounts.find((a) => a.id === transfer.to);
+    const needsRate = fromAcc && toAcc && fromAcc.currency !== toAcc.currency;
+    if (needsRate && (!transfer.exchangeRate || Number(transfer.exchangeRate) <= 0)) {
+      setTransferError(t('tx_transfer_error_rate'));
+      return;
+    }
     try {
       await api.transferBetweenAccounts({
         from_account_id: transfer.from,
         to_account_id: transfer.to,
         amount: Number(transfer.amount),
+        exchange_rate: needsRate ? Number(transfer.exchangeRate) : undefined,
       });
       setTransfer(emptyTransfer);
       load();
@@ -175,6 +183,7 @@ export default function Transactions() {
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
         <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
         <button onClick={() => switchActionMode('transfer')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'transfer' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_transfer')}</button>
+        <Link to="/categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
       </div>
 
       <Card className="mb-6">
@@ -187,7 +196,7 @@ export default function Transactions() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_transfer_from')}</SelectItem>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -196,11 +205,36 @@ export default function Transactions() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_transfer_to')}</SelectItem>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}(NT$ {Number(acc.balance).toLocaleString()})</SelectItem>
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Input type="number" placeholder={t('tx_transfer_amount')} required value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
+              {(() => {
+                const fromAcc = accounts.find((a) => a.id === transfer.from);
+                const toAcc = accounts.find((a) => a.id === transfer.to);
+                const needsRate = fromAcc && toAcc && fromAcc.currency !== toAcc.currency;
+                if (!needsRate) return null;
+                const converted = transfer.amount && transfer.exchangeRate
+                  ? (Number(transfer.amount) * Number(transfer.exchangeRate)).toLocaleString()
+                  : null;
+                return (
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      placeholder={`${t('tx_exchange_rate')} (1 ${fromAcc.currency} = ? ${toAcc.currency})`}
+                      value={transfer.exchangeRate}
+                      onChange={(e) => setTransfer({ ...transfer, exchangeRate: e.target.value })}
+                    />
+                    {converted && (
+                      <p className="text-xs text-muted-foreground">
+                        {t('tx_exchange_preview')} {toAcc.currency} {converted}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
               <Button type="submit" className="w-full">{t('tx_confirm_transfer')}</Button>
             </form>
           ) : pickingMode ? (
@@ -271,9 +305,6 @@ export default function Transactions() {
                 value={form.note}
                 onChange={(e) => setForm({ ...form, note: e.target.value })}
               />
-              <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
-                {t('tx_manage_categories')}
-              </Link>
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">{actionMode === 'edit' ? t('tx_save_edit') : t('tx_add_record')}</Button>
                 {actionMode === 'edit' && activeId && (
@@ -323,7 +354,7 @@ export default function Transactions() {
                           </div>
                           <p className="truncate">{tx.note || t('tx_no_note')}</p>
                         </div>
-                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{tx.type === 'income' ? '+' : '-'}NT$ {Number(tx.amount).toLocaleString()}</span>
+                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>NT$ {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
                       </div>
                     );
                   })}

@@ -17,12 +17,12 @@ async function listAccounts(req, res) {
 
 async function createAccount(req, res) {
   try {
-    const { name, balance } = req.body;
+    const { name, balance, currency } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
 
     const { data, error } = await supabase
       .from('yy_accounts')
-      .insert({ user_id: req.user.id, name, balance: balance || 0 })
+      .insert({ user_id: req.user.id, name, balance: balance || 0, currency: currency || 'TWD' })
       .select()
       .single();
     if (error) throw error;
@@ -33,11 +33,10 @@ async function createAccount(req, res) {
   }
 }
 
-// Rename an account and/or manually adjust its balance.
 async function updateAccount(req, res) {
   try {
     const { id } = req.params;
-    const { name, balance } = req.body;
+    const { name, balance, currency } = req.body;
 
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_accounts')
@@ -52,6 +51,7 @@ async function updateAccount(req, res) {
     const updates = {};
     if (name !== undefined) updates.name = name;
     if (balance !== undefined) updates.balance = balance;
+    if (currency !== undefined) updates.currency = currency;
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'Nothing to update' });
     }
@@ -70,9 +70,6 @@ async function updateAccount(req, res) {
   }
 }
 
-// Deleting an account leaves past transactions intact — the FK is
-// `on delete set null`, so those rows just lose their account reference
-// rather than being deleted.
 async function deleteAccount(req, res) {
   try {
     const { id } = req.params;
@@ -95,10 +92,15 @@ async function deleteAccount(req, res) {
   }
 }
 
-// Direct transfer between two of the user's own accounts.
+// Transfer between two accounts. If they use different currencies, the
+// caller must supply exchange_rate (destination currency units per 1 unit
+// of source currency) — we don't call any live FX rate API, the user
+// enters the rate manually. `amount` is always expressed in the source
+// (from) account's currency; the destination account is credited
+// amount * exchange_rate.
 async function transferBetweenAccounts(req, res) {
   try {
-    const { from_account_id, to_account_id, amount } = req.body;
+    const { from_account_id, to_account_id, amount, exchange_rate } = req.body;
     if (!from_account_id || !to_account_id || !amount || amount <= 0) {
       return res.status(400).json({ error: 'from_account_id, to_account_id and a positive amount are required' });
     }
@@ -108,7 +110,7 @@ async function transferBetweenAccounts(req, res) {
 
     const { data: accounts, error } = await supabase
       .from('yy_accounts')
-      .select('id, balance, user_id')
+      .select('id, balance, user_id, currency')
       .in('id', [from_account_id, to_account_id]);
     if (error) throw error;
 
@@ -118,10 +120,18 @@ async function transferBetweenAccounts(req, res) {
       return res.status(404).json({ error: 'One or both accounts were not found' });
     }
 
-    await supabase.from('yy_accounts').update({ balance: Number(from.balance) - Number(amount) }).eq('id', from_account_id);
-    await supabase.from('yy_accounts').update({ balance: Number(to.balance) + Number(amount) }).eq('id', to_account_id);
+    const differentCurrency = from.currency !== to.currency;
+    const rate = differentCurrency ? Number(exchange_rate) : 1;
+    if (differentCurrency && (!rate || rate <= 0)) {
+      return res.status(400).json({ error: 'A positive exchange_rate is required when currencies differ' });
+    }
 
-    return res.json({ message: 'Transfer complete' });
+    const creditedAmount = Number(amount) * rate;
+
+    await supabase.from('yy_accounts').update({ balance: Number(from.balance) - Number(amount) }).eq('id', from_account_id);
+    await supabase.from('yy_accounts').update({ balance: Number(to.balance) + creditedAmount }).eq('id', to_account_id);
+
+    return res.json({ message: 'Transfer complete', credited_amount: creditedAmount });
   } catch (err) {
     console.error('[accountController.transferBetweenAccounts]', err);
     return res.status(500).json({ error: 'Failed to transfer between accounts' });

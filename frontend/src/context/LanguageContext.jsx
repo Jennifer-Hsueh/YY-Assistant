@@ -100,6 +100,9 @@ const dictionary = {
     tx_confirm_transfer: '確認轉帳',
     tx_transfer_error_same: '轉出與轉入帳戶不能相同',
     tx_transfer_error_fail: '轉帳失敗,請確認金額與帳戶是否正確',
+    tx_transfer_error_rate: '兩個帳戶幣別不同,請輸入匯率',
+    tx_exchange_rate: '匯率',
+    tx_exchange_preview: '約可換得',
     tx_search_placeholder: '搜尋說明或分類…',
 
     // 帳戶
@@ -269,6 +272,9 @@ const dictionary = {
     tx_confirm_transfer: 'Confirm transfer',
     tx_transfer_error_same: 'Source and destination accounts must differ',
     tx_transfer_error_fail: 'Transfer failed, please check amount and accounts',
+    tx_transfer_error_rate: 'These accounts use different currencies — please enter an exchange rate',
+    tx_exchange_rate: 'Exchange rate',
+    tx_exchange_preview: 'Approx.',
     tx_search_placeholder: 'Search note or category…',
 
     acc_pageTitle: 'Accounts',

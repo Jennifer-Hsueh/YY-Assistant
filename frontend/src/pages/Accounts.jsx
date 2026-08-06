@@ -4,7 +4,10 @@ import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
+
+const CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP'];
 
 const CARD_COLORS = ['bg-primary', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
 
@@ -17,6 +20,7 @@ export default function Accounts() {
   const [mode, setMode] = useState('add');
 
   const [newName, setNewName] = useState('');
+  const [newCurrency, setNewCurrency] = useState('TWD');
 
   const [pickedId, setPickedId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -46,7 +50,7 @@ export default function Accounts() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName) return;
-    await api.createAccount({ name: newName, balance: 0 });
+    await api.createAccount({ name: newName, balance: 0, currency: newCurrency });
     setNewName('');
     load();
   }
@@ -106,7 +110,7 @@ export default function Accounts() {
                 style={{ top: `${Math.abs(offset) * 10}px`, transform: `scale(${1 - Math.abs(offset) * 0.05})`, zIndex: 10 - Math.abs(offset), opacity: Math.abs(offset) > 1 ? 0.5 : 1 }}
               >
                 <p className="text-sm opacity-80">{acc.name}</p>
-                <p className="mt-4 text-2xl font-semibold">NT$ {Number(acc.balance).toLocaleString()}</p>
+                <p className="mt-4 text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
               </button>
             );
           })}
@@ -124,6 +128,14 @@ export default function Accounts() {
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="flex gap-2">
               <Input type="text" placeholder={t('acc_new_name_placeholder')} value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <Select value={newCurrency} onValueChange={setNewCurrency}>
+                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button type="submit">{t('acc_add')}</Button>
             </form>
           )}
@@ -138,7 +150,7 @@ export default function Accounts() {
                   className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
                 >
                   <span>{acc.name}</span>
-                  <span className="text-muted-foreground">NT$ {Number(acc.balance).toLocaleString()}</span>
+                  <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
               ))}
             </div>
@@ -165,7 +177,7 @@ export default function Accounts() {
                   className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
                 >
                   <span>{acc.name}</span>
-                  <span className="text-muted-foreground">NT$ {Number(acc.balance).toLocaleString()}</span>
+                  <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
               ))}
             </div>

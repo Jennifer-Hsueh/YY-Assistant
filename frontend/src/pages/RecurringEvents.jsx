@@ -93,8 +93,8 @@ export default function RecurringEvents() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+      <h1 className="mb-3 text-lg font-semibold">{t('sub_recurring_events')}</h1>
       <CalendarSubNav />
-      <h1 className="mb-4 text-lg font-semibold">{t('sub_recurring_events')}</h1>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
