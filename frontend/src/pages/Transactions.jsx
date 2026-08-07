@@ -400,11 +400,11 @@ export default function Transactions() {
                           <span className="text-xs text-muted-foreground">
                             {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
                           </span>
-                          <span className="text-foreground"> - {tx.note || t('tx_no_note')}</span>
+                          <span className="text-xs text-foreground"> - {tx.note || t('tx_no_note')}</span>
                         </div>
-                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
+                        <span className={`font-amount shrink-0 pl-2 flex items-baseline ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
                           <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
-                          {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}
+                          <span className="inline-block w-16 text-right">{tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
                         </span>
                       </div>
                     );
