@@ -168,17 +168,21 @@ export default function Transactions() {
 
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
-  const [searchQuery, setSearchQuery] = useState('');
-  const filteredTransactions = searchQuery.trim()
-    ? transactions.filter((tx) => {
-        const q = searchQuery.trim().toLowerCase();
-        return (
-          (tx.note || '').toLowerCase().includes(q) ||
-          (tx.category || '').toLowerCase().includes(q) ||
-          (accountName(tx.account_id) || '').toLowerCase().includes(q)
-        );
-      })
-    : transactions;
+
+  const [searchType, setSearchType] = useState('note');
+  const [searchValue, setSearchValue] = useState('');
+
+  const now = new Date();
+  const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthTransactions = transactions.filter((tx) => tx.occurred_at.slice(0, 7) === currentMonthPrefix);
+
+  const filteredTransactions = !searchValue
+    ? monthTransactions
+    : monthTransactions.filter((tx) => {
+        if (searchType === 'account') return tx.account_id === searchValue;
+        if (searchType === 'category') return tx.category === searchValue;
+        return (tx.note || '').toLowerCase().includes(searchValue.toLowerCase());
+      });
   const filteredGrouped = filteredTransactions.reduce((acc, t) => {
     const day = t.occurred_at.slice(0, 10);
     (acc[day] ||= []).push(t);
@@ -339,12 +343,45 @@ export default function Transactions() {
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'list' ? (
         <div className="space-y-4">
-          <Input
-            type="text"
-            placeholder={t('tx_search_placeholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <Select value={searchType} onValueChange={(v) => { setSearchType(v); setSearchValue(''); }}>
+              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="account">{t('tx_search_by_account')}</SelectItem>
+                <SelectItem value="category">{t('tx_search_by_category')}</SelectItem>
+                <SelectItem value="note">{t('tx_search_by_note')}</SelectItem>
+              </SelectContent>
+            </Select>
+            {searchType === 'account' ? (
+              <Select value={searchValue || 'all'} onValueChange={(v) => setSearchValue(v === 'all' ? '' : v)}>
+                <SelectTrigger className="flex-1"><SelectValue placeholder={t('tx_search_all')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('tx_search_all')}</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : searchType === 'category' ? (
+              <Select value={searchValue || 'all'} onValueChange={(v) => setSearchValue(v === 'all' ? '' : v)}>
+                <SelectTrigger className="flex-1"><SelectValue placeholder={t('tx_search_all')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('tx_search_all')}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                type="text"
+                placeholder={t('tx_search_note_placeholder')}
+                className="flex-1"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+            )}
+          </div>
           {Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
@@ -363,9 +400,12 @@ export default function Transactions() {
                           <span className="text-xs text-muted-foreground">
                             {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
                           </span>
-                          <span className="text-foreground"> · {tx.note || t('tx_no_note')}</span>
+                          <span className="text-foreground"> - {tx.note || t('tx_no_note')}</span>
                         </div>
-                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{accountCurrency(tx.account_id)} {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
+                        <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
+                          <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
+                          {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}
+                        </span>
                       </div>
                     );
                   })}

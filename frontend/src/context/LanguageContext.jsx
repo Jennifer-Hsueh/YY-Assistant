@@ -105,6 +105,11 @@ const dictionary = {
     tx_exchange_rate_hint: '已帶入台銀參考匯率,可自行修改',
     tx_exchange_preview: '約可換得',
     tx_search_placeholder: '搜尋說明、分類或帳戶…',
+    tx_search_by_account: '帳戶',
+    tx_search_by_category: '分類',
+    tx_search_by_note: '說明',
+    tx_search_all: '全部',
+    tx_search_note_placeholder: '輸入說明關鍵字…',
 
     // 帳戶
     acc_pageTitle: '帳戶管理',
@@ -278,6 +283,11 @@ const dictionary = {
     tx_exchange_rate_hint: 'Pre-filled from Bank of Taiwan — feel free to edit',
     tx_exchange_preview: 'Approx.',
     tx_search_placeholder: 'Search note, category, or account…',
+    tx_search_by_account: 'Account',
+    tx_search_by_category: 'Category',
+    tx_search_by_note: 'Note',
+    tx_search_all: 'All',
+    tx_search_note_placeholder: 'Enter keyword…',
 
     acc_pageTitle: 'Accounts',
     acc_new_name_placeholder: 'New account name',

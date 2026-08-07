@@ -110,7 +110,7 @@ async function transferBetweenAccounts(req, res) {
 
     const { data: accounts, error } = await supabase
       .from('yy_accounts')
-      .select('id, balance, user_id, currency')
+      .select('id, name, balance, user_id, currency')
       .in('id', [from_account_id, to_account_id]);
     if (error) throw error;
 
@@ -130,6 +130,31 @@ async function transferBetweenAccounts(req, res) {
 
     await supabase.from('yy_accounts').update({ balance: Number(from.balance) - Number(amount) }).eq('id', from_account_id);
     await supabase.from('yy_accounts').update({ balance: Number(to.balance) + creditedAmount }).eq('id', to_account_id);
+
+    // Also record the transfer as two transaction rows so it shows up in
+    // the ledger — one outflow on the source account, one inflow on the
+    // destination account, tagged with category "轉帳" (Transfer).
+    const now = new Date().toISOString();
+    await supabase.from('yy_transactions').insert([
+      {
+        user_id: req.user.id,
+        account_id: from_account_id,
+        type: 'expense',
+        amount: Number(amount),
+        category: '轉帳',
+        note: `轉出至:${to.name}`,
+        occurred_at: now,
+      },
+      {
+        user_id: req.user.id,
+        account_id: to_account_id,
+        type: 'income',
+        amount: creditedAmount,
+        category: '轉帳',
+        note: `轉入自:${from.name}`,
+        occurred_at: now,
+      },
+    ]);
 
     return res.json({ message: 'Transfer complete', credited_amount: creditedAmount });
   } catch (err) {
