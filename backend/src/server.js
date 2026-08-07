@@ -14,7 +14,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const bugReportRoutes = require('./routes/bugReportRoutes');
 const app = express();
 const announcementRoutes = require('./routes/announcementRoutes');
-
+const exchangeRateRoutes = require('./routes/exchangeRateRoutes');
 app.use(cors());
 app.use(express.json());
 
@@ -32,6 +32,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/bug-reports', bugReportRoutes);
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+app.use('/api/exchange-rate', exchangeRateRoutes);
 
 // Central error handler (routes should still try/catch and respond themselves;
 // this is a safety net for anything that slips through)

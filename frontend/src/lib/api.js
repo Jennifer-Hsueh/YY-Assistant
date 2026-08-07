@@ -70,5 +70,6 @@ listAnnouncements: () => request('/announcements'),
 getProfile: () => request('/profile'),
 updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }),
 submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
+getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
 
 };

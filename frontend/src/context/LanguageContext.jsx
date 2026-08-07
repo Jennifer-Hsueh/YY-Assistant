@@ -102,8 +102,9 @@ const dictionary = {
     tx_transfer_error_fail: '轉帳失敗,請確認金額與帳戶是否正確',
     tx_transfer_error_rate: '兩個帳戶幣別不同,請輸入匯率',
     tx_exchange_rate: '匯率',
+    tx_exchange_rate_hint: '已帶入台銀參考匯率,可自行修改',
     tx_exchange_preview: '約可換得',
-    tx_search_placeholder: '搜尋說明或分類…',
+    tx_search_placeholder: '搜尋說明、分類或帳戶…',
 
     // 帳戶
     acc_pageTitle: '帳戶管理',
@@ -274,8 +275,9 @@ const dictionary = {
     tx_transfer_error_fail: 'Transfer failed, please check amount and accounts',
     tx_transfer_error_rate: 'These accounts use different currencies — please enter an exchange rate',
     tx_exchange_rate: 'Exchange rate',
+    tx_exchange_rate_hint: 'Pre-filled from Bank of Taiwan — feel free to edit',
     tx_exchange_preview: 'Approx.',
-    tx_search_placeholder: 'Search note or category…',
+    tx_search_placeholder: 'Search note, category, or account…',
 
     acc_pageTitle: 'Accounts',
     acc_new_name_placeholder: 'New account name',

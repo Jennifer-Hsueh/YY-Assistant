@@ -58,6 +58,16 @@ export default function Transactions() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    const fromAcc = accounts.find((a) => a.id === transfer.from);
+    const toAcc = accounts.find((a) => a.id === transfer.to);
+    if (fromAcc && toAcc && fromAcc.currency !== toAcc.currency) {
+      api.getExchangeRate(fromAcc.currency, toAcc.currency)
+        .then(({ rate }) => setTransfer((prev) => ({ ...prev, exchangeRate: String(rate) })))
+        .catch((err) => console.error('[exchange rate]', err));
+    }
+  }, [transfer.from, transfer.to, accounts]);
+
   function switchActionMode(newMode) {
     setActionMode(newMode);
     setActiveId(null);
@@ -162,7 +172,11 @@ export default function Transactions() {
   const filteredTransactions = searchQuery.trim()
     ? transactions.filter((tx) => {
         const q = searchQuery.trim().toLowerCase();
-        return (tx.note || '').toLowerCase().includes(q) || (tx.category || '').toLowerCase().includes(q);
+        return (
+          (tx.note || '').toLowerCase().includes(q) ||
+          (tx.category || '').toLowerCase().includes(q) ||
+          (accountName(tx.account_id) || '').toLowerCase().includes(q)
+        );
       })
     : transactions;
   const filteredGrouped = filteredTransactions.reduce((acc, t) => {
@@ -236,6 +250,7 @@ export default function Transactions() {
                         {t('tx_exchange_preview')} {toAcc.currency} {converted}
                       </p>
                     )}
+                    <p className="text-[11px] text-muted-foreground">{t('tx_exchange_rate_hint')}</p>
                   </div>
                 );
               })()}
@@ -271,44 +286,44 @@ export default function Transactions() {
                     <SelectItem value="income">{t('type_income')}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <Input type="date" required className="flex-1" value={form.occurred_at} onChange={(e) => setForm({ ...form, occurred_at: e.target.value })} />
               </div>
-              <Input
-                type="date"
-                required
-                value={form.occurred_at}
-                onChange={(e) => setForm({ ...form, occurred_at: e.target.value })}
-              />
-              <Select
-                value={form.account_id || 'none'}
-                onValueChange={(v) => setForm({ ...form, account_id: v === 'none' ? '' : v })}
-              >
-                <SelectTrigger><SelectValue placeholder={t('tx_account_placeholder')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('tx_no_account')}</SelectItem>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={form.category || 'none'}
-                onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
-              >
-                <SelectTrigger><SelectValue placeholder={t('tx_category_placeholder')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('tx_no_category')}</SelectItem>
-                  {relevantCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                type="text"
-                placeholder={t('tx_note_placeholder')}
-                value={form.note}
-                onChange={(e) => setForm({ ...form, note: e.target.value })}
-              />
+              <div className="flex flex-wrap gap-2">
+                <Select
+                  value={form.account_id || 'none'}
+                  onValueChange={(v) => setForm({ ...form, account_id: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder={t('tx_account_placeholder')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('tx_no_account')}</SelectItem>
+                    {accounts.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={form.category || 'none'}
+                  onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
+                >
+                  <SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder={t('tx_category_placeholder')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('tx_no_category')}</SelectItem>
+                    {relevantCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder={t('tx_note_placeholder')}
+                  className="min-w-0 flex-[2]"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                />
+                <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required className="min-w-0 flex-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">{actionMode === 'edit' ? t('tx_save_edit') : t('tx_add_record')}</Button>
                 {actionMode === 'edit' && activeId && (
