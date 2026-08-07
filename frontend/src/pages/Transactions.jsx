@@ -359,19 +359,11 @@ export default function Transactions() {
                         onClick={selectable ? () => pickTransaction(tx) : undefined}
                         className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
                       >
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span className="text-xs text-muted-foreground">{accountName(tx.account_id) || t('tx_unspecified_account')}</span>
-                            <span className="text-xs text-muted-foreground">·</span>
-                            <span className="text-xs text-muted-foreground">{tx.type === 'income' ? t('type_income') : t('type_expense')}</span>
-                            {tx.category && (
-                              <>
-                                <span className="text-xs text-muted-foreground">·</span>
-                                <span className="text-xs text-muted-foreground">{tx.category}</span>
-                              </>
-                            )}
-                          </div>
-                          <p className="truncate">{tx.note || t('tx_no_note')}</p>
+                        <div className="min-w-0 flex-1 truncate">
+                          <span className="text-xs text-muted-foreground">
+                            {accountName(tx.account_id) || t('tx_unspecified_account')} · {tx.type === 'income' ? t('type_income') : t('type_expense')}{tx.category ? ` · ${tx.category}` : ''}
+                          </span>
+                          <span className="text-foreground"> · {tx.note || t('tx_no_note')}</span>
                         </div>
                         <span className={`font-amount shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>{accountCurrency(tx.account_id)} {tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
                       </div>
