@@ -267,18 +267,6 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            {actionMode === 'add' && selectedDayEvents.length > 0 && (
-              <div className="space-y-1 rounded-md border border-border p-2">
-                {selectedDayEvents.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-2 px-1 py-1 text-sm">
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                    <span>{ev.title}</span>
-                    {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-
             {actionMode === 'add' && (
               <form onSubmit={handleSubmit} className="space-y-2">
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
