@@ -16,7 +16,7 @@ function pastelForDate(dateKey) {
   return palette[Math.abs(hash) % palette.length];
 }
 
-const emptyForm = { title: '', date: '', category: '', color: '#4F46E5' };
+const emptyForm = { title: '', date: '', time: '', note: '', category: '', color: '#4F46E5' };
 
 export default function CalendarPage() {
   const { t } = useLanguage();
@@ -62,11 +62,18 @@ export default function CalendarPage() {
     return isoString.slice(0, 10);
   }
 
+  function toTimeInputValue(isoString) {
+    const d = new Date(isoString);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
   function pickEvent(ev) {
     setActiveId(ev.id);
     setForm({
       title: ev.title,
       date: toDateInputValue(ev.start_at),
+      time: toTimeInputValue(ev.start_at),
+      note: ev.note || '',
       category: ev.category || '',
       color: ev.color || '#4F46E5',
     });
@@ -80,11 +87,13 @@ export default function CalendarPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title || !form.date) return;
+    const startAt = form.time ? `${form.date}T${form.time}:00` : `${form.date}T00:00:00`;
     const payload = {
       title: form.title,
-      start_at: new Date(form.date).toISOString(),
+      start_at: new Date(startAt).toISOString(),
       category: form.category || null,
       color: form.color,
+      note: form.note || null,
     };
     if (actionMode === 'edit' && activeId) {
       await api.updateEvent(activeId, payload);
@@ -120,6 +129,7 @@ export default function CalendarPage() {
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
   const weekdays = t('cal_weekdays');
 
+  const [searchType, setSearchType] = useState('title');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -135,7 +145,9 @@ export default function CalendarPage() {
       try {
         const { events: allEvents } = await api.listEvents({});
         const matched = allEvents.filter((ev) =>
-          ev.title.toLowerCase().includes(q.toLowerCase()) || (ev.category || '').toLowerCase().includes(q.toLowerCase())
+          searchType === 'category'
+            ? (ev.category || '') === q
+            : ev.title.toLowerCase().includes(q.toLowerCase())
         );
         setSearchResults(matched);
       } catch (err) {
@@ -145,20 +157,41 @@ export default function CalendarPage() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, searchType]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
 
-      <Input
-        type="text"
-        placeholder={t('cal_search_placeholder')}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="mb-3"
-      />
+      <div className="mb-3 flex gap-2">
+        <Select value={searchType} onValueChange={(v) => { setSearchType(v); setSearchQuery(''); }}>
+          <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="title">{t('cal_search_by_title')}</SelectItem>
+            <SelectItem value="category">{t('cal_search_by_category')}</SelectItem>
+          </SelectContent>
+        </Select>
+        {searchType === 'category' ? (
+          <Select value={searchQuery || 'none'} onValueChange={(v) => setSearchQuery(v === 'none' ? '' : v)}>
+            <SelectTrigger className="flex-1"><SelectValue placeholder={t('cal_search_select_category')} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{t('cal_search_select_category')}</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            type="text"
+            placeholder={t('cal_search_placeholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+        )}
+      </div>
 
       {searchQuery.trim() && (
         <Card className="mb-3">
@@ -205,7 +238,7 @@ export default function CalendarPage() {
                   <span>{day}</span>
                   {dayEvents.slice(0, 2).map((ev) => (
                     <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
-                      <span className="ml-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                      <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
                       <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
                     </span>
                   ))}
@@ -239,6 +272,7 @@ export default function CalendarPage() {
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 <div className="flex gap-2">
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
+                  <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
                 <Select
@@ -253,6 +287,13 @@ export default function CalendarPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <textarea
+                  placeholder={t('cal_note_placeholder')}
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  rows={2}
+                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                />
                 <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
                   {t('tx_manage_categories')}
                 </Link>
@@ -274,7 +315,7 @@ export default function CalendarPage() {
                         onClick={() => pickEvent(ev)}
                         className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                       >
-                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
                         <span>{ev.title}</span>
                         {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
                       </button>
@@ -290,6 +331,7 @@ export default function CalendarPage() {
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 <div className="flex gap-2">
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
+                  <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                   <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
                 </div>
                 <Select
@@ -304,6 +346,13 @@ export default function CalendarPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <textarea
+                  placeholder={t('cal_note_placeholder')}
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  rows={2}
+                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                />
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
@@ -325,7 +374,7 @@ export default function CalendarPage() {
                         onClick={() => pickEvent(ev)}
                         className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                       >
-                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
                         <span>{ev.title}</span>
                         {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
                       </button>
