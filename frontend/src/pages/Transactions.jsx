@@ -361,7 +361,7 @@ export default function Transactions() {
                       >
                         <div className="min-w-0 flex-1 truncate">
                           <span className="text-xs text-muted-foreground">
-                            {accountName(tx.account_id) || t('tx_unspecified_account')} · {tx.type === 'income' ? t('type_income') : t('type_expense')}{tx.category ? ` · ${tx.category}` : ''}
+                            {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
                           </span>
                           <span className="text-foreground"> · {tx.note || t('tx_no_note')}</span>
                         </div>
