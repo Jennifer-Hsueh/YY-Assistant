@@ -164,6 +164,23 @@ export default function CalendarPage() {
       <h1 className="mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
 
+      {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
+      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
+        <button
+          onClick={() => switchActionMode('add')}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >{t('mode_add')}</button>
+        <button
+          onClick={() => switchActionMode('edit')}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >{t('mode_edit')}</button>
+        <button
+          onClick={() => switchActionMode('delete')}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+        >{t('mode_delete')}</button>
+        <Link to="/categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
+      </div>
+
       <div className="mb-3 flex gap-2">
         <Select value={searchType} onValueChange={(v) => { setSearchType(v); setSearchQuery(''); }}>
           <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
@@ -258,14 +275,19 @@ export default function CalendarPage() {
       ) : (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
-              <div className="flex rounded-lg bg-muted p-1 text-xs">
-                <button onClick={() => switchActionMode('add')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-                <button onClick={() => switchActionMode('edit')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-                <button onClick={() => switchActionMode('delete')} className={`rounded-md px-2 py-1 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
+            <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
+
+            {actionMode === 'add' && selectedDayEvents.length > 0 && (
+              <div className="space-y-1 rounded-md border border-border p-2">
+                {selectedDayEvents.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-2 px-1 py-1 text-sm">
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                    <span>{ev.title}</span>
+                    {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
             {actionMode === 'add' && (
               <form onSubmit={handleSubmit} className="space-y-2">
