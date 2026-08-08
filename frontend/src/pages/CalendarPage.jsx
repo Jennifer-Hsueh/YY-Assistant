@@ -28,7 +28,7 @@ export default function CalendarPage() {
   const year = today.getFullYear();
   const month = today.getMonth();
 
-  const [actionMode, setActionMode] = useState('add');
+  const [actionMode, setActionMode] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
 
@@ -266,96 +266,98 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {!selectedDay ? (
+      {/* 未選擇任何模式:點日期只顯示當日行程,沒點日期就空白 */}
+      {!actionMode && selectedDay && (
         <Card>
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            {t('cal_select_date_prompt')}
+          <CardContent className="space-y-2 p-4">
+            <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
+            {selectedDayEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
+            ) : (
+              <div className="space-y-1">
+                {selectedDayEvents.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                    <span>{ev.title}</span>
+                    {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <>
-          {/* 區塊一:當日行程(唯讀) */}
-          <Card className="mb-3">
-            <CardContent className="space-y-2 p-4">
-              <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
-              {selectedDayEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
-              ) : (
-                <div className="space-y-1">
-                  {selectedDayEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
-                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                      <span>{ev.title}</span>
-                      {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      )}
 
-          {/* 區塊二:新增/編輯/刪除操作 */}
-          <Card>
+      {/* 選了新增模式:直接顯示新增表單 */}
+      {actionMode === 'add' && (
+        <Card>
           <CardContent className="space-y-3 p-4">
-            {actionMode === 'add' && (
-              <form onSubmit={handleSubmit} className="space-y-2">
-                <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                <div className="flex gap-2">
-                  <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
-                  <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
-                  <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
-                </div>
-                <Select
-                  value={form.category || 'none'}
-                  onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
-                >
-                  <SelectTrigger><SelectValue placeholder={t('cal_category_placeholder')} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('tx_no_category')}</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <textarea
-                  placeholder={t('cal_note_placeholder')}
-                  value={form.note}
-                  onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  rows={2}
-                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                />
-                <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
-                  {t('tx_manage_categories')}
-                </Link>
-                <Button type="submit" className="w-full">{t('cal_add_event')}</Button>
-              </form>
-            )}
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <div className="flex gap-2">
+                <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
+                <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
+                <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
+              </div>
+              <Select
+                value={form.category || 'none'}
+                onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger><SelectValue placeholder={t('cal_category_placeholder')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('tx_no_category')}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <textarea
+                placeholder={t('cal_note_placeholder')}
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+                rows={2}
+                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+              />
+              <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
+                {t('tx_manage_categories')}
+              </Link>
+              <Button type="submit" className="w-full">{t('cal_add_event')}</Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
-            {actionMode === 'edit' && !activeId && (
+      {/* 選了編輯/刪除模式:直接列出當月所有行程供選擇,不用先點日期 */}
+      {(actionMode === 'edit' || actionMode === 'delete') && (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            {!activeId ? (
               <div className="space-y-1">
-                {selectedDayEvents.length === 0 ? (
+                {events.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground">{t('cal_pick_edit')}</p>
-                    {selectedDayEvents.map((ev) => (
-                      <button
-                        key={ev.id}
-                        type="button"
-                        onClick={() => pickEvent(ev)}
-                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                      >
-                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                        <span>{ev.title}</span>
-                        {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                      </button>
-                    ))}
+                    <p className="text-xs text-muted-foreground">{actionMode === 'edit' ? t('cal_pick_edit') : t('cal_pick_delete')}</p>
+                    {events
+                      .slice()
+                      .sort((a, b) => a.start_at.localeCompare(b.start_at))
+                      .map((ev) => (
+                        <button
+                          key={ev.id}
+                          type="button"
+                          onClick={() => pickEvent(ev)}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                        >
+                          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                          <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
+                          <span>{ev.title}</span>
+                          {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                        </button>
+                      ))}
                   </>
                 )}
               </div>
-            )}
-
-            {actionMode === 'edit' && activeId && (
+            ) : actionMode === 'edit' ? (
               <form onSubmit={handleSubmit} className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">{t('cal_editing')}</p>
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -388,33 +390,7 @@ export default function CalendarPage() {
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
               </form>
-            )}
-
-            {actionMode === 'delete' && !activeId && (
-              <div className="space-y-1">
-                {selectedDayEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
-                ) : (
-                  <>
-                    <p className="text-xs text-muted-foreground">{t('cal_pick_delete')}</p>
-                    {selectedDayEvents.map((ev) => (
-                      <button
-                        key={ev.id}
-                        type="button"
-                        onClick={() => pickEvent(ev)}
-                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                      >
-                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                        <span>{ev.title}</span>
-                        {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-
-            {actionMode === 'delete' && activeId && (
+            ) : (
               <div className="space-y-2">
                 <p className="text-sm font-medium">{t('cal_confirm_delete_title')}</p>
                 <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
@@ -428,8 +404,7 @@ export default function CalendarPage() {
               </div>
             )}
           </CardContent>
-          </Card>
-        </>
+        </Card>
       )}
 
       {loading && <p className="mt-4 text-sm text-muted-foreground">{t('loading')}</p>}

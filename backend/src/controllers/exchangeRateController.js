@@ -12,8 +12,10 @@ async function fetchBotRates() {
   if (cache.data && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data;
 
   const res = await fetch(BOT_CSV_URL);
+  console.log(`[exchangeRateController] BOT feed status: ${res.status}`);
   if (!res.ok) throw new Error(`Bank of Taiwan feed returned ${res.status}`);
   const text = await res.text();
+  console.log(`[exchangeRateController] BOT feed length: ${text.length} chars, first 200 chars:`, text.slice(0, 200));
 
   // CSV columns: 幣別,匯率別,現金買入,現金賣出,即期買入,即期賣出,...
   const rates = {};
@@ -29,6 +31,7 @@ async function fetchBotRates() {
   });
 
   cache = { data: rates, fetchedAt: now };
+  console.log(`[exchangeRateController] Parsed ${Object.keys(rates).length} currencies from BOT feed:`, Object.keys(rates).join(', '));
   return rates;
 }
 
