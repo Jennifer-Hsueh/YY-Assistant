@@ -165,7 +165,7 @@ export default function RecurringMoney() {
               )}
               <div className="flex gap-2">
                 <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
-                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-36 whitespace-nowrap"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="expense">{t('rec_kind_expense')}</SelectItem>
                     <SelectItem value="income">{t('rec_kind_income')}</SelectItem>

@@ -92,7 +92,7 @@ export default function Home() {
                   <Icon className="h-8 w-8" style={{ color }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-medium" style={{ color }}>{t(titleKey)}</p>
+                  <p className="text-[1.2rem] font-medium" style={{ color }}>{t(titleKey)}</p>
                   <p className="truncate text-[0.975rem] text-muted-foreground">{t(subtitleKey)}</p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0" style={{ color }} />

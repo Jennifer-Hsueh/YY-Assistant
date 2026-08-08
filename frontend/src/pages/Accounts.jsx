@@ -106,6 +106,7 @@ export default function Accounts() {
               <button
                 key={acc.id}
                 onClick={() => setActiveIndex(idx)}
+                onDoubleClick={() => setActiveIndex((prev) => (prev + 1) % accounts.length)}
                 className={`absolute inset-x-0 h-36 rounded-2xl p-4 text-left text-white shadow-lg transition-all ${CARD_COLORS[idx % CARD_COLORS.length]}`}
                 style={{ top: `${Math.abs(offset) * 10}px`, transform: `scale(${1 - Math.abs(offset) * 0.05})`, zIndex: 10 - Math.abs(offset), opacity: Math.abs(offset) > 1 ? 0.5 : 1 }}
               >

@@ -273,22 +273,30 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <>
+          {/* 區塊一:當日行程(唯讀) */}
+          <Card className="mb-3">
+            <CardContent className="space-y-2 p-4">
+              <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
+              {selectedDayEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
+              ) : (
+                <div className="space-y-1">
+                  {selectedDayEvents.map((ev) => (
+                    <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                      <span>{ev.title}</span>
+                      {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 區塊二:新增/編輯/刪除操作 */}
+          <Card>
           <CardContent className="space-y-3 p-4">
-            <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
-
-            {actionMode === 'add' && selectedDayEvents.length > 0 && (
-              <div className="space-y-1 rounded-md border border-border p-2">
-                {selectedDayEvents.map((ev) => (
-                  <div key={ev.id} className="flex items-center gap-2 px-1 py-1 text-sm">
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
-                    <span>{ev.title}</span>
-                    {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-
             {actionMode === 'add' && (
               <form onSubmit={handleSubmit} className="space-y-2">
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -420,7 +428,8 @@ export default function CalendarPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+          </Card>
+        </>
       )}
 
       {loading && <p className="mt-4 text-sm text-muted-foreground">{t('loading')}</p>}

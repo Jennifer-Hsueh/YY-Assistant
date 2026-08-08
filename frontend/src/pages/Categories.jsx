@@ -104,7 +104,7 @@ export default function Categories() {
               required
             />
             <Select value={newType} onValueChange={setNewType}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-32 whitespace-nowrap"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="general">{t('type_general')}</SelectItem>
                 <SelectItem value="expense">{t('type_expense')}</SelectItem>
