@@ -1,46 +1,40 @@
-// Fetches Bank of Taiwan's published spot exchange rates (public CSV, no
-// API key needed) and computes a "mid rate" (average of spot buy/sell) for
-// the requested currency pair. This is only a suggested default — the
-// frontend lets the user override it, since this isn't a live trading feed.
-const BOT_CSV_URL = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
+// Uses the fawazahmed0/currency-api (community-maintained, free, no API key,
+// hosted via CDN — not a scraped consumer webpage, so it isn't blocked by
+// bot-protection the way bank/broker websites are). Two mirrors are tried
+// in order for resilience. Data updates roughly once a day.
+const PRIMARY_BASE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies';
+const FALLBACK_BASE = 'https://latest.currency-api.pages.dev/v1/currencies';
 
-let cache = { data: null, fetchedAt: 0 };
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes — BOT updates a few times a day
+const cache = new Map(); // fromCurrency (lowercase) -> { data, fetchedAt }
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour — this feed only updates ~daily anyway
 
-async function fetchBotRates() {
-  const now = Date.now();
-  if (cache.data && now - cache.fetchedAt < CACHE_TTL_MS) return cache.data;
+async function fetchRatesFor(fromLower) {
+  const cached = cache.get(fromLower);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) return cached.data;
 
-  const res = await fetch(BOT_CSV_URL);
-  console.log(`[exchangeRateController] BOT feed status: ${res.status}`);
-  if (!res.ok) throw new Error(`Bank of Taiwan feed returned ${res.status}`);
-  const text = await res.text();
-  console.log(`[exchangeRateController] BOT feed length: ${text.length} chars, first 200 chars:`, text.slice(0, 200));
-
-  // CSV columns: 幣別,匯率別,現金買入,現金賣出,即期買入,即期賣出,...
-  const rates = {};
-  text.split('\n').forEach((line) => {
-    const cols = line.split(',');
-    if (cols.length < 6) return;
-    const code = cols[0]?.trim();
-    const spotBuy = parseFloat(cols[4]);
-    const spotSell = parseFloat(cols[5]);
-    if (code && !Number.isNaN(spotBuy) && !Number.isNaN(spotSell) && spotBuy > 0 && spotSell > 0) {
-      rates[code] = { spotBuy, spotSell, mid: (spotBuy + spotSell) / 2 };
+  const urls = [`${PRIMARY_BASE}/${fromLower}.json`, `${FALLBACK_BASE}/${fromLower}.json`];
+  let lastErr;
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      console.log(`[exchangeRateController] ${url} -> ${res.status}`);
+      if (!res.ok) { lastErr = new Error(`status ${res.status}`); continue; }
+      const data = await res.json();
+      cache.set(fromLower, { data, fetchedAt: Date.now() });
+      return data;
+    } catch (err) {
+      console.warn(`[exchangeRateController] fetch failed for ${url}:`, err.message);
+      lastErr = err;
     }
-  });
-
-  cache = { data: rates, fetchedAt: now };
-  console.log(`[exchangeRateController] Parsed ${Object.keys(rates).length} currencies from BOT feed:`, Object.keys(rates).join(', '));
-  return rates;
+  }
+  throw lastErr || new Error('All currency-api mirrors failed');
 }
 
-// Returns "1 unit of `from` = ? units of `to`", using TWD as the bridge
-// currency since Bank of Taiwan only quotes each currency against TWD.
+// Returns "1 unit of `from` = ? units of `to`".
 async function getExchangeRate(req, res) {
   try {
-    const from = String(req.query.from || '').toUpperCase();
-    const to = String(req.query.to || '').toUpperCase();
+    const from = String(req.query.from || '').toLowerCase();
+    const to = String(req.query.to || '').toLowerCase();
     if (!from || !to) {
       return res.status(400).json({ error: 'from and to query params are required' });
     }
@@ -48,25 +42,13 @@ async function getExchangeRate(req, res) {
       return res.json({ rate: 1, source: 'same-currency' });
     }
 
-    const rates = await fetchBotRates();
-
-    let rate;
-    if (from === 'TWD') {
-      const toRate = rates[to];
-      if (!toRate) return res.status(404).json({ error: `No rate found for ${to}` });
-      rate = 1 / toRate.mid;
-    } else if (to === 'TWD') {
-      const fromRate = rates[from];
-      if (!fromRate) return res.status(404).json({ error: `No rate found for ${from}` });
-      rate = fromRate.mid;
-    } else {
-      const fromRate = rates[from];
-      const toRate = rates[to];
-      if (!fromRate || !toRate) return res.status(404).json({ error: 'Rate not found for one or both currencies' });
-      rate = fromRate.mid / toRate.mid;
+    const data = await fetchRatesFor(from);
+    const rate = data?.[from]?.[to];
+    if (rate === undefined) {
+      return res.status(404).json({ error: `No rate found for ${from} -> ${to}` });
     }
 
-    return res.json({ rate: Number(rate.toFixed(6)), source: 'Bank of Taiwan (spot mid rate)' });
+    return res.json({ rate: Number(Number(rate).toFixed(6)), source: 'currency-api (community feed, daily updates)' });
   } catch (err) {
     console.error('[exchangeRateController.getExchangeRate]', err);
     return res.status(500).json({ error: 'Failed to fetch exchange rate' });
