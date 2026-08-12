@@ -42,9 +42,9 @@ export default function Home() {
     <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
       <img
-        src="/watermark-girl.png"
+        src="/home-watermark-logo.png"
         alt=""
-        className="pointer-events-none absolute bottom-0 right-0 opacity-[0.08]"
+        className="pointer-events-none absolute bottom-0 right-0 opacity-[0.16]"
         style={{ width: '480px', maxWidth: 'none' }}
       />
 
