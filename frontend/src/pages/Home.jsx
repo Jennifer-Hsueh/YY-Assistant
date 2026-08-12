@@ -48,7 +48,11 @@ export default function Home() {
         style={{ width: '480px', maxWidth: 'none' }}
       />
 
-      <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
+      <img
+  src="/header-banner.png"
+  alt={t('appName')}
+  className="mb-4 w-full h-auto"
+/>
       {displayName && (
         <p className="mb-5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}
