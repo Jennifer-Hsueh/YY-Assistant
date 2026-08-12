@@ -44,7 +44,7 @@ export default function Home() {
 <img
   src="/home-watermark-logo.png"
   alt=""
-  className="pointer-events-none absolute bottom-4 right-4 opacity-[0.08]"
+  className="pointer-events-none absolute bottom-4 right-4 opacity-[0.09]"
   style={{ width: '432px', maxWidth: 'none' }}
 />
 
