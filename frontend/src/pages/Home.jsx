@@ -41,12 +41,12 @@ export default function Home() {
   return (
     <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
-      <img
-        src="/home-watermark-logo.png"
-        alt=""
-        className="pointer-events-none absolute bottom-0 right-0 opacity-[0.08]"
-        style={{ width: '480px', maxWidth: 'none' }}
-      />
+<img
+  src="/home-watermark-logo.png"
+  alt=""
+  className="pointer-events-none absolute bottom-4 right-4 opacity-[0.08]"
+  style={{ width: '432px', maxWidth: 'none' }}
+/>
 
       <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       {displayName && (
