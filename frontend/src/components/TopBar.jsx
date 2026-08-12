@@ -10,7 +10,7 @@ export default function TopBar() {
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-  <img src="/round-logo.png" alt={t('appName')} className="h-9 w-9 rounded-full" />
+  <img src="/round-logo.png" alt={t('appName')} className="h-12 w-12 rounded-full" />
   <div className="flex items-baseline gap-1.5">
     <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px' }}>YY手帳</span>
     <span className="text-muted-foreground" style={{ fontSize: '12px' }}>Assistant</span>
