@@ -9,7 +9,13 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-3">
-        <img src="/topbar-logo.png" alt={t('appName')} className="h-8 w-auto" />
+        <div className="flex items-center gap-2">
+  <img src="/round-logo.png" alt={t('appName')} className="h-9 w-9 rounded-full" />
+  <div className="flex items-baseline gap-1.5">
+    <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px' }}>YY手帳</span>
+    <span className="text-muted-foreground" style={{ fontSize: '12px' }}>Assistant</span>
+  </div>
+</div>
         <div className="flex items-center gap-3">
           <button
             type="button"
