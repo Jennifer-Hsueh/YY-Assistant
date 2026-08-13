@@ -12,7 +12,7 @@ export default function TopBar() {
         <div className="flex items-end gap-4">
   <img src="/round-logo.png" alt={t('appName')} className="h-12 w-12 rounded-full" />
   <div className="flex items-baseline gap-1.5 leading-none">
-  <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px' }}>YY手帳</span>
+  <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', transform: 'translateY(-2px)', display: 'inline-block' }}>YY手帳</span>
   <span className="text-muted-foreground" style={{ fontSize: '12px' }}>Assistant</span>
   </div>
 </div>
