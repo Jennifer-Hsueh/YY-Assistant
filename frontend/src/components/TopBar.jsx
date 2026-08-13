@@ -16,7 +16,7 @@ export default function TopBar() {
   <span className="text-muted-foreground" style={{ fontSize: '12px' }}>Assistant</span>
   </div>
 </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={toggleLanguage}
