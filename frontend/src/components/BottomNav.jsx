@@ -1,29 +1,33 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { navTabs } from './navTabs';
+import { navTabs, isTabActive } from './navTabs';
 
 export default function BottomNav() {
   const { t } = useLanguage();
+  const { pathname } = useLocation();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-xl justify-around">
-        {navTabs.map(({ to, key, Icon, color, end }) => (
-          <li key={to} className="flex-1">
-            <NavLink
-              to={to}
-              end={end}
-              className="flex flex-col items-center gap-1 py-3 text-xs"
-              style={({ isActive }) => ({
-                color: isActive ? color : 'var(--muted-foreground)',
-                fontWeight: isActive ? 500 : 400,
-              })}
-            >
-              <Icon className="h-6 w-6" />
-              {t(key)}
-            </NavLink>
-          </li>
-        ))}
+        {navTabs.map((tab) => {
+          const { to, key, Icon, color } = tab;
+          const active = isTabActive(tab, pathname);
+          return (
+            <li key={to} className="flex-1">
+              <NavLink
+                to={to}
+                className="flex flex-col items-center gap-1 py-3 text-xs"
+                style={{
+                  color: active ? color : 'var(--muted-foreground)',
+                  fontWeight: active ? 500 : 400,
+                }}
+              >
+                <Icon className="h-6 w-6" />
+                {t(key)}
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
