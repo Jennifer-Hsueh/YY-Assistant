@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
+import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -28,8 +29,11 @@ function ProtectedLayout({ children }) {
 
   return (
     <div className="min-h-screen">
-      <TopBar />
-      {children}
+      <Sidebar />
+      <div className="md:pl-56">
+        <TopBar />
+        {children}
+      </div>
       <BottomNav />
     </div>
   );
