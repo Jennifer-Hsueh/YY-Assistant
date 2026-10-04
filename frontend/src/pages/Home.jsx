@@ -39,7 +39,7 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
-    <div className="relative mx-auto max-w-xl px-4 py-6 pb-24">
+    <div className="relative mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-4xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
 <img
   src="/home-watermark-logo.png"
@@ -80,11 +80,11 @@ export default function Home() {
         </Card>
       </Link>
 
-      <div className="space-y-5">
+      <div className="grid gap-5 md:grid-cols-2">
         {blocks.map(({ to, Icon, titleKey, subtitleKey, color }) => (
-          <Link key={to} to={to} className="block">
+          <Link key={to} to={to} className="block h-full">
             <Card
-              className="border-none transition-transform active:scale-[0.99]"
+              className="h-full border-none transition-transform active:scale-[0.99]"
               style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, white), color-mix(in srgb, ${color} 20%, white))` }}
             >
               <CardContent className="flex items-center gap-4 p-5">
