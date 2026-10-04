@@ -190,7 +190,7 @@ export default function Transactions() {
   }, {});
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="mb-3 flex items-center justify-between">
         <h1 className="text-lg font-semibold">{t('tx_pageTitle')}</h1>
         <div className="flex rounded-lg bg-muted p-1 text-sm">
@@ -199,6 +199,9 @@ export default function Transactions() {
         </div>
       </div>
       <LedgerSubNav />
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div className="md:sticky md:top-6 md:order-2">
 
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
@@ -338,7 +341,9 @@ export default function Transactions() {
           )}
         </CardContent>
       </Card>
+      </div>
 
+      <div className="md:order-1">
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'list' ? (
@@ -418,6 +423,8 @@ export default function Transactions() {
       ) : (
         <CalendarView grouped={grouped} weekdays={t('cal_weekdays')} />
       )}
+      </div>
+      </div>
     </div>
   );
 }
