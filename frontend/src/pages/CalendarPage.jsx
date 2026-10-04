@@ -160,9 +160,12 @@ export default function CalendarPage() {
   }, [searchQuery, searchType]);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
+      <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
@@ -232,6 +235,9 @@ export default function CalendarPage() {
         </Card>
       )}
 
+      </div>
+
+      <div className="md:col-start-1 md:row-span-2 md:row-start-1">
       <Card className="mb-3">
         <CardContent className="p-3">
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
@@ -249,7 +255,7 @@ export default function CalendarPage() {
                   type="button"
                   key={idx}
                   onClick={() => handleDayClick(dateKey)}
-                  className={`flex min-h-14 flex-col items-center gap-0.5 rounded-md py-1 text-xs ${isSelected ? 'ring-1 ring-primary' : 'hover:bg-muted/50'}`}
+                  className={`flex min-h-14 flex-col md:min-h-20 items-center gap-0.5 rounded-md py-1 text-xs ${isSelected ? 'ring-1 ring-primary' : 'hover:bg-muted/50'}`}
                   style={hasEvents ? { backgroundColor: pastelForDate(dateKey) } : undefined}
                 >
                   <span>{day}</span>
@@ -265,7 +271,9 @@ export default function CalendarPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
+      <div className="md:col-start-2 md:row-start-2">
       {/* 未選擇任何模式:點日期只顯示當日行程,沒點日期就空白 */}
       {!actionMode && selectedDay && (
         <Card>
@@ -406,6 +414,9 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       )}
+
+      </div>
+      </div>
 
       {loading && <p className="mt-4 text-sm text-muted-foreground">{t('loading')}</p>}
     </div>
