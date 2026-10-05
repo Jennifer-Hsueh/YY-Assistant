@@ -85,7 +85,7 @@ export default function Categories() {
   const typeLabel = { expense: t('type_expense'), income: t('type_income'), general: t('type_general') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold">{t('cat_pageTitle')}</h1>
         <Link to="/transactions" className="text-sm text-muted-foreground underline">{t('cat_back_to_transactions')}</Link>
@@ -93,6 +93,8 @@ export default function Categories() {
 
       {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
 
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div className="md:sticky md:top-6 md:order-2">
       <Card className="mb-6">
         <CardContent className="p-4">
           <form onSubmit={handleCreate} className="flex gap-2">
@@ -115,7 +117,9 @@ export default function Categories() {
           </form>
         </CardContent>
       </Card>
+      </div>
 
+      <div className="md:order-1">
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
@@ -162,6 +166,8 @@ export default function Categories() {
           </div>
         </Card>
       )}
+      </div>
+      </div>
     </div>
   );
 }
