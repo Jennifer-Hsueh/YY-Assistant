@@ -89,16 +89,31 @@ export default function Accounts() {
   const pickedAccount = accounts.find((a) => a.id === pickedId);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
       <LedgerSubNav />
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : accounts.length === 0 ? (
         <p className="mb-4 text-sm text-muted-foreground">{t('acc_no_accounts')}</p>
       ) : (
-        <div className="relative mb-6 h-40">
+        <>
+        <div className="mb-6 hidden gap-4 md:grid md:grid-cols-2">
+          {accounts.map((acc, idx) => (
+            <div
+              key={acc.id}
+              className={`h-36 rounded-2xl p-4 text-white shadow-lg ${CARD_COLORS[idx % CARD_COLORS.length]} ${pickedId === acc.id ? 'ring-4 ring-ring ring-offset-2' : ''}`}
+            >
+              <p className="text-sm opacity-80">{acc.name}</p>
+              <p className="mt-4 text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+        <div className="relative mb-6 h-40 md:hidden">
           {accounts.map((acc, idx) => {
             const offset = idx - activeIndex;
             if (Math.abs(offset) > 2) return null;
@@ -116,8 +131,11 @@ export default function Accounts() {
             );
           })}
         </div>
+        </>
       )}
+      </div>
 
+      <div className="md:sticky md:top-6">
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button onClick={() => switchMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
@@ -197,6 +215,8 @@ export default function Accounts() {
           )}
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }
