@@ -97,9 +97,12 @@ export default function RecurringMoney() {
   const kindLabel = { expense: t('rec_kind_expense'), income: t('rec_kind_income') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
@@ -133,7 +136,9 @@ export default function RecurringMoney() {
           {items.length === 0 && <p className="text-sm text-muted-foreground">{t('rec_no_items')}</p>}
         </div>
       )}
+      </div>
 
+      <div className="md:sticky md:top-6">
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
@@ -201,6 +206,8 @@ export default function RecurringMoney() {
           )}
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }
