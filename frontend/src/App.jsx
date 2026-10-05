@@ -28,7 +28,7 @@ function ProtectedLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip">
       <Sidebar />
       <div className="md:pl-56">
         <TopBar />
