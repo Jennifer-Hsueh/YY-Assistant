@@ -25,6 +25,7 @@ export default function Accounts() {
   const [pickedId, setPickedId] = useState(null);
   const [editName, setEditName] = useState('');
   const [actionError, setActionError] = useState('');
+  const [rates, setRates] = useState({ TWD: 1 });
 
   async function load() {
     setLoading(true);
@@ -39,6 +40,18 @@ export default function Accounts() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const currencies = [...new Set(accounts.map((a) => a.currency || 'TWD'))].filter((c) => c !== 'TWD');
+    if (currencies.length === 0) return;
+    Promise.all(
+      currencies.map((c) =>
+        api.getExchangeRate(c, 'TWD')
+          .then(({ rate }) => [c, rate])
+          .catch(() => [c, null])
+      )
+    ).then((pairs) => setRates((prev) => ({ ...prev, ...Object.fromEntries(pairs) })));
+  }, [accounts]);
 
   function switchMode(newMode) {
     setMode(newMode);
@@ -88,6 +101,16 @@ export default function Accounts() {
   const pickingMode = (mode === 'edit' || mode === 'delete') && !pickedId;
   const pickedAccount = accounts.find((a) => a.id === pickedId);
 
+  const subtotals = accounts.reduce((acc, a) => {
+    const c = a.currency || 'TWD';
+    acc[c] = (acc[c] || 0) + Number(a.balance);
+    return acc;
+  }, {});
+  const ratesReady = Object.keys(subtotals).every((c) => rates[c] != null);
+  const totalTwd = ratesReady
+    ? Object.entries(subtotals).reduce((sum, [c, v]) => sum + v * rates[c], 0)
+    : null;
+
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
@@ -95,6 +118,22 @@ export default function Accounts() {
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div>
+
+      {!loading && accounts.length > 0 && (
+        <Card className="mb-4">
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">{t('acc_total_assets')}</p>
+            <p className="mt-1 text-2xl font-semibold">
+              {totalTwd == null ? '—' : `TWD ${Math.round(totalTwd).toLocaleString()}`}
+            </p>
+            {Object.keys(subtotals).length > 1 && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {Object.entries(subtotals).map(([c, v]) => `${c} ${v.toLocaleString()}`).join(' · ')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
