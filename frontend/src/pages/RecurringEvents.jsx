@@ -92,9 +92,12 @@ export default function RecurringEvents() {
   const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="mb-3 text-lg font-semibold">{t('sub_recurring_events')}</h1>
       <CalendarSubNav />
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
@@ -128,7 +131,9 @@ export default function RecurringEvents() {
           {items.length === 0 && <p className="text-sm text-muted-foreground">{t('rec_no_items')}</p>}
         </div>
       )}
+      </div>
 
+      <div className="md:sticky md:top-6">
       <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
@@ -187,6 +192,8 @@ export default function RecurringEvents() {
           )}
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }
