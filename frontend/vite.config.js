@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: '獨立助理 APP',
-        short_name: '助理APP',
+        name: 'YY手帳 Assistant',
+        short_name: 'YY手帳',
         description: '記帳、行事曆、心情日誌的個人助理應用',
         theme_color: '#111827',
         background_color: '#ffffff',
