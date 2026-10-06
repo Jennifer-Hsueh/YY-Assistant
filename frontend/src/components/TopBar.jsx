@@ -10,10 +10,10 @@ export default function TopBar() {
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 pt-2 pb-4">
         <div className="flex items-end gap-4">
-          <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.4, marginBottom: '-12px' }} />
-          <div className="flex items-end gap-1.5 leading-none">
-            <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', transform: 'translateY(-4px)', display: 'inline-block' }}>YY手帳</span>
-            <span className="text-muted-foreground" style={{ fontSize: '12px', transform: 'translateY(-5px)', display: 'inline-block' }}>Assistant</span>
+          <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.6, marginBottom: '-12px' }} />
+          <div className="flex flex-col items-start gap-1 leading-none">
+            <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', display: 'inline-block' }}>YY手帳</span>
+            <span className="text-muted-foreground" style={{ fontSize: '12px', display: 'inline-block' }}>Assistant</span>
           </div>
         </div>
         <div className="flex items-end gap-2">
