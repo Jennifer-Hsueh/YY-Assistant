@@ -44,8 +44,8 @@ export default function Home() {
 <img
   src="/home-watermark-logo.png"
   alt=""
-  className="pointer-events-none absolute opacity-[0.09]"
-  style={{ width: '340px', maxWidth: 'none', right: '-20px', bottom: '48px' }}
+  className="pointer-events-none absolute right-4 opacity-[0.09] md:right-8"
+  style={{ width: '340px', maxWidth: 'none', bottom: '48px' }}
 />
 
       <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
