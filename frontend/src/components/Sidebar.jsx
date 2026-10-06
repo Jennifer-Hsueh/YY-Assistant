@@ -12,7 +12,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-border bg-card/95 backdrop-blur md:flex">
       <div className="flex items-end gap-3 px-5 py-5">
-        <img src="/round-logo.png" alt={t('appName')} className="h-12 w-12 rounded-full" />
+        <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.4, marginBottom: '-12px' }} />
         <div className="flex items-end gap-1.5 leading-none">
           <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', transform: 'translateY(-4px)', display: 'inline-block' }}>YY手帳</span>
           <span className="text-muted-foreground" style={{ fontSize: '12px', transform: 'translateY(-5px)', display: 'inline-block' }}>Assistant</span>

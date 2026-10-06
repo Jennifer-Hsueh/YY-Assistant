@@ -8,9 +8,9 @@ export default function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-2">
+      <div className="mx-auto flex max-w-xl items-center justify-between px-4 pt-2 pb-4">
         <div className="flex items-end gap-4">
-          <img src="/round-logo.png" alt={t('appName')} className="h-12 w-12 rounded-full" />
+          <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.4, marginBottom: '-12px' }} />
           <div className="flex items-end gap-1.5 leading-none">
             <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', transform: 'translateY(-4px)', display: 'inline-block' }}>YY手帳</span>
             <span className="text-muted-foreground" style={{ fontSize: '12px', transform: 'translateY(-5px)', display: 'inline-block' }}>Assistant</span>
