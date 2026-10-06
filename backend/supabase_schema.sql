@@ -42,9 +42,9 @@ create table if not exists yy_categories (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references yy_users(id) on delete cascade,
   name text not null,
-  type text not null check (type in ('income', 'expense', 'general')) default 'general',
+  type text not null check (type in ('income', 'expense', 'general', 'event')) default 'general',
   created_at timestamptz not null default now(),
-  unique (user_id, name)
+  unique (user_id, name, type)
 );
 
 -- Calendar events (行事曆) — Google sync fields are here but unused until phase 2

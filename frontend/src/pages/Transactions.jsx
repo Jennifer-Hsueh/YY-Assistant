@@ -48,7 +48,7 @@ export default function Transactions() {
       ]);
       setTransactions(transactions);
       setAccounts(accounts);
-      setCategories(categories);
+      setCategories(categories.filter((c) => c.type !== 'event'));
     } catch (err) {
       console.error(err);
     } finally {

@@ -64,6 +64,7 @@ export default function App() {
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
 
             <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />
+            <Route path="/calendar-categories" element={<ProtectedLayout><Categories scope="calendar" /></ProtectedLayout>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

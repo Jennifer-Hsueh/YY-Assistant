@@ -42,7 +42,7 @@ export default function CalendarPage() {
         api.listCategories(),
       ]);
       setEvents(events);
-      setCategories(categories.filter((c) => c.type === 'general'));
+      setCategories(categories.filter((c) => c.type === 'event'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -181,7 +181,7 @@ export default function CalendarPage() {
           onClick={() => switchActionMode('delete')}
           className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
         >{t('mode_delete')}</button>
-        <Link to="/categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
+        <Link to="/calendar-categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
       </div>
 
       <div className="mb-3 flex gap-2">
@@ -326,7 +326,7 @@ export default function CalendarPage() {
                 rows={2}
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               />
-              <Link to="/categories" className="block text-right text-xs text-muted-foreground underline">
+              <Link to="/calendar-categories" className="block text-right text-xs text-muted-foreground underline">
                 {t('tx_manage_categories')}
               </Link>
               <Button type="submit" className="w-full">{t('cal_add_event')}</Button>

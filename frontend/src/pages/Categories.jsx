@@ -7,14 +7,15 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
-export default function Categories() {
+export default function Categories({ scope = 'ledger' }) {
+  const isCalendar = scope === 'calendar';
   const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState('general');
+  const [newType, setNewType] = useState(isCalendar ? 'event' : 'general');
 
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -25,7 +26,7 @@ export default function Categories() {
     setLoading(true);
     try {
       const { categories } = await api.listCategories();
-      setCategories(categories);
+      setCategories(categories.filter((c) => (isCalendar ? c.type === 'event' : c.type !== 'event')));
     } catch (err) {
       console.error(err);
       setError(t('cat_error_load'));
@@ -43,7 +44,7 @@ export default function Categories() {
     try {
       await api.createCategory({ name: newName.trim(), type: newType });
       setNewName('');
-      setNewType('general');
+      setNewType(isCalendar ? 'event' : 'general');
       load();
     } catch (err) {
       console.error(err);
@@ -85,10 +86,10 @@ export default function Categories() {
   const typeLabel = { expense: t('type_expense'), income: t('type_income'), general: t('type_general') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">{t('cat_pageTitle')}</h1>
-        <Link to="/transactions" className="text-sm text-muted-foreground underline">{t('cat_back_to_transactions')}</Link>
+        <h1 className="text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
+        <Link to={isCalendar ? '/calendar' : '/transactions'} className="text-sm text-muted-foreground underline">{t(isCalendar ? 'cat_back_to_calendar' : 'cat_back_to_transactions')}</Link>
       </div>
 
       {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
@@ -105,6 +106,7 @@ export default function Categories() {
               onChange={(e) => setNewName(e.target.value)}
               required
             />
+            {!isCalendar && (
             <Select value={newType} onValueChange={setNewType}>
               <SelectTrigger className="w-32 whitespace-nowrap"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -113,6 +115,7 @@ export default function Categories() {
                 <SelectItem value="income">{t('type_income')}</SelectItem>
               </SelectContent>
             </Select>
+            )}
             <Button type="submit">{t('acc_add')}</Button>
           </form>
         </CardContent>
@@ -150,7 +153,7 @@ export default function Categories() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span>{cat.name}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>
+                      {!isCalendar && <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>}
                     </div>
                     <div className="flex gap-3">
                       <button type="button" onClick={() => startEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_rename')}</button>

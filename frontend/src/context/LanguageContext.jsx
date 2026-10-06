@@ -114,6 +114,8 @@ const dictionary = {
     // 帳戶
     acc_pageTitle: '帳戶管理',
     acc_total_assets: '總資產',
+    cat_calendar_pageTitle: '行程分類管理',
+    cat_back_to_calendar: '回行事曆',
     acc_new_name_placeholder: '新帳戶名稱',
     acc_add: '新增',
     acc_no_accounts: '還沒有任何帳戶,先新增一個吧',
@@ -296,6 +298,8 @@ const dictionary = {
 
     acc_pageTitle: 'Accounts',
     acc_total_assets: 'Total assets',
+    cat_calendar_pageTitle: 'Event categories',
+    cat_back_to_calendar: 'Back to calendar',
     acc_new_name_placeholder: 'New account name',
     acc_add: 'Add',
     acc_no_accounts: 'No accounts yet — add one to get started',
