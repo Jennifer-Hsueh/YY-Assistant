@@ -17,12 +17,12 @@ async function listCategories(req, res) {
 
 async function createCategory(req, res) {
   try {
-    const { name, type } = req.body;
+    const { name, type, color } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
 
     const { data, error } = await supabase
       .from('yy_categories')
-      .insert({ user_id: req.user.id, name, type: type || 'general' })
+      .insert({ user_id: req.user.id, name, type: type || 'general', color: color || null })
       .select()
       .single();
     if (error) {
@@ -45,8 +45,8 @@ async function createCategory(req, res) {
 async function updateCategory(req, res) {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'name is required' });
+    const { name, color } = req.body;
+    if (!name && color === undefined) return res.status(400).json({ error: 'name or color is required' });
 
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_categories')
@@ -62,7 +62,7 @@ async function updateCategory(req, res) {
 
     const { data, error } = await supabase
       .from('yy_categories')
-      .update({ name })
+      .update({ ...(name ? { name } : {}), ...(color !== undefined ? { color } : {}) })
       .eq('id', id)
       .select()
       .single();
@@ -76,7 +76,7 @@ async function updateCategory(req, res) {
     // Best-effort propagation to the free-text category fields elsewhere.
     // These run independently; if one fails it's logged but doesn't fail the rename.
     const tables = ['yy_transactions', 'yy_events', 'yy_recurring_items'];
-    await Promise.all(
+    if (name && name !== oldName) await Promise.all(
       tables.map((table) =>
         supabase.from(table).update({ category: name }).eq('user_id', req.user.id).eq('category', oldName)
       )

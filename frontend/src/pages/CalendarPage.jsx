@@ -92,7 +92,7 @@ export default function CalendarPage() {
       title: form.title,
       start_at: new Date(startAt).toISOString(),
       category: form.category || null,
-      color: form.color,
+      color: form.category ? categoryColor(form.category) : '#9CA3AF',
       note: form.note || null,
     };
     if (actionMode === 'edit' && activeId) {
@@ -128,6 +128,8 @@ export default function CalendarPage() {
 
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
   const weekdays = t('cal_weekdays');
+  const categoryColor = (name) => categories.find((c) => c.name === name)?.color || '#9CA3AF';
+  const eventColor = (ev) => (ev.category ? categoryColor(ev.category) : '#9CA3AF');
 
   const [searchType, setSearchType] = useState('title');
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,7 +200,7 @@ export default function CalendarPage() {
             <SelectContent>
               <SelectItem value="none">{t('cal_search_select_category')}</SelectItem>
               {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                <SelectItem key={cat.id} value={cat.name}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || '#9CA3AF' }} />{cat.name}</span></SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -224,7 +226,7 @@ export default function CalendarPage() {
               searchResults.map((ev) => (
                 <div key={ev.id} className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                     <span>{ev.title}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
@@ -261,7 +263,7 @@ export default function CalendarPage() {
                   <span>{day}</span>
                   {dayEvents.slice(0, 2).map((ev) => (
                     <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
-                      <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                      <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                       <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
                     </span>
                   ))}
@@ -285,7 +287,7 @@ export default function CalendarPage() {
               <div className="space-y-1">
                 {selectedDayEvents.map((ev) => (
                   <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                     <span>{ev.title}</span>
                     {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
                   </div>
@@ -305,7 +307,7 @@ export default function CalendarPage() {
               <div className="flex gap-2">
                 <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                 <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
-                <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
+                
               </div>
               <Select
                 value={form.category || 'none'}
@@ -315,7 +317,7 @@ export default function CalendarPage() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_no_category')}</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.name}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || '#9CA3AF' }} />{cat.name}</span></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -356,7 +358,7 @@ export default function CalendarPage() {
                           onClick={() => pickEvent(ev)}
                           className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
                         >
-                          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
+                          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                           <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
                           <span>{ev.title}</span>
                           {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
@@ -372,7 +374,7 @@ export default function CalendarPage() {
                 <div className="flex gap-2">
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
-                  <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded-md border border-input" />
+                  
                 </div>
                 <Select
                   value={form.category || 'none'}
@@ -382,7 +384,7 @@ export default function CalendarPage() {
                   <SelectContent>
                     <SelectItem value="none">{t('tx_no_category')}</SelectItem>
                     {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      <SelectItem key={cat.id} value={cat.name}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || '#9CA3AF' }} />{cat.name}</span></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

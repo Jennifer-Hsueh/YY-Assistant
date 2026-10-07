@@ -13,6 +13,7 @@ import Transactions from './pages/Transactions';
 import CalendarPage from './pages/CalendarPage';
 import Accounts from './pages/Accounts';
 import RecurringMoney from './pages/RecurringMoney';
+import LedgerStats from './pages/LedgerStats';
 import RecurringEvents from './pages/RecurringEvents';
 import Categories from './pages/Categories';
 import Announcements from './pages/Announcements';
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/transactions" element={<ProtectedLayout><Transactions /></ProtectedLayout>} />
             <Route path="/accounts" element={<ProtectedLayout><Accounts /></ProtectedLayout>} />
             <Route path="/recurring-money" element={<ProtectedLayout><RecurringMoney /></ProtectedLayout>} />
+            <Route path="/ledger-stats" element={<ProtectedLayout><LedgerStats /></ProtectedLayout>} />
 
             <Route path="/calendar" element={<ProtectedLayout><CalendarPage /></ProtectedLayout>} />
             <Route path="/recurring-events" element={<ProtectedLayout><RecurringEvents /></ProtectedLayout>} />

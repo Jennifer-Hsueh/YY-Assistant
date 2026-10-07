@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -16,6 +16,8 @@ export default function Categories({ scope = 'ledger' }) {
 
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState(isCalendar ? 'event' : 'general');
+  const [newColor, setNewColor] = useState('#4F46E5');
+  const colorTimers = useRef({});
 
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -42,7 +44,7 @@ export default function Categories({ scope = 'ledger' }) {
     if (!newName.trim()) return;
     setError('');
     try {
-      await api.createCategory({ name: newName.trim(), type: newType });
+      await api.createCategory({ name: newName.trim(), type: newType, ...(isCalendar ? { color: newColor } : {}) });
       setNewName('');
       setNewType(isCalendar ? 'event' : 'general');
       load();
@@ -70,6 +72,17 @@ export default function Categories({ scope = 'ledger' }) {
       console.error(err);
       setError(t('cat_error_rename'));
     }
+  }
+
+  function saveColor(id, color) {
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, color } : c)));
+    clearTimeout(colorTimers.current[id]);
+    colorTimers.current[id] = setTimeout(() => {
+      api.updateCategory(id, { color }).catch((err) => {
+        console.error(err);
+        setError(t('cat_error_rename'));
+      });
+    }, 400);
   }
 
   async function confirmDelete(id) {
@@ -116,6 +129,9 @@ export default function Categories({ scope = 'ledger' }) {
               </SelectContent>
             </Select>
             )}
+            {isCalendar && (
+              <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="h-9 w-12 shrink-0 cursor-pointer rounded-md border border-input" />
+            )}
             <Button type="submit">{t('acc_add')}</Button>
           </form>
         </CardContent>
@@ -152,6 +168,9 @@ export default function Categories({ scope = 'ledger' }) {
                 ) : (
                   <div className="flex items-center justify-between">
                     <div>
+                      {isCalendar && (
+                        <input type="color" value={cat.color || '#9CA3AF'} onChange={(e) => saveColor(cat.id, e.target.value)} className="mr-2 h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0 align-middle" />
+                      )}
                       <span>{cat.name}</span>
                       {!isCalendar && <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>}
                     </div>

@@ -5,6 +5,7 @@ const subTabs = [
   { to: '/transactions', key: 'tx_pageTitle' },
   { to: '/recurring-money', key: 'sub_recurring' },
   { to: '/accounts', key: 'acc_pageTitle' },
+  { to: '/ledger-stats', key: 'sub_stats' },
 ];
 
 export default function LedgerSubNav() {
