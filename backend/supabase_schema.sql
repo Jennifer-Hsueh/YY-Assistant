@@ -77,6 +77,8 @@ create table if not exists yy_recurring_items (
   next_trigger_date date not null,
   reminder_method text not null default 'push' check (reminder_method in ('push', 'in_app', 'both')),
   is_active boolean not null default true,
+  account_id uuid references yy_accounts(id) on delete set null,
+  end_date date,
   created_at timestamptz not null default now()
 );
 

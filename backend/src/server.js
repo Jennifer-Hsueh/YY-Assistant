@@ -9,7 +9,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const recurringRoutes = require('./routes/recurringRoutes');
 const pushRoutes = require('./routes/pushRoutes');
-const { startRecurringScheduler } = require('./jobs/recurringScheduler');
+const { startRecurringScheduler, runDailyRecurringScan } = require('./jobs/recurringScheduler');
 const profileRoutes = require('./routes/profileRoutes');
 const bugReportRoutes = require('./routes/bugReportRoutes');
 const app = express();
@@ -19,6 +19,21 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+
+// Called daily by cron-job.org so recurring items run even if the 08:00 tick
+// was missed while the instance was asleep. Protected by CRON_SECRET.
+app.get('/cron/recurring', async (req, res) => {
+  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    const result = await runDailyRecurringScan();
+    return res.json({ status: 'ok', ...result });
+  } catch (err) {
+    console.error('[cron/recurring]', err);
+    return res.status(500).json({ error: 'Scan failed' });
+  }
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);

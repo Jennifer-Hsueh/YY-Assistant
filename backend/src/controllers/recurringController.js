@@ -27,6 +27,8 @@ async function createRecurringItem(req, res) {
       day_of_week,
       next_trigger_date,
       reminder_method, // user-configurable: 'push' | 'in_app' | 'both'
+      account_id,
+      end_date,
     } = req.body;
 
     if (!kind || !title || !frequency || !next_trigger_date) {
@@ -46,6 +48,8 @@ async function createRecurringItem(req, res) {
         day_of_week: day_of_week || null,
         next_trigger_date,
         reminder_method: reminder_method || 'push',
+        account_id: account_id || null,
+        end_date: end_date || null,
         is_active: true,
       })
       .select()

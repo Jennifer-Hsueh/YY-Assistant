@@ -71,7 +71,7 @@ export default function RecurringEvents() {
       await api.createRecurringItem({
         kind: 'event', title: form.title,
         frequency: 'monthly', day_of_month: Number(form.day_of_month),
-        next_trigger_date: nextDate.toISOString().slice(0, 10), reminder_method: form.reminder_method,
+        next_trigger_date: `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`, reminder_method: form.reminder_method,
       });
     }
     resetAfterAction();
