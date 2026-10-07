@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestPushToken } from '../lib/firebase';
@@ -32,6 +32,23 @@ export default function Settings() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ title: '', description: '' });
   const [reportStatus, setReportStatus] = useState('idle');
+
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearText, setClearText] = useState('');
+  const [clearStatus, setClearStatus] = useState('idle');
+
+  async function clearAllData() {
+    setClearStatus('clearing');
+    try {
+      await api.clearAllData();
+      setClearStatus('done');
+      setClearOpen(false);
+      setClearText('');
+    } catch (err) {
+      console.error(err);
+      setClearStatus('failed');
+    }
+  }
 
   useEffect(() => {
     async function loadProfile() {
@@ -253,6 +270,44 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="mt-3">
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-red-600">
+              <Trash2 className="h-4 w-4" />
+              {t('settings_clear_data')}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('settings_clear_data_desc')}</p>
+            {clearStatus === 'done' && <p className="mt-1 text-xs text-green-600">{t('settings_clear_done')}</p>}
+          </div>
+          <Button size="sm" variant="destructive" onClick={() => { setClearOpen(true); setClearStatus('idle'); setClearText(''); }}>
+            {t('settings_clear_button')}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {clearOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => clearStatus !== 'clearing' && setClearOpen(false)}>
+          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="flex items-center gap-2 font-semibold text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              {t('settings_clear_confirm_title')}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t('settings_clear_confirm_body')}</p>
+            <Input className="mt-3" value={clearText} onChange={(e) => setClearText(e.target.value)} placeholder={t('settings_clear_keyword')} />
+            {clearStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_clear_failed')}</p>}
+            <div className="mt-4 flex gap-2">
+              <Button variant="destructive" className="flex-1" disabled={clearText !== t('settings_clear_keyword') || clearStatus === 'clearing'} onClick={clearAllData}>
+                {clearStatus === 'clearing' ? t('loading') : t('settings_clear_button')}
+              </Button>
+              <Button variant="outline" className="flex-1" disabled={clearStatus === 'clearing'} onClick={() => setClearOpen(false)}>
+                {t('cancel')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
       </div>
     </div>

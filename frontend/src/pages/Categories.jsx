@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,7 +17,8 @@ export default function Categories({ scope = 'ledger' }) {
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState(isCalendar ? 'event' : 'general');
   const [newColor, setNewColor] = useState('#4F46E5');
-  const colorTimers = useRef({});
+  const [colorEditingId, setColorEditingId] = useState(null);
+  const [colorDraft, setColorDraft] = useState('#9CA3AF');
 
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -58,6 +59,7 @@ export default function Categories({ scope = 'ledger' }) {
     setEditingId(cat.id);
     setEditName(cat.name);
     setDeletingId(null);
+    setColorEditingId(null);
   }
 
   async function saveEdit(id) {
@@ -74,15 +76,23 @@ export default function Categories({ scope = 'ledger' }) {
     }
   }
 
-  function saveColor(id, color) {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, color } : c)));
-    clearTimeout(colorTimers.current[id]);
-    colorTimers.current[id] = setTimeout(() => {
-      api.updateCategory(id, { color }).catch((err) => {
-        console.error(err);
-        setError(t('cat_error_rename'));
-      });
-    }, 400);
+  function startColorEdit(cat) {
+    setColorEditingId(cat.id);
+    setColorDraft(cat.color || '#9CA3AF');
+    setEditingId(null);
+    setDeletingId(null);
+  }
+
+  async function saveColor(id) {
+    setError('');
+    try {
+      await api.updateCategory(id, { color: colorDraft });
+      setColorEditingId(null);
+      load();
+    } catch (err) {
+      console.error(err);
+      setError(t('cat_error_rename'));
+    }
   }
 
   async function confirmDelete(id) {
@@ -157,6 +167,13 @@ export default function Categories({ scope = 'ledger' }) {
                     <Button type="button" size="sm" onClick={() => saveEdit(cat.id)}>{t('save')}</Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => setEditingId(null)}>{t('cancel')}</Button>
                   </div>
+                ) : colorEditingId === cat.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1">{cat.name}</span>
+                    <input type="color" value={colorDraft} onChange={(e) => setColorDraft(e.target.value)} className="h-8 w-12 cursor-pointer rounded-md border border-input" />
+                    <Button type="button" size="sm" onClick={() => saveColor(cat.id)}>{t('save')}</Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setColorEditingId(null)}>{t('cancel')}</Button>
+                  </div>
                 ) : deletingId === cat.id ? (
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">{t('cat_confirm_delete_prefix')}{cat.name}{t('cat_confirm_delete_suffix')}</span>
@@ -169,13 +186,14 @@ export default function Categories({ scope = 'ledger' }) {
                   <div className="flex items-center justify-between">
                     <div>
                       {isCalendar && (
-                        <input type="color" value={cat.color || '#9CA3AF'} onChange={(e) => saveColor(cat.id, e.target.value)} className="mr-2 h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0 align-middle" />
+                        <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ backgroundColor: cat.color || '#9CA3AF' }} />
                       )}
                       <span>{cat.name}</span>
                       {!isCalendar && <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>}
                     </div>
                     <div className="flex gap-3">
                       <button type="button" onClick={() => startEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_rename')}</button>
+                      {isCalendar && <button type="button" onClick={() => startColorEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_reset_color')}</button>}
                       <button type="button" onClick={() => setDeletingId(cat.id)} className="text-xs text-red-500 underline">{t('mode_delete')}</button>
                     </div>
                   </div>

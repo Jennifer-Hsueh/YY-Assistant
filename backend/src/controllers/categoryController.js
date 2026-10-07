@@ -50,7 +50,7 @@ async function updateCategory(req, res) {
 
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_categories')
-      .select('id, name, user_id')
+      .select('id, name, user_id, type')
       .eq('id', id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
@@ -81,6 +81,11 @@ async function updateCategory(req, res) {
         supabase.from(table).update({ category: name }).eq('user_id', req.user.id).eq('category', oldName)
       )
     );
+
+    // Event categories: keep the stored colour of existing events in sync.
+    if (color !== undefined && existing.type === 'event') {
+      await supabase.from('yy_events').update({ color: color || '#9CA3AF' }).eq('user_id', req.user.id).eq('category', name || oldName);
+    }
 
     return res.json({ category: data });
   } catch (err) {
@@ -115,4 +120,20 @@ async function deleteCategory(req, res) {
   }
 }
 
-module.exports = { listCategories, createCategory, updateCategory, deleteCategory };
+// Removes every record the user owns (accounts, transactions, events,
+// recurring items, categories). The login account and profile are kept.
+async function clearAllData(req, res) {
+  try {
+    const tables = ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_accounts'];
+    for (const table of tables) {
+      const { error } = await supabase.from(table).delete().eq('user_id', req.user.id);
+      if (error) throw error;
+    }
+    return res.json({ message: 'All data cleared' });
+  } catch (err) {
+    console.error('[categoryController.clearAllData]', err);
+    return res.status(500).json({ error: 'Failed to clear data' });
+  }
+}
+
+module.exports = { listCategories, createCategory, updateCategory, deleteCategory, clearAllData };
