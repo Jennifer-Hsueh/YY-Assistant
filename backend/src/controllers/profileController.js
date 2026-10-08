@@ -25,10 +25,7 @@ async function updateProfile(req, res) {
     const updates = {};
     if (username !== undefined) updates.username = username;
     if (home_image !== undefined) {
-      const valid = home_image === null
-        || (typeof home_image === 'string'
-          && /^data:image\/(png|jpeg|webp);base64,/.test(home_image)
-          && home_image.length <= 1500000);
+      const valid = home_image === null || (typeof home_image === 'string' && /^\/home-images\/yy-[1-6]\.png$/.test(home_image));
       if (!valid) return res.status(400).json({ error: 'Invalid image' });
       updates.home_image = home_image;
     }

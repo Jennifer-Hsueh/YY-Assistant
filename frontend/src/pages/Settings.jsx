@@ -16,70 +16,15 @@ function usePushPreference(storageKey) {
   return [enabled, setEnabled];
 }
 
-// Makes a light, uniform background transparent — only the area connected to the
-// image edges, so light parts inside the drawing (e.g. a white ghost) are kept.
-function removeLightBackground(ctx, w, h) {
-  const imgData = ctx.getImageData(0, 0, w, h);
-  const d = imgData.data;
-  const corners = [0, w - 1, (h - 1) * w, h * w - 1].map((p) => [d[p * 4], d[p * 4 + 1], d[p * 4 + 2], d[p * 4 + 3]]);
-  if (corners.some((c) => c[3] < 250)) return false;
-  const bg = [0, 1, 2].map((k) => corners.reduce((s, c) => s + c[k], 0) / 4);
-  if (!bg.every((v) => v > 190)) return false;
-  if (!corners.every((c) => Math.hypot(c[0] - bg[0], c[1] - bg[1], c[2] - bg[2]) < 30)) return false;
-
-  const dist = (p) => Math.hypot(d[p * 4] - bg[0], d[p * 4 + 1] - bg[1], d[p * 4 + 2] - bg[2]);
-  const seen = new Uint8Array(w * h);
-  const queue = [];
-  for (let x = 0; x < w; x++) queue.push(x, (h - 1) * w + x);
-  for (let y = 0; y < h; y++) queue.push(y * w, y * w + w - 1);
-  while (queue.length) {
-    const p = queue.pop();
-    if (seen[p]) continue;
-    seen[p] = 1;
-    const dv = dist(p);
-    if (dv >= 45) continue;
-    d[p * 4 + 3] = Math.round(d[p * 4 + 3] * Math.min(1, Math.max(0, (dv - 15) / 30)));
-    const x = p % w;
-    if (x > 0) queue.push(p - 1);
-    if (x < w - 1) queue.push(p + 1);
-    if (p >= w) queue.push(p - w);
-    if (p < w * (h - 1)) queue.push(p + w);
-  }
-  ctx.putImageData(imgData, 0, 0);
-  return true;
-}
-
-// Scales an image file to a fixed width (keeping its aspect ratio) and returns a data URL.
-// Stored at 2x so it stays sharp on high-density screens; displayed at 280px.
-function resizeImage(file, width) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const render = (w) => {
-        const h = Math.round((img.naturalHeight * w) / img.naturalWidth);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const cleared = removeLightBackground(ctx, w, h);
-        return cleared || file.type === 'image/png' || file.type === 'image/webp'
-          ? canvas.toDataURL('image/png')
-          : canvas.toDataURL('image/jpeg', 0.85);
-      };
-      let data = render(width);
-      if (data.length > 1400000) data = render(Math.round(width * 0.7));
-      resolve(data);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Image load failed'));
-    };
-    img.src = url;
-  });
-}
+const HOME_IMAGES = [
+  null,
+  '/home-images/yy-1.png',
+  '/home-images/yy-2.png',
+  '/home-images/yy-3.png',
+  '/home-images/yy-4.png',
+  '/home-images/yy-5.png',
+  '/home-images/yy-6.png',
+];
 
 export default function Settings() {
   const { user } = useAuth();
@@ -104,30 +49,10 @@ export default function Settings() {
 
   const [imageStatus, setImageStatus] = useState('idle');
 
-  async function handleImageFile(e) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setImageStatus('invalid');
-      return;
-    }
+  async function selectImage(src) {
     setImageStatus('saving');
     try {
-      const dataUrl = await resizeImage(file, 560);
-      const { profile } = await api.updateProfile({ home_image: dataUrl });
-      setProfile(profile);
-      setImageStatus('idle');
-    } catch (err) {
-      console.error(err);
-      setImageStatus('failed');
-    }
-  }
-
-  async function resetImage() {
-    setImageStatus('saving');
-    try {
-      const { profile } = await api.updateProfile({ home_image: null });
+      const { profile } = await api.updateProfile({ home_image: src });
       setProfile(profile);
       setImageStatus('idle');
     } catch (err) {
@@ -299,29 +224,23 @@ export default function Settings() {
             <ImageIcon className="h-4 w-4" />
             {t('settings_home_image')}
           </p>
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
-              <img
-                src={profile?.home_image || '/home-watermark-logo.png'}
-                alt=""
-                className="max-h-full max-w-full object-contain"
-                style={{ opacity: profile?.home_image ? 0.25 : 0.5 }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={`inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground ${imageStatus === 'saving' ? 'pointer-events-none opacity-60' : 'cursor-pointer'}`}>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
-                {imageStatus === 'saving' ? t('loading') : t('settings_home_image_upload')}
-              </label>
-              {profile?.home_image && (
-                <Button size="sm" variant="outline" disabled={imageStatus === 'saving'} onClick={resetImage}>
-                  {t('settings_home_image_reset')}
-                </Button>
-              )}
-            </div>
+          <div className="grid grid-cols-4 gap-2">
+            {HOME_IMAGES.map((src) => {
+              const selected = (profile?.home_image || null) === src;
+              return (
+                <button
+                  key={src || 'default'}
+                  type="button"
+                  disabled={imageStatus === 'saving'}
+                  onClick={() => selectImage(src)}
+                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-1 transition-colors ${selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:bg-muted'}`}
+                >
+                  <img src={src || '/home-watermark-logo.png'} alt="" className="max-h-full max-w-full object-contain" />
+                </button>
+              );
+            })}
           </div>
           {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
-          {imageStatus === 'invalid' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_invalid')}</p>}
         </CardContent>
       </Card>
       </div>
