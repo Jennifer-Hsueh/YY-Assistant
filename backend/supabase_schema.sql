@@ -124,3 +124,6 @@ alter table yy_events enable row level security;
 alter table yy_recurring_items enable row level security;
 alter table yy_password_reset_tokens enable row level security;
 alter table yy_push_subscriptions enable row level security;
+
+-- 首頁圖片（使用者上傳，280px 顯示）
+alter table yy_users add column if not exists home_image text;

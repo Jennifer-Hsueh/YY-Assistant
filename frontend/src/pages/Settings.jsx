@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestPushToken } from '../lib/firebase';
@@ -14,6 +14,32 @@ function usePushPreference(storageKey) {
     localStorage.setItem(storageKey, String(enabled));
   }, [enabled, storageKey]);
   return [enabled, setEnabled];
+}
+
+// Scales an image file to a fixed width (keeping its aspect ratio) and returns a data URL.
+// Stored at 2x so it stays sharp on high-density screens; displayed at 280px.
+function resizeImage(file, width) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = width;
+      const h = Math.round((img.naturalHeight * width) / img.naturalWidth);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      let data = file.type === 'image/png' || file.type === 'image/webp' ? canvas.toDataURL('image/png') : '';
+      if (!data || data.length > 600000) data = canvas.toDataURL('image/jpeg', 0.85);
+      resolve(data);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load failed'));
+    };
+    img.src = url;
+  });
 }
 
 export default function Settings() {
@@ -36,6 +62,40 @@ export default function Settings() {
   const [clearOpen, setClearOpen] = useState(false);
   const [clearText, setClearText] = useState('');
   const [clearStatus, setClearStatus] = useState('idle');
+
+  const [imageStatus, setImageStatus] = useState('idle');
+
+  async function handleImageFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setImageStatus('invalid');
+      return;
+    }
+    setImageStatus('saving');
+    try {
+      const dataUrl = await resizeImage(file, 560);
+      const { profile } = await api.updateProfile({ home_image: dataUrl });
+      setProfile(profile);
+      setImageStatus('idle');
+    } catch (err) {
+      console.error(err);
+      setImageStatus('failed');
+    }
+  }
+
+  async function resetImage() {
+    setImageStatus('saving');
+    try {
+      const { profile } = await api.updateProfile({ home_image: null });
+      setProfile(profile);
+      setImageStatus('idle');
+    } catch (err) {
+      console.error(err);
+      setImageStatus('failed');
+    }
+  }
 
   async function clearAllData() {
     setClearStatus('clearing');
@@ -194,6 +254,37 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      <Card className="mb-3">
+        <CardContent className="p-4">
+          <p className="mb-3 flex items-center gap-1.5 text-sm font-medium">
+            <ImageIcon className="h-4 w-4" />
+            {t('settings_home_image')}
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
+              <img
+                src={profile?.home_image || '/home-watermark-logo.png'}
+                alt=""
+                className="max-h-full max-w-full object-contain"
+                style={{ opacity: profile?.home_image ? 0.6 : 0.5 }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className={`inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground ${imageStatus === 'saving' ? 'pointer-events-none opacity-60' : 'cursor-pointer'}`}>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+                {imageStatus === 'saving' ? t('loading') : t('settings_home_image_upload')}
+              </label>
+              {profile?.home_image && (
+                <Button size="sm" variant="outline" disabled={imageStatus === 'saving'} onClick={resetImage}>
+                  {t('settings_home_image_reset')}
+                </Button>
+              )}
+            </div>
+          </div>
+          {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
+          {imageStatus === 'invalid' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_invalid')}</p>}
+        </CardContent>
+      </Card>
       </div>
 
       <div>

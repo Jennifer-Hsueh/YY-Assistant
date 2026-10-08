@@ -16,7 +16,7 @@ const app = express();
 const announcementRoutes = require('./routes/announcementRoutes');
 const exchangeRateRoutes = require('./routes/exchangeRateRoutes');
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
