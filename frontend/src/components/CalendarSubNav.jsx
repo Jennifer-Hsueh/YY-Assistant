@@ -10,7 +10,7 @@ const subTabs = [
 export default function CalendarSubNav() {
   const { t } = useLanguage();
   return (
-    <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
+    <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:hidden">
       {subTabs.map(({ to, key }) => (
         <NavLink
           key={to}

@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { LogOut, Languages } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut, Languages, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { navTabs, isTabActive } from './navTabs';
@@ -8,6 +9,23 @@ export default function Sidebar() {
   const { logout } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const groupOf = (path) => navTabs.find((tb) => tb.children && isTabActive(tb, path))?.to || null;
+  const [openGroup, setOpenGroup] = useState(() => groupOf(pathname));
+
+  // Keep the group of the current page open; only one group is open at a time.
+  useEffect(() => {
+    setOpenGroup(groupOf(pathname));
+  }, [pathname]);
+
+  function toggleGroup(tab) {
+    if (openGroup === tab.to) {
+      setOpenGroup(null);
+      return;
+    }
+    setOpenGroup(tab.to);
+    navigate(tab.children[0].to);
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-border bg-card/95 backdrop-blur md:flex">
@@ -19,25 +37,62 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3">
+      <nav className="flex-1 overflow-y-auto px-3">
         <ul className="space-y-1">
           {navTabs.map((tab) => {
-            const { to, key, Icon, color } = tab;
+            const { to, key, Icon, color, children } = tab;
             const active = isTabActive(tab, pathname);
+            if (!children) {
+              return (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+                    style={{
+                      color: active ? color : 'var(--muted-foreground)',
+                      fontWeight: active ? 500 : 400,
+                      backgroundColor: active ? 'var(--muted)' : undefined,
+                    }}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {t(key)}
+                  </NavLink>
+                </li>
+              );
+            }
+            const open = openGroup === to;
             return (
               <li key={to}>
-                <NavLink
-                  to={to}
-                  className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
-                  style={{
-                    color: active ? color : 'var(--muted-foreground)',
-                    fontWeight: active ? 500 : 400,
-                    backgroundColor: active ? 'var(--muted)' : undefined,
-                  }}
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(tab)}
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+                  style={{ color: active ? color : 'var(--muted-foreground)', fontWeight: active ? 500 : 400 }}
                 >
                   <Icon className="h-5 w-5" />
-                  {t(key)}
-                </NavLink>
+                  <span className="flex-1 text-left">{t(key)}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+                {open && (
+                  <ul className="mb-2 ml-5 mt-1 space-y-0.5 border-l border-border pl-3">
+                    {children.map((c) => (
+                      <li key={c.to}>
+                        <NavLink
+                          to={c.to}
+                          end
+                          className="block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
+                          style={({ isActive }) => ({
+                            color: isActive ? color : 'var(--muted-foreground)',
+                            fontWeight: isActive ? 500 : 400,
+                            backgroundColor: isActive ? 'var(--muted)' : undefined,
+                          })}
+                        >
+                          {t(c.key)}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             );
           })}
