@@ -305,7 +305,7 @@ export default function Settings() {
                 src={profile?.home_image || '/home-watermark-logo.png'}
                 alt=""
                 className="max-h-full max-w-full object-contain"
-                style={{ opacity: profile?.home_image ? 0.75 : 0.5 }}
+                style={{ opacity: profile?.home_image ? 0.25 : 0.5 }}
               />
             </div>
             <div className="flex flex-col gap-2">

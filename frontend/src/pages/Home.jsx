@@ -17,6 +17,7 @@ export default function Home() {
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAnn, setLoadingAnn] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [homeImgH, setHomeImgH] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -45,7 +46,7 @@ export default function Home() {
   <img
     src={profile?.home_image || '/home-watermark-logo.png'}
     alt=""
-    className={`pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-75 md:hidden' : 'opacity-[0.09] md:w-[340px]'}`}
+    className={`pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-25 md:hidden' : 'opacity-[0.09] md:w-[340px]'}`}
     style={{ maxWidth: 'none' }}
   />
 )}
@@ -107,8 +108,9 @@ export default function Home() {
         <img
           src={profile.home_image}
           alt=""
-          className="pointer-events-none ml-auto mt-8 hidden w-[280px] opacity-75 md:block"
-          style={{ maxWidth: 'none' }}
+          onLoad={(e) => setHomeImgH(e.currentTarget.offsetHeight)}
+          className="pointer-events-none relative z-0 ml-auto hidden w-[280px] opacity-25 md:block"
+          style={{ maxWidth: 'none', marginTop: -homeImgH / 2 }}
         />
       )}
     </div>
