@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestPushToken } from '../lib/firebase';
 import { api } from '../lib/api';
+import { applyTheme, getStoredTheme } from '../lib/theme';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -48,6 +49,18 @@ export default function Settings() {
   const [clearStatus, setClearStatus] = useState('idle');
 
   const [imageStatus, setImageStatus] = useState('idle');
+  const [theme, setTheme] = useState(getStoredTheme);
+
+  // 立即套用,再存到伺服器(Web 與 APP 共用同一個設定)
+  async function selectTheme(name) {
+    setTheme(applyTheme(name));
+    try {
+      const { profile } = await api.updateProfile({ theme: name });
+      setProfile(profile);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   async function selectImage(src) {
     setImageStatus('saving');
@@ -147,8 +160,8 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10">
-      <h1 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-        <SettingsIcon className="h-5 w-5" style={{ color: 'var(--ink)' }} />
+      <h1 className="page-title-row page-title mb-4 flex items-center gap-2 text-lg font-semibold">
+        <SettingsIcon className="h-5 w-5 md:hidden" style={{ color: 'var(--ink)' }} />
         {t('nav_settings')}
       </h1>
 
@@ -196,7 +209,22 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('settings_interface')}</span>
-                <span className="text-xs text-muted-foreground">{t('settings_interface_placeholder')}</span>
+                <div className="flex rounded-lg bg-muted p-1 text-xs">
+                  {[
+                    { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
+                    { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
+                  ].map(({ name, swatch, label }) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => selectTheme(name)}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${theme === name ? 'bg-card font-medium shadow-sm' : 'text-muted-foreground'}`}
+                    >
+                      <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: swatch }} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex items-center justify-between">

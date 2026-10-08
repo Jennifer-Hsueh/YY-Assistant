@@ -1,5 +1,7 @@
 const supabase = require('../config/supabase');
 
+const isHexColor = (v) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+
 async function listAccounts(req, res) {
   try {
     const { data, error } = await supabase
@@ -17,12 +19,13 @@ async function listAccounts(req, res) {
 
 async function createAccount(req, res) {
   try {
-    const { name, balance, currency } = req.body;
+    const { name, balance, currency, color } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
+    if (color != null && !isHexColor(color)) return res.status(400).json({ error: 'Invalid color' });
 
     const { data, error } = await supabase
       .from('yy_accounts')
-      .insert({ user_id: req.user.id, name, balance: balance || 0, currency: currency || 'TWD' })
+      .insert({ user_id: req.user.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null })
       .select()
       .single();
     if (error) throw error;
@@ -36,7 +39,8 @@ async function createAccount(req, res) {
 async function updateAccount(req, res) {
   try {
     const { id } = req.params;
-    const { name, balance, currency } = req.body;
+    const { name, balance, currency, color } = req.body;
+    if (color != null && !isHexColor(color)) return res.status(400).json({ error: 'Invalid color' });
 
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_accounts')
@@ -52,6 +56,7 @@ async function updateAccount(req, res) {
     if (name !== undefined) updates.name = name;
     if (balance !== undefined) updates.balance = balance;
     if (currency !== undefined) updates.currency = currency;
+    if (color !== undefined) updates.color = color;
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'Nothing to update' });
     }

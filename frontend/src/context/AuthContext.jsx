@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api } from '../lib/api';
+import { applyTheme } from '../lib/theme';
 
 const AuthContext = createContext(null);
 
@@ -8,6 +9,14 @@ export function AuthProvider({ children }) {
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;
   });
+
+  // 登入後以伺服器上的主題設定為準,讓 Web 與 APP 一致
+  useEffect(() => {
+    if (!user) return;
+    api.getProfile()
+      .then(({ profile }) => { if (profile?.theme) applyTheme(profile.theme); })
+      .catch(() => {});
+  }, [user]);
 
   const login = useCallback(async (email, password) => {
     const { user, token } = await api.login(email, password);

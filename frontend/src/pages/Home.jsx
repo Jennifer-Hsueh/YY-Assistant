@@ -40,7 +40,7 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
-    <div className="relative mx-auto max-w-xl px-4 pt-4 pb-24 md:max-w-4xl md:px-8 md:py-10">
+    <div className="relative mx-auto max-w-xl px-4 pt-4 pb-24 md:max-w-5xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
 {!loadingAnn && (
   <img
@@ -51,7 +51,7 @@ export default function Home() {
   />
 )}
 
-      <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
+      <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       {displayName && (
         <p className="mb-3 text-muted-foreground md:mb-5" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}
@@ -59,7 +59,7 @@ export default function Home() {
       <Link to="/announcements" className="relative z-10 mb-3 block md:mb-5">
         <Card
           className="border-none"
-          style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 12%, white) 50%, transparent), color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 32%, white) 50%, transparent))` }}
+          style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 12%, var(--card)) 50%, transparent), color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 32%, var(--card)) 50%, transparent))` }}
         >
           <CardContent className="p-3 md:p-4">
             <p className="mb-2 flex items-center gap-1.5 text-[1.3125rem] font-medium" style={{ color: 'var(--module-recurring)' }}>
@@ -88,10 +88,10 @@ export default function Home() {
           <Link key={to} to={to} className="relative z-10 block h-full">
             <Card
               className="h-full border-none transition-transform active:scale-[0.99]"
-              style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, ${color} 12%, white) 50%, transparent), color-mix(in srgb, color-mix(in srgb, ${color} 32%, white) 50%, transparent))` }}
+              style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, ${color} 12%, var(--card)) 50%, transparent), color-mix(in srgb, color-mix(in srgb, ${color} 32%, var(--card)) 50%, transparent))` }}
             >
               <CardContent className="flex items-center gap-4 p-4 md:p-5">
-                <div className="flex h-12 w-12 shrink-0 md:h-16 md:w-16 items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: 'white' }}>
+                <div className="flex h-12 w-12 shrink-0 md:h-16 md:w-16 items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: 'var(--card)' }}>
                   <Icon className="h-6 w-6 md:h-8 md:w-8" style={{ color }} />
                 </div>
                 <div className="min-w-0 flex-1">

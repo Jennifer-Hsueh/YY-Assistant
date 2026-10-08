@@ -45,7 +45,7 @@ export default function Categories({ scope = 'ledger' }) {
     if (!newName.trim()) return;
     setError('');
     try {
-      await api.createCategory({ name: newName.trim(), type: newType, ...(isCalendar ? { color: newColor } : {}) });
+      await api.createCategory({ name: newName.trim(), type: newType, color: newColor });
       setNewName('');
       setNewType(isCalendar ? 'event' : 'general');
       load();
@@ -110,8 +110,8 @@ export default function Categories({ scope = 'ledger' }) {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
+      <div className="page-title-row mb-4 flex items-center justify-between">
+        <h1 className="page-title text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
         <Link to={isCalendar ? '/calendar' : '/transactions'} className="text-sm text-muted-foreground underline">{t(isCalendar ? 'cat_back_to_calendar' : 'cat_back_to_transactions')}</Link>
       </div>
 
@@ -139,9 +139,7 @@ export default function Categories({ scope = 'ledger' }) {
               </SelectContent>
             </Select>
             )}
-            {isCalendar && (
-              <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="h-9 w-12 shrink-0 cursor-pointer rounded-md border border-input" />
-            )}
+            <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="h-9 w-12 shrink-0 cursor-pointer rounded-md border border-input" />
             <Button type="submit">{t('acc_add')}</Button>
           </form>
         </CardContent>
@@ -185,15 +183,13 @@ export default function Categories({ scope = 'ledger' }) {
                 ) : (
                   <div className="flex items-center justify-between">
                     <div>
-                      {isCalendar && (
-                        <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ backgroundColor: cat.color || '#9CA3AF' }} />
-                      )}
+                      <span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ backgroundColor: cat.color || '#9CA3AF' }} />
                       <span>{cat.name}</span>
                       {!isCalendar && <span className="ml-2 text-xs text-muted-foreground">({typeLabel[cat.type] || cat.type})</span>}
                     </div>
                     <div className="flex gap-3">
                       <button type="button" onClick={() => startEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_rename')}</button>
-                      {isCalendar && <button type="button" onClick={() => startColorEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_reset_color')}</button>}
+                      <button type="button" onClick={() => startColorEdit(cat)} className="text-xs text-muted-foreground underline">{t('cat_reset_color')}</button>
                       <button type="button" onClick={() => setDeletingId(cat.id)} className="text-xs text-red-500 underline">{t('mode_delete')}</button>
                     </div>
                   </div>

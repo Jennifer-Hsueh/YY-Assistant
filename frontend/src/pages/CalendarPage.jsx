@@ -10,11 +10,13 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 
 function pastelForDate(dateKey) {
-  const palette = ['#DCE3F0', '#E3EDDC', '#F0E6DC', '#EAE0F0', '#DCEEF0', '#F0E3DC'];
+  // 顏色定義在 index.css(--pastel-1~6),石墨灰主題會自動換成灰階
   let hash = 0;
-  for (let i = 0; i < dateKey.length; i++) hash = (hash * 31 + dateKey.charCodeAt(i)) % palette.length;
-  return palette[Math.abs(hash) % palette.length];
+  for (let i = 0; i < dateKey.length; i++) hash = (hash * 31 + dateKey.charCodeAt(i)) % 6;
+  return `var(--pastel-${(Math.abs(hash) % 6) + 1})`;
 }
+
+const emptyFilters = { from: '', to: '', category: '', keyword: '' };
 
 const emptyForm = { title: '', date: '', time: '', note: '', category: '', color: '#4F46E5' };
 
@@ -131,14 +133,14 @@ export default function CalendarPage() {
   const categoryColor = (name) => categories.find((c) => c.name === name)?.color || '#9CA3AF';
   const eventColor = (ev) => (ev.category ? categoryColor(ev.category) : '#9CA3AF');
 
-  const [searchType, setSearchType] = useState('title');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState(emptyFilters);
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const hasFilter = Object.keys(emptyFilters).some((k) => filters[k] !== emptyFilters[k]);
+  const setFilter = (k) => (v) => setFilters((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    const q = searchQuery.trim();
-    if (!q) {
+    if (!hasFilter) {
       setSearchResults([]);
       return;
     }
@@ -146,11 +148,21 @@ export default function CalendarPage() {
     const timer = setTimeout(async () => {
       try {
         const { events: allEvents } = await api.listEvents({});
-        const matched = allEvents.filter((ev) =>
-          searchType === 'category'
-            ? (ev.category || '') === q
-            : ev.title.toLowerCase().includes(q.toLowerCase())
-        );
+        const kw = filters.keyword.trim().toLowerCase();
+        const localDay = (iso) => {
+          const d = new Date(iso);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+        const matched = allEvents
+          .filter((ev) => {
+            const day = localDay(ev.start_at);
+            if (filters.from && day < filters.from) return false;
+            if (filters.to && day > filters.to) return false;
+            if (filters.category && (ev.category || '') !== filters.category) return false;
+            if (kw && !`${ev.title} ${ev.note || ''}`.toLowerCase().includes(kw)) return false;
+            return true;
+          })
+          .sort((a, b) => a.start_at.localeCompare(b.start_at));
         setSearchResults(matched);
       } catch (err) {
         console.error(err);
@@ -159,11 +171,11 @@ export default function CalendarPage() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, searchType]);
+  }, [filters]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
-      <h1 className="mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
+      <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
@@ -185,57 +197,6 @@ export default function CalendarPage() {
         >{t('mode_delete')}</button>
         <Link to="/calendar-categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
       </div>
-
-      <div className="mb-3 flex gap-2">
-        <Select value={searchType} onValueChange={(v) => { setSearchType(v); setSearchQuery(''); }}>
-          <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="title">{t('cal_search_by_title')}</SelectItem>
-            <SelectItem value="category">{t('cal_search_by_category')}</SelectItem>
-          </SelectContent>
-        </Select>
-        {searchType === 'category' ? (
-          <Select value={searchQuery || 'none'} onValueChange={(v) => setSearchQuery(v === 'none' ? '' : v)}>
-            <SelectTrigger className="flex-1"><SelectValue placeholder={t('cal_search_select_category')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">{t('cal_search_select_category')}</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.name}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || '#9CA3AF' }} />{cat.name}</span></SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            type="text"
-            placeholder={t('cal_search_placeholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
-        )}
-      </div>
-
-      {searchQuery.trim() && (
-        <Card className="mb-3">
-          <CardContent className="space-y-1 p-3">
-            {searching ? (
-              <p className="text-sm text-muted-foreground">{t('loading')}</p>
-            ) : searchResults.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('cal_no_search_results')}</p>
-            ) : (
-              searchResults.map((ev) => (
-                <div key={ev.id} className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
-                    <span>{ev.title}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       </div>
 
@@ -416,6 +377,68 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card className="mt-3">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">{t('search_title')}</p>
+            {hasFilter && (
+              <button type="button" onClick={() => setFilters(emptyFilters)} className="text-xs text-muted-foreground underline">
+                {t('search_clear')}
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="mb-1 block text-xs text-muted-foreground">{t('search_date_from')}</span>
+              <Input type="date" value={filters.from} onChange={(e) => setFilter('from')(e.target.value)} />
+            </div>
+            <div>
+              <span className="mb-1 block text-xs text-muted-foreground">{t('search_date_to')}</span>
+              <Input type="date" value={filters.to} onChange={(e) => setFilter('to')(e.target.value)} />
+            </div>
+            <div className="col-span-2">
+              <span className="mb-1 block text-xs text-muted-foreground">{t('cal_search_by_category')}</span>
+              <Select value={filters.category || 'all'} onValueChange={(v) => setFilter('category')(v === 'all' ? '' : v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('search_all_categories')}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cat.color || '#9CA3AF' }} />{cat.name}</span></SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <span className="mb-1 block text-xs text-muted-foreground">{t('cal_search_keyword')}</span>
+              <Input type="text" placeholder={t('cal_search_placeholder')} value={filters.keyword} onChange={(e) => setFilter('keyword')(e.target.value)} />
+            </div>
+          </div>
+
+          {!hasFilter ? (
+            <p className="text-xs text-muted-foreground">{t('cal_search_hint')}</p>
+          ) : searching ? (
+            <p className="text-sm text-muted-foreground">{t('loading')}</p>
+          ) : searchResults.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('cal_no_search_results')}</p>
+          ) : (
+            <div className="space-y-1 border-t border-border pt-2">
+              <p className="text-xs text-muted-foreground">{t('search_count_prefix')}{searchResults.length}{t('search_count_suffix')}</p>
+              <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                {searchResults.map((ev) => (
+                  <div key={ev.id} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                      <span className="truncate">{ev.title}</span>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       </div>
       </div>

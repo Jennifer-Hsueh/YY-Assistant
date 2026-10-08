@@ -69,6 +69,90 @@
   --module-calendar-bg: color-mix(in srgb, var(--ink) 8%, white);
   --module-recurring: var(--highlight);
   --module-recurring-bg: color-mix(in srgb, var(--highlight) 12%, white);
+
+  /* 帳戶卡片預設色(使用者沒自訂顏色時輪流使用) */
+  --acc-1: var(--income);
+  --acc-2: #4F46E5;
+  --acc-3: #059669;
+  --acc-4: #D97706;
+  --acc-5: #E11D48;
+
+  /* 行事曆有行程日期的淡色底 */
+  --pastel-1: #DCE3F0;
+  --pastel-2: #E3EDDC;
+  --pastel-3: #F0E6DC;
+  --pastel-4: #EAE0F0;
+  --pastel-5: #DCEEF0;
+  --pastel-6: #F0E3DC;
+
+  --dot-pattern: rgba(51, 65, 92, 0.1);
+}
+
+/* ───────── 石墨灰主題 ─────────
+   除了使用者自選的分類/帳戶顏色外,只用四種顏色:
+   炭黑 #2E3135 · 石灰 #7D8085 · 霧灰 #DCDCD9 · 紙灰 #F3F3F1
+   (邊框、陰影用炭黑的透明度,不另算一色) */
+:root[data-theme="grey"] {
+  --g-ink: #2E3135;
+  --g-stone: #7D8085;
+  --g-mist: #DCDCD9;
+  --g-paper: #F3F3F1;
+
+  --background: var(--g-mist);
+  --foreground: var(--g-ink);
+  --card: var(--g-paper);
+  --card-foreground: var(--g-ink);
+  --primary: var(--g-ink);
+  --primary-foreground: var(--g-paper);
+  --secondary: var(--g-mist);
+  --secondary-foreground: var(--g-ink);
+  --muted: var(--g-mist);
+  --muted-foreground: var(--g-stone);
+  --accent: var(--g-mist);
+  --accent-foreground: var(--g-ink);
+  --destructive: var(--g-ink);
+  --destructive-foreground: var(--g-paper);
+  --border: rgba(46, 49, 53, 0.14);
+  --input: rgba(46, 49, 53, 0.18);
+  --ring: var(--g-ink);
+
+  --ink: var(--g-ink);
+  --income: var(--g-stone);
+  --expense: var(--g-ink);
+  --highlight: var(--g-stone);
+
+  --income-bg: var(--g-mist);
+  --expense-bg: var(--g-mist);
+  --highlight-bg: var(--g-mist);
+
+  --module-transactions: var(--g-ink);
+  --module-transactions-bg: var(--g-mist);
+  --module-accounts: var(--g-stone);
+  --module-accounts-bg: var(--g-mist);
+  --module-calendar: var(--g-ink);
+  --module-calendar-bg: var(--g-mist);
+  --module-recurring: var(--g-stone);
+  --module-recurring-bg: var(--g-mist);
+
+  --acc-1: var(--g-ink);
+  --acc-2: var(--g-stone);
+  --acc-3: var(--g-ink);
+  --acc-4: var(--g-stone);
+  --acc-5: var(--g-ink);
+
+  --pastel-1: var(--g-mist);
+  --pastel-2: var(--g-mist);
+  --pastel-3: var(--g-mist);
+  --pastel-4: var(--g-mist);
+  --pastel-5: var(--g-mist);
+  --pastel-6: var(--g-mist);
+
+  --dot-pattern: rgba(46, 49, 53, 0.07);
+
+  /* 寫死在畫面上的 Tailwind 色(收入綠、錯誤紅)也收斂進四色 */
+  --color-green-600: var(--g-stone);
+  --color-red-500: var(--g-ink);
+  --color-red-600: var(--g-ink);
 }
 
 html {
@@ -82,7 +166,7 @@ body {
   overflow-x: hidden;
   font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
   background-color: var(--background);
-  background-image: radial-gradient(rgba(51, 65, 92, 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-pattern) 1px, transparent 1px);
   background-size: 14px 14px;
   color: var(--foreground);
 }
@@ -98,5 +182,20 @@ body {
   textarea,
   select {
     font-size: 16px !important;
+  }
+}
+
+/* 桌機版:所有頁面的主標題統一高度、字級與位置 */
+@media (min-width: 768px) {
+  .page-title-row {
+    display: flex;
+    align-items: center;
+    min-height: 2.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .page-title {
+    font-size: 1.5rem !important;
+    line-height: 2.25rem;
+    font-weight: 600;
   }
 }

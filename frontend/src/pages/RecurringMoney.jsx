@@ -152,7 +152,7 @@ export default function RecurringMoney() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
-      <h1 className="mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
+      <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">

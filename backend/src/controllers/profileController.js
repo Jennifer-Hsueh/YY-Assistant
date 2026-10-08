@@ -4,7 +4,7 @@ async function getProfile(req, res) {
   try {
     const { data, error } = await supabase
       .from('yy_users')
-      .select('id, email, username, role, plan, last_payment_date, created_at, home_image')
+      .select('id, email, username, role, plan, last_payment_date, created_at, home_image, theme')
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
@@ -21,13 +21,17 @@ async function getProfile(req, res) {
 // access or upgrade their own plan by calling this endpoint.
 async function updateProfile(req, res) {
   try {
-    const { username, home_image } = req.body;
+    const { username, home_image, theme } = req.body;
     const updates = {};
     if (username !== undefined) updates.username = username;
     if (home_image !== undefined) {
       const valid = home_image === null || (typeof home_image === 'string' && /^\/home-images\/yy-[1-6]\.png$/.test(home_image));
       if (!valid) return res.status(400).json({ error: 'Invalid image' });
       updates.home_image = home_image;
+    }
+    if (theme !== undefined) {
+      if (!['default', 'grey'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
+      updates.theme = theme;
     }
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'Nothing to update' });
@@ -37,7 +41,7 @@ async function updateProfile(req, res) {
       .from('yy_users')
       .update(updates)
       .eq('id', req.user.id)
-      .select('id, email, username, role, plan, last_payment_date, created_at, home_image')
+      .select('id, email, username, role, plan, last_payment_date, created_at, home_image, theme')
       .single();
     if (error) throw error;
     return res.json({ profile: data });

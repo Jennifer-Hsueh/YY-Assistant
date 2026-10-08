@@ -9,7 +9,46 @@ import LedgerSubNav from '../components/LedgerSubNav';
 
 const CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP'];
 
-const CARD_COLORS = ['bg-primary', 'bg-indigo-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
+// 沒自訂顏色的帳戶輪流用的預設色(由 index.css 依主題提供)
+const CARD_COLORS = ['var(--acc-1)', 'var(--acc-2)', 'var(--acc-3)', 'var(--acc-4)', 'var(--acc-5)'];
+// 新增帳戶時可快速點選的顏色
+const SWATCHES = ['#33415C', '#6E8B5D', '#C1666B', '#B08238', '#4F46E5', '#0F766E', '#7C3AED', '#475569'];
+
+const cardColor = (acc, idx) => acc.color || CARD_COLORS[idx % CARD_COLORS.length];
+
+function ColorPicker({ value, onChange, t }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs text-muted-foreground">{t('acc_color')}</p>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className={`h-6 rounded-full border border-border px-2 text-xs ${value == null ? 'ring-2 ring-ring ring-offset-1' : 'text-muted-foreground'}`}
+        >
+          {t('acc_color_auto')}
+        </button>
+        {SWATCHES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-label={c}
+            onClick={() => onChange(c)}
+            className={`h-6 w-6 rounded-full ${value?.toLowerCase() === c.toLowerCase() ? 'ring-2 ring-ring ring-offset-1' : ''}`}
+            style={{ backgroundColor: c }}
+          />
+        ))}
+        <input
+          type="color"
+          value={value || '#33415C'}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-6 w-8 cursor-pointer rounded-md border border-input"
+          title={t('acc_color')}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function Accounts() {
   const { t } = useLanguage();
@@ -21,6 +60,8 @@ export default function Accounts() {
 
   const [newName, setNewName] = useState('');
   const [newCurrency, setNewCurrency] = useState('TWD');
+  const [newColor, setNewColor] = useState(null);
+  const [editColor, setEditColor] = useState(null);
 
   const [pickedId, setPickedId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -57,27 +98,30 @@ export default function Accounts() {
     setMode(newMode);
     setPickedId(null);
     setEditName('');
+    setEditColor(null);
     setActionError('');
   }
 
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName) return;
-    await api.createAccount({ name: newName, balance: 0, currency: newCurrency });
+    await api.createAccount({ name: newName, balance: 0, currency: newCurrency, color: newColor });
     setNewName('');
+    setNewColor(null);
     load();
   }
 
   function pickForEdit(acc) {
     setPickedId(acc.id);
     setEditName(acc.name);
+    setEditColor(acc.color || null);
   }
 
   async function saveEdit() {
     if (!editName.trim()) return;
     setActionError('');
     try {
-      await api.updateAccount(pickedId, { name: editName.trim() });
+      await api.updateAccount(pickedId, { name: editName.trim(), color: editColor });
       switchMode('edit');
       load();
     } catch (err) {
@@ -113,7 +157,7 @@ export default function Accounts() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
-      <h1 className="mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
+      <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
       <LedgerSubNav />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
@@ -127,9 +171,18 @@ export default function Accounts() {
               {totalTwd == null ? '—' : `TWD ${Math.round(totalTwd).toLocaleString()}`}
             </p>
             {Object.keys(subtotals).length > 1 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {Object.entries(subtotals).map(([c, v]) => `${c} ${v.toLocaleString()}`).join(' · ')}
-              </p>
+              <>
+                <p className="mt-1 text-xs text-muted-foreground md:hidden">
+                  {Object.entries(subtotals).map(([c, v]) => `${c} ${v.toLocaleString()}`).join(' · ')}
+                </p>
+                <div className="mt-3 hidden flex-wrap gap-x-10 gap-y-2 text-sm text-muted-foreground md:flex">
+                  {Object.entries(subtotals).map(([c, v]) => (
+                    <span key={c} className="font-amount">
+                      <span className="mr-1.5 text-xs">{c}</span>{v.toLocaleString()}
+                    </span>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -145,10 +198,11 @@ export default function Accounts() {
           {accounts.map((acc, idx) => (
             <div
               key={acc.id}
-              className={`h-36 rounded-2xl p-4 text-white shadow-lg ${CARD_COLORS[idx % CARD_COLORS.length]} ${pickedId === acc.id ? 'ring-4 ring-ring ring-offset-2' : ''}`}
+              className={`flex h-24 flex-col justify-between rounded-2xl px-4 py-3 text-card shadow-lg ${pickedId === acc.id ? 'ring-4 ring-ring ring-offset-2' : ''}`}
+              style={{ backgroundColor: cardColor(acc, idx) }}
             >
               <p className="text-sm opacity-80">{acc.name}</p>
-              <p className="mt-4 text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
+              <p className="text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
             </div>
           ))}
         </div>
@@ -161,8 +215,8 @@ export default function Accounts() {
                 key={acc.id}
                 onClick={() => setActiveIndex(idx)}
                 onDoubleClick={() => setActiveIndex((prev) => (prev + 1) % accounts.length)}
-                className={`absolute inset-x-0 h-36 rounded-2xl p-4 text-left text-white shadow-lg transition-all ${CARD_COLORS[idx % CARD_COLORS.length]}`}
-                style={{ top: `${Math.abs(offset) * 10}px`, transform: `scale(${1 - Math.abs(offset) * 0.05})`, zIndex: 10 - Math.abs(offset), opacity: Math.abs(offset) > 1 ? 0.5 : 1 }}
+                className="absolute inset-x-0 h-36 rounded-2xl p-4 text-left text-card shadow-lg transition-all"
+                style={{ backgroundColor: cardColor(acc, idx), top: `${Math.abs(offset) * 10}px`, transform: `scale(${1 - Math.abs(offset) * 0.05})`, zIndex: 10 - Math.abs(offset), opacity: Math.abs(offset) > 1 ? 0.5 : 1 }}
               >
                 <p className="text-sm opacity-80">{acc.name}</p>
                 <p className="mt-4 text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
@@ -184,17 +238,20 @@ export default function Accounts() {
       <Card>
         <CardContent className="p-4">
           {mode === 'add' && (
-            <form onSubmit={handleAdd} className="flex gap-2">
-              <Input type="text" placeholder={t('acc_new_name_placeholder')} value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <Select value={newCurrency} onValueChange={setNewCurrency}>
-                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="submit">{t('acc_add')}</Button>
+            <form onSubmit={handleAdd} className="space-y-3">
+              <div className="flex gap-2">
+                <Input type="text" placeholder={t('acc_new_name_placeholder')} value={newName} onChange={(e) => setNewName(e.target.value)} />
+                <Select value={newCurrency} onValueChange={setNewCurrency}>
+                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="submit">{t('acc_add')}</Button>
+              </div>
+              <ColorPicker value={newColor} onChange={setNewColor} t={t} />
             </form>
           )}
 
@@ -207,7 +264,10 @@ export default function Accounts() {
                   onClick={() => pickForEdit(acc)}
                   className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
                 >
-                  <span>{acc.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
+                    {acc.name}
+                  </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
               ))}
@@ -218,6 +278,7 @@ export default function Accounts() {
             <div className="space-y-2">
               {actionError && <p className="text-sm text-red-500">{actionError}</p>}
               <Input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <ColorPicker value={editColor} onChange={setEditColor} t={t} />
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={saveEdit}>{t('save')}</Button>
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>{t('reselect')}</Button>
@@ -234,7 +295,10 @@ export default function Accounts() {
                   onClick={() => setPickedId(acc.id)}
                   className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
                 >
-                  <span>{acc.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
+                    {acc.name}
+                  </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
               ))}
