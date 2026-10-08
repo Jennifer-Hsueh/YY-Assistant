@@ -46,7 +46,7 @@ export default function Home() {
   <img
     src={profile?.home_image || '/home-watermark-logo.png'}
     alt=""
-    className={`pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-25 md:hidden' : 'opacity-[0.09] md:w-[340px]'}`}
+    className={`pointer-events-none fixed z-20 bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-25 md:hidden' : 'opacity-[0.09] md:w-[340px]'}`}
     style={{ maxWidth: 'none', ...(profile?.home_image ? { width: 'auto', height: '280px' } : {}) }}
   />
 )}
@@ -109,7 +109,7 @@ export default function Home() {
           src={profile.home_image}
           alt=""
           onLoad={(e) => setHomeImgH(e.currentTarget.offsetHeight)}
-          className="pointer-events-none relative z-0 ml-auto hidden w-[280px] opacity-25 md:block"
+          className="pointer-events-none relative z-20 ml-auto hidden w-[280px] opacity-25 md:block"
           style={{ maxWidth: 'none', width: 'auto', height: '280px', marginTop: -homeImgH / 2 }}
         />
       )}
