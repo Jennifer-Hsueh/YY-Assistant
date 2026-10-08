@@ -39,26 +39,26 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
-    <div className="relative mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-4xl md:px-8 md:py-10">
+    <div className="relative mx-auto max-w-xl px-4 pt-4 pb-24 md:max-w-4xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
 <img
   src="/home-watermark-logo.png"
   alt=""
-  className="pointer-events-none absolute opacity-[0.09]"
-  style={{ width: '340px', maxWidth: 'none', right: '-8px', bottom: '-30px' }}
+  className="pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] opacity-[0.09] md:absolute md:bottom-[-30px] md:right-[-8px] md:w-[340px]"
+  style={{ maxWidth: 'none' }}
 />
 
       <h1 className="mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       {displayName && (
-        <p className="mb-5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
+        <p className="mb-3 text-muted-foreground md:mb-5" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}
 
-      <Link to="/announcements" className="mb-5 block">
+      <Link to="/announcements" className="mb-3 block md:mb-5">
         <Card
           className="border-none"
           style={{ background: `linear-gradient(135deg, color-mix(in srgb, var(--module-recurring) 6%, white), color-mix(in srgb, var(--module-recurring) 20%, white))` }}
         >
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <p className="mb-2 flex items-center gap-1.5 text-[1.3125rem] font-medium" style={{ color: 'var(--module-recurring)' }}>
               <Megaphone className="h-4 w-4" />
               {t('ann_latest')}
@@ -80,16 +80,16 @@ export default function Home() {
         </Card>
       </Link>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 md:gap-5">
         {blocks.map(({ to, Icon, titleKey, subtitleKey, color }) => (
           <Link key={to} to={to} className="block h-full">
             <Card
               className="h-full border-none transition-transform active:scale-[0.99]"
               style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, white), color-mix(in srgb, ${color} 20%, white))` }}
             >
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: 'white' }}>
-                  <Icon className="h-8 w-8" style={{ color }} />
+              <CardContent className="flex items-center gap-4 p-4 md:p-5">
+                <div className="flex h-12 w-12 shrink-0 md:h-16 md:w-16 items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: 'white' }}>
+                  <Icon className="h-6 w-6 md:h-8 md:w-8" style={{ color }} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[1.2rem] font-medium" style={{ color }}>{t(titleKey)}</p>
