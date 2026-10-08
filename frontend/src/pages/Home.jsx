@@ -45,7 +45,7 @@ export default function Home() {
   <img
     src={profile?.home_image || '/home-watermark-logo.png'}
     alt=""
-    className={`pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-60 md:w-[280px]' : 'opacity-[0.09] md:w-[340px]'}`}
+    className={`pointer-events-none fixed bottom-[calc(88px+env(safe-area-inset-bottom))] right-5 w-[280px] md:absolute md:bottom-[-30px] md:right-[-8px] ${profile?.home_image ? 'opacity-75 md:hidden' : 'opacity-[0.09] md:w-[340px]'}`}
     style={{ maxWidth: 'none' }}
   />
 )}
@@ -55,10 +55,10 @@ export default function Home() {
         <p className="mb-3 text-muted-foreground md:mb-5" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
       )}
 
-      <Link to="/announcements" className="mb-3 block md:mb-5">
+      <Link to="/announcements" className="relative z-10 mb-3 block md:mb-5">
         <Card
           className="border-none"
-          style={{ background: `linear-gradient(135deg, color-mix(in srgb, var(--module-recurring) 6%, white), color-mix(in srgb, var(--module-recurring) 20%, white))` }}
+          style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 12%, white) 50%, transparent), color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 32%, white) 50%, transparent))` }}
         >
           <CardContent className="p-3 md:p-4">
             <p className="mb-2 flex items-center gap-1.5 text-[1.3125rem] font-medium" style={{ color: 'var(--module-recurring)' }}>
@@ -84,10 +84,10 @@ export default function Home() {
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-5">
         {blocks.map(({ to, Icon, titleKey, subtitleKey, color }) => (
-          <Link key={to} to={to} className="block h-full">
+          <Link key={to} to={to} className="relative z-10 block h-full">
             <Card
               className="h-full border-none transition-transform active:scale-[0.99]"
-              style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, white), color-mix(in srgb, ${color} 20%, white))` }}
+              style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, ${color} 12%, white) 50%, transparent), color-mix(in srgb, color-mix(in srgb, ${color} 32%, white) 50%, transparent))` }}
             >
               <CardContent className="flex items-center gap-4 p-4 md:p-5">
                 <div className="flex h-12 w-12 shrink-0 md:h-16 md:w-16 items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: 'white' }}>
@@ -103,6 +103,14 @@ export default function Home() {
           </Link>
         ))}
       </div>
+      {!loadingAnn && profile?.home_image && (
+        <img
+          src={profile.home_image}
+          alt=""
+          className="pointer-events-none ml-auto mt-8 hidden w-[280px] opacity-75 md:block"
+          style={{ maxWidth: 'none' }}
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,39 @@ function usePushPreference(storageKey) {
   return [enabled, setEnabled];
 }
 
+// Makes a light, uniform background transparent — only the area connected to the
+// image edges, so light parts inside the drawing (e.g. a white ghost) are kept.
+function removeLightBackground(ctx, w, h) {
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+  const corners = [0, w - 1, (h - 1) * w, h * w - 1].map((p) => [d[p * 4], d[p * 4 + 1], d[p * 4 + 2], d[p * 4 + 3]]);
+  if (corners.some((c) => c[3] < 250)) return false;
+  const bg = [0, 1, 2].map((k) => corners.reduce((s, c) => s + c[k], 0) / 4);
+  if (!bg.every((v) => v > 190)) return false;
+  if (!corners.every((c) => Math.hypot(c[0] - bg[0], c[1] - bg[1], c[2] - bg[2]) < 30)) return false;
+
+  const dist = (p) => Math.hypot(d[p * 4] - bg[0], d[p * 4 + 1] - bg[1], d[p * 4 + 2] - bg[2]);
+  const seen = new Uint8Array(w * h);
+  const queue = [];
+  for (let x = 0; x < w; x++) queue.push(x, (h - 1) * w + x);
+  for (let y = 0; y < h; y++) queue.push(y * w, y * w + w - 1);
+  while (queue.length) {
+    const p = queue.pop();
+    if (seen[p]) continue;
+    seen[p] = 1;
+    const dv = dist(p);
+    if (dv >= 45) continue;
+    d[p * 4 + 3] = Math.round(d[p * 4 + 3] * Math.min(1, Math.max(0, (dv - 15) / 30)));
+    const x = p % w;
+    if (x > 0) queue.push(p - 1);
+    if (x < w - 1) queue.push(p + 1);
+    if (p >= w) queue.push(p - w);
+    if (p < w * (h - 1)) queue.push(p + w);
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return true;
+}
+
 // Scales an image file to a fixed width (keeping its aspect ratio) and returns a data URL.
 // Stored at 2x so it stays sharp on high-density screens; displayed at 280px.
 function resizeImage(file, width) {
@@ -23,15 +56,21 @@ function resizeImage(file, width) {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const w = width;
-      const h = Math.round((img.naturalHeight * width) / img.naturalWidth);
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      let data = file.type === 'image/png' || file.type === 'image/webp' ? canvas.toDataURL('image/png') : '';
-      if (!data || data.length > 600000) data = canvas.toDataURL('image/jpeg', 0.85);
+      const render = (w) => {
+        const h = Math.round((img.naturalHeight * w) / img.naturalWidth);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const cleared = removeLightBackground(ctx, w, h);
+        return cleared || file.type === 'image/png' || file.type === 'image/webp'
+          ? canvas.toDataURL('image/png')
+          : canvas.toDataURL('image/jpeg', 0.85);
+      };
+      let data = render(width);
+      if (data.length > 1400000) data = render(Math.round(width * 0.7));
       resolve(data);
     };
     img.onerror = () => {
@@ -266,7 +305,7 @@ export default function Settings() {
                 src={profile?.home_image || '/home-watermark-logo.png'}
                 alt=""
                 className="max-h-full max-w-full object-contain"
-                style={{ opacity: profile?.home_image ? 0.6 : 0.5 }}
+                style={{ opacity: profile?.home_image ? 0.75 : 0.5 }}
               />
             </div>
             <div className="flex flex-col gap-2">
