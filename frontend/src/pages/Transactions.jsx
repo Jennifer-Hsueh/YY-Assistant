@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
+import Categories from './Categories';
 
 function todayLocal() {
   const d = new Date();
@@ -39,6 +40,8 @@ export default function Transactions() {
   const [transfer, setTransfer] = useState(emptyTransfer);
   const [transferError, setTransferError] = useState('');
   const [rates, setRates] = useState({ TWD: 1 });
+  // 桌機版左側顯示內容:記帳明細 / 查詢 / 管理分類
+  const [panel, setPanel] = useState('list');
 
   async function load() {
     setLoading(true);
@@ -59,6 +62,21 @@ export default function Transactions() {
   }
 
   useEffect(() => { load(); }, []);
+
+  async function reloadCategories() {
+    try {
+      const { categories } = await api.listCategories();
+      setCategories(categories.filter((c) => c.type !== 'event'));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function togglePanel(next) {
+    const target = panel === next ? 'list' : next;
+    if (target !== 'search') setFilters(emptyFilters);
+    setPanel(target);
+  }
 
   // 各幣別換算台幣的匯率,用來比較「當日消費最高」的那一筆
   useEffect(() => {
@@ -81,6 +99,7 @@ export default function Transactions() {
 
   function switchActionMode(newMode) {
     setActionMode(newMode);
+    if (panel === 'categories') setPanel('list');
     setActiveId(null);
     setForm(emptyForm);
     setTransfer(emptyTransfer);
@@ -229,6 +248,7 @@ export default function Transactions() {
       categories={categories}
       hasFilter={hasFilter}
       count={filteredTransactions.length}
+      onClose={panel === 'search' ? () => togglePanel('search') : null}
     />
   );
 
@@ -246,11 +266,11 @@ export default function Transactions() {
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
 
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
-        <button onClick={() => switchActionMode('transfer')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'transfer' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}>{t('mode_transfer')}</button>
+      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
+        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
+        <button onClick={() => switchActionMode('transfer')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'transfer' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_transfer')}</button>
         <Link to="/categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors md:hidden">{t('tx_manage_categories')}</Link>
       </div>
 
@@ -385,21 +405,39 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      {/* 桌機版:查詢與管理分類放在操作區塊下方 */}
-      <div className="hidden md:block">
-        {searchBlock}
-        <Link to="/categories" className="mt-3 block rounded-lg border border-border bg-card px-3 py-2 text-center text-sm text-muted-foreground transition-colors hover:bg-muted">
-          {t('tx_manage_categories')}
-        </Link>
+      {/* 桌機版:查詢 / 管理分類 — 點選後內容顯示在左側,取代記帳明細;再點一次收起 */}
+      <div className="hidden gap-2 md:flex">
+        {[
+          { key: 'search', label: t('search_title') },
+          { key: 'categories', label: t('tx_manage_categories') },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => togglePanel(key)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors ${panel === key ? 'border-primary bg-primary font-medium text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:bg-muted'}`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       </div>
 
       <div className="md:order-1">
-      {loading ? (
+      {panel === 'categories' ? (
+        <div className="hidden md:block">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium">{t('tx_manage_categories')}</p>
+            <button type="button" onClick={() => setPanel('list')} className="text-xs text-muted-foreground underline">{t('tx_back_to_list')}</button>
+          </div>
+          <Categories scope="ledger" embedded onChanged={reloadCategories} />
+        </div>
+      ) : loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
-      ) : view === 'list' ? (
+      ) : view === 'list' || panel === 'search' ? (
         <div className="space-y-4">
-          <div className="md:hidden">{searchBlock}</div>
+          {/* 手機版查詢一直顯示;桌機版只有點選「查詢」時才顯示 */}
+          <div className={panel === 'search' ? '' : 'md:hidden'}>{searchBlock}</div>
           {Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
@@ -482,19 +520,26 @@ function CalendarView({ grouped, weekdays, dayColor }) {
   );
 }
 
-function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter, count }) {
+function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter, count, onClose }) {
   const set = (k) => (v) => setFilters((f) => ({ ...f, [k]: v }));
   const label = 'mb-1 block text-xs text-muted-foreground';
   return (
-    <Card className="mb-4 md:mb-0">
+    <Card>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">{t('search_title')}</p>
-          {hasFilter && (
-            <button type="button" onClick={() => setFilters(emptyFilters)} className="text-xs text-muted-foreground underline">
-              {t('search_clear')}
-            </button>
-          )}
+          <div className="flex gap-3">
+            {hasFilter && (
+              <button type="button" onClick={() => setFilters(emptyFilters)} className="text-xs text-muted-foreground underline">
+                {t('search_clear')}
+              </button>
+            )}
+            {onClose && (
+              <button type="button" onClick={onClose} className="text-xs text-muted-foreground underline">
+                {t('tx_back_to_list')}
+              </button>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>

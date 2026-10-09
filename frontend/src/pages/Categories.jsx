@@ -7,7 +7,8 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
-export default function Categories({ scope = 'ledger' }) {
+// embedded:嵌在記帳/行事曆頁面裡顯示(不含頁面標題與外框);onChanged:分類變動後通知外層重新載入
+export default function Categories({ scope = 'ledger', embedded = false, onChanged }) {
   const isCalendar = scope === 'calendar';
   const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
@@ -40,6 +41,11 @@ export default function Categories({ scope = 'ledger' }) {
 
   useEffect(() => { load(); }, []);
 
+  function reload() {
+    load();
+    onChanged?.();
+  }
+
   async function handleCreate(e) {
     e.preventDefault();
     if (!newName.trim()) return;
@@ -48,7 +54,7 @@ export default function Categories({ scope = 'ledger' }) {
       await api.createCategory({ name: newName.trim(), type: newType, color: newColor });
       setNewName('');
       setNewType(isCalendar ? 'event' : 'general');
-      load();
+      reload();
     } catch (err) {
       console.error(err);
       setError(t('cat_error_create'));
@@ -69,7 +75,7 @@ export default function Categories({ scope = 'ledger' }) {
       await api.updateCategory(id, { name: editName.trim() });
       setEditingId(null);
       setEditName('');
-      load();
+      reload();
     } catch (err) {
       console.error(err);
       setError(t('cat_error_rename'));
@@ -88,7 +94,7 @@ export default function Categories({ scope = 'ledger' }) {
     try {
       await api.updateCategory(id, { color: colorDraft });
       setColorEditingId(null);
-      load();
+      reload();
     } catch (err) {
       console.error(err);
       setError(t('cat_error_rename'));
@@ -99,7 +105,7 @@ export default function Categories({ scope = 'ledger' }) {
     try {
       await api.deleteCategory(id);
       setDeletingId(null);
-      load();
+      reload();
     } catch (err) {
       console.error(err);
       setError(t('cat_error_delete'));
@@ -108,18 +114,8 @@ export default function Categories({ scope = 'ledger' }) {
 
   const typeLabel = { expense: t('type_expense'), income: t('type_income'), general: t('type_general') };
 
-  return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
-      <div className="page-title-row mb-4 flex items-center justify-between">
-        <h1 className="page-title text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
-        <Link to={isCalendar ? '/calendar' : '/transactions'} className="text-sm text-muted-foreground underline">{t(isCalendar ? 'cat_back_to_calendar' : 'cat_back_to_transactions')}</Link>
-      </div>
-
-      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
-
-      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
-      <div className="md:sticky md:top-6 md:order-2">
-      <Card className="mb-6">
+  const formCard = (
+      <Card className={embedded ? 'mb-3' : 'mb-6'}>
         <CardContent className="p-4">
           <form onSubmit={handleCreate} className="flex gap-2">
             <Input
@@ -144,9 +140,10 @@ export default function Categories({ scope = 'ledger' }) {
           </form>
         </CardContent>
       </Card>
-      </div>
+  );
 
-      <div className="md:order-1">
+  const listCard = (
+    <>
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
@@ -202,6 +199,35 @@ export default function Categories({ scope = 'ledger' }) {
           </div>
         </Card>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+        {formCard}
+        {listCard}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+      <div className="page-title-row mb-4 flex items-center justify-between">
+        <h1 className="page-title text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
+        <Link to={isCalendar ? '/calendar' : '/transactions'} className="text-sm text-muted-foreground underline">{t(isCalendar ? 'cat_back_to_calendar' : 'cat_back_to_transactions')}</Link>
+      </div>
+
+      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div className="md:sticky md:top-6 md:order-2">
+      {formCard}
+      </div>
+
+      <div className="md:order-1">
+      {listCard}
       </div>
       </div>
     </div>

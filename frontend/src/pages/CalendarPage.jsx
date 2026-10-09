@@ -8,6 +8,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
+import Categories from './Categories';
 
 function pastelForDate(dateKey) {
   // 顏色定義在 index.css(--pastel-1~6),石墨灰主題會自動換成灰階
@@ -134,6 +135,13 @@ export default function CalendarPage() {
   const eventColor = (ev) => (ev.category ? categoryColor(ev.category) : '#9CA3AF');
 
   const [filters, setFilters] = useState(emptyFilters);
+  // 桌機版:查詢 / 管理分類 點選後才展開
+  const [panel, setPanel] = useState(null);
+  function togglePanel(next) {
+    const target = panel === next ? null : next;
+    if (target !== 'search') setFilters(emptyFilters);
+    setPanel(target);
+  }
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const hasFilter = Object.keys(emptyFilters).some((k) => filters[k] !== emptyFilters[k]);
@@ -182,20 +190,20 @@ export default function CalendarPage() {
       <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm">
+      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
         <button
           onClick={() => switchActionMode('add')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
         >{t('mode_add')}</button>
         <button
           onClick={() => switchActionMode('edit')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
         <button
           onClick={() => switchActionMode('delete')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
         >{t('mode_delete')}</button>
-        <Link to="/calendar-categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors">{t('tx_manage_categories')}</Link>
+        <Link to="/calendar-categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors md:hidden">{t('tx_manage_categories')}</Link>
       </div>
 
       </div>
@@ -378,7 +386,30 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      <Card className="mt-3">
+      <div className="mt-3 hidden gap-2 md:flex">
+        {[
+          { key: 'search', label: t('search_title') },
+          { key: 'categories', label: t('tx_manage_categories') },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => togglePanel(key)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors ${panel === key ? 'border-primary bg-primary font-medium text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:bg-muted'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {panel === 'categories' && (
+        <div className="mt-3 hidden md:block">
+          <Categories scope="calendar" embedded onChanged={load} />
+        </div>
+      )}
+
+      {/* 手機版查詢一直顯示;桌機版點選「查詢」才展開 */}
+      <Card className={`mt-3 ${panel === 'search' ? '' : 'md:hidden'}`}>
         <CardContent className="space-y-3 p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">{t('search_title')}</p>
