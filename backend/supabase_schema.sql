@@ -133,3 +133,54 @@ alter table yy_accounts add column if not exists color text;
 
 -- 介面主題：default（米紙）/ grey（石墨灰），Web 與 APP 共用
 alter table yy_users add column if not exists theme text not null default 'default';
+
+-- ============================================================
+-- 社群(晴空與雨天 / 養豬小能手 / 小編許願池)
+-- ============================================================
+create table if not exists yy_posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  board text not null check (board in ('mood', 'finance', 'wish')),
+  visibility text not null default 'private' check (visibility in ('private', 'public')),
+  anonymous boolean not null default false,
+  mood text check (mood in ('sunny', 'cloudy', 'rainy', 'storm', 'rainbow')),
+  title text,
+  content text not null,
+  wish_status text check (wish_status in ('considering', 'planned', 'done')),
+  hidden boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists yy_posts_board_idx on yy_posts (board, visibility, hidden, created_at desc);
+create index if not exists yy_posts_user_idx on yy_posts (user_id, created_at desc);
+
+create table if not exists yy_post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references yy_posts(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists yy_post_comments_post_idx on yy_post_comments (post_id, created_at);
+
+create table if not exists yy_post_reactions (
+  post_id uuid not null references yy_posts(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  type text not null check (type in ('hug', 'cheer', 'understand', 'laugh', 'approve', 'like')),
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+create table if not exists yy_post_reports (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references yy_posts(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  reason text,
+  created_at timestamptz not null default now(),
+  unique (post_id, user_id)
+);
+
+alter table yy_posts enable row level security;
+alter table yy_post_comments enable row level security;
+alter table yy_post_reactions enable row level security;
+alter table yy_post_reports enable row level security;

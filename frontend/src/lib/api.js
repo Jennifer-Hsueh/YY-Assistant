@@ -73,4 +73,16 @@ updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }
 submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
 getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
 
+  listPosts: (params = {}) => request(`/community/posts?${new URLSearchParams(params).toString()}`),
+  getCommunityStats: () => request('/community/stats'),
+  createPost: (payload) => request('/community/posts', { method: 'POST', body: payload }),
+  updatePost: (id, payload) => request(`/community/posts/${id}`, { method: 'PUT', body: payload }),
+  deletePost: (id) => request(`/community/posts/${id}`, { method: 'DELETE' }),
+  listComments: (id) => request(`/community/posts/${id}/comments`),
+  createComment: (id, content) => request(`/community/posts/${id}/comments`, { method: 'POST', body: { content } }),
+  deleteComment: (id) => request(`/community/comments/${id}`, { method: 'DELETE' }),
+  reactToPost: (id, type) => request(`/community/posts/${id}/react`, { method: 'POST', body: { type } }),
+  reportPost: (id, reason) => request(`/community/posts/${id}/report`, { method: 'POST', body: { reason } }),
+  setWishStatus: (id, wish_status) => request(`/community/posts/${id}/status`, { method: 'PUT', body: { wish_status } }),
+
 };
