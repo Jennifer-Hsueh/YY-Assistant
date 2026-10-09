@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,6 +9,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // 因登入過期被導回時,顯示提示;登入後回到原本的頁面
+  const [expired] = useState(() => {
+    const v = sessionStorage.getItem('yy_session_expired') === '1';
+    sessionStorage.removeItem('yy_session_expired');
+    return v;
+  });
+  const from = location.state?.from?.pathname || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +28,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,6 +44,7 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {expired && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">登入已逾時，請重新登入</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

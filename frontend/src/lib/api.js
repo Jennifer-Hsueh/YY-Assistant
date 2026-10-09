@@ -1,5 +1,25 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+// 登入過期(或 token 無效)時:清掉登入資料,通知 AuthContext 導回登入頁
+export const SESSION_EXPIRED_KEY = 'yy_session_expired';
+
+export function clearSession({ expired = false } = {}) {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  if (expired) sessionStorage.setItem(SESSION_EXPIRED_KEY, '1');
+  window.dispatchEvent(new Event('yy:unauthorized'));
+}
+
+// 只解讀 JWT 的到期時間(不驗證簽章,驗證仍由後端負責)
+export function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
 function getToken() {
   return localStorage.getItem('token'); // ok in a real browser; PWA-safe (not an in-artifact context)
 }
@@ -16,6 +36,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  if (res.status === 401 && auth) {
+    clearSession({ expired: true });
+  }
 
   if (res.status === 204) return null;
 
