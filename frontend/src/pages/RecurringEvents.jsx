@@ -134,10 +134,10 @@ export default function RecurringEvents() {
       </div>
 
       <div className="md:sticky md:top-6">
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
+      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
       <Card>

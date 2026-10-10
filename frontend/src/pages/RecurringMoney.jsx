@@ -144,7 +144,7 @@ export default function RecurringMoney() {
     <button
       type="button"
       onClick={() => setStatusFilter(value)}
-      className={`flex-1 rounded-md px-3 py-1 transition-colors ${statusFilter === value ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
+      className={`flex-1 rounded-md px-3 py-1 transition-colors ${statusFilter === value ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
     >
       {label}
     </button>
@@ -157,7 +157,7 @@ export default function RecurringMoney() {
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div>
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
+      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
         {filterButton('all', t('rec_filter_all'))}
         {filterButton('active', t('rec_filter_active'))}
         {filterButton('inactive', t('rec_filter_inactive'))}
@@ -217,10 +217,10 @@ export default function RecurringMoney() {
       </div>
 
       <div className="md:sticky md:top-6">
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
+      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
       <Card>

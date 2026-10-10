@@ -190,20 +190,19 @@ export default function CalendarPage() {
       <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
+      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
         <button
           onClick={() => switchActionMode('add')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_add')}</button>
         <button
           onClick={() => switchActionMode('edit')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
         <button
           onClick={() => switchActionMode('delete')}
-          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}
+          className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_delete')}</button>
-        <Link to="/calendar-categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors md:hidden">{t('tx_manage_categories')}</Link>
       </div>
 
       </div>
@@ -386,7 +385,7 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      <div className="mt-3 hidden gap-2 md:flex">
+      <div className="mt-3 flex gap-2">
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
@@ -403,13 +402,13 @@ export default function CalendarPage() {
       </div>
 
       {panel === 'categories' && (
-        <div className="mt-3 hidden md:block">
+        <div className="mt-3">
           <Categories scope="calendar" embedded onChanged={load} />
         </div>
       )}
 
-      {/* 手機版查詢一直顯示;桌機版點選「查詢」才展開 */}
-      <Card className={`mt-3 ${panel === 'search' ? '' : 'md:hidden'}`}>
+      {/* 點選「查詢」才展開 */}
+      <Card className={`mt-3 ${panel === 'search' ? '' : 'hidden'}`}>
         <CardContent className="space-y-3 p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">{t('search_title')}</p>

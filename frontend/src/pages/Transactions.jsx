@@ -23,6 +23,10 @@ function toLocalDateInput(isoString) {
 
 const emptyForm = { type: 'expense', amount: '', category: '', note: '', account_id: '', occurred_at: todayLocal() };
 const emptyTransfer = { from: '', to: '', amount: '', exchangeRate: '' };
+// 功能列(分段按鈕)統一樣式:紙色底框 + 選中項目用 muted 底
+const SEG_BAR = 'flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm';
+const segBtn = (on) => `rounded-md transition-colors ${on ? 'bg-muted font-medium' : 'text-muted-foreground'}`;
+
 const emptyFilters = { from: '', to: '', type: 'all', account: '', category: '', min: '', max: '', keyword: '' };
 
 export default function Transactions() {
@@ -42,6 +46,8 @@ export default function Transactions() {
   const [rates, setRates] = useState({ TWD: 1 });
   // 桌機版左側顯示內容:記帳明細 / 查詢 / 管理分類
   const [panel, setPanel] = useState('list');
+  // 日曆檢視:點選的日期(下方列出當天紀錄,可直接點選編輯/刪除)
+  const [selectedDay, setSelectedDay] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -239,6 +245,32 @@ export default function Transactions() {
 
   const catColor = (name) => categories.find((c) => c.name === name)?.color || null;
 
+  function renderTxRow(tx) {
+    const selectable = actionMode === 'edit' || actionMode === 'delete';
+    const isActive = activeId === tx.id;
+    return (
+      <div
+        key={tx.id}
+        onClick={selectable ? () => pickTransaction(tx) : undefined}
+        className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
+      >
+        <div className="min-w-0 flex-1 truncate">
+          {catColor(tx.category) && (
+            <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) }} />
+          )}
+          <span className="text-xs text-muted-foreground">
+            {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
+          </span>
+          <span className="text-xs text-foreground"> - {tx.note || t('tx_no_note')}</span>
+        </div>
+        <span className={`font-amount shrink-0 pl-2 flex items-baseline ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
+          <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
+          <span className="inline-block w-16 text-right">{tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
+        </span>
+      </div>
+    );
+  }
+
   const searchBlock = (
     <TxSearchBlock
       t={t}
@@ -256,9 +288,9 @@ export default function Transactions() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="page-title-row mb-3 flex items-center justify-between">
         <h1 className="page-title text-lg font-semibold">{t('tx_pageTitle')}</h1>
-        <div className="flex rounded-lg bg-muted p-1 text-sm">
-          <button onClick={() => setView('list')} className={`rounded-md px-3 py-1 transition-colors ${view === 'list' ? 'bg-card shadow-sm' : 'text-muted-foreground'}`}>{t('tx_view_list')}</button>
-          <button onClick={() => setView('calendar')} className={`rounded-md px-3 py-1 transition-colors ${view === 'calendar' ? 'bg-card shadow-sm' : 'text-muted-foreground'}`}>{t('tx_view_calendar')}</button>
+        <div className={SEG_BAR}>
+          <button onClick={() => setView('list')} className={`${segBtn(view === 'list')} px-3 py-1`}>{t('tx_view_list')}</button>
+          <button onClick={() => setView('calendar')} className={`${segBtn(view === 'calendar')} px-3 py-1`}>{t('tx_view_calendar')}</button>
         </div>
       </div>
       <LedgerSubNav />
@@ -266,15 +298,14 @@ export default function Transactions() {
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
 
-      <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:border md:border-border md:bg-card md:shadow-sm">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
-        <button onClick={() => switchActionMode('transfer')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'transfer' ? 'bg-card shadow-sm font-medium md:bg-muted md:shadow-none' : 'text-muted-foreground'}`}>{t('mode_transfer')}</button>
-        <Link to="/categories" className="flex-1 rounded-md px-2 py-1.5 text-center text-muted-foreground transition-colors md:hidden">{t('tx_manage_categories')}</Link>
+      <div className={`mb-3 ${SEG_BAR}`}>
+        <button onClick={() => switchActionMode('add')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add')}`}>{t('mode_add')}</button>
+        <button onClick={() => switchActionMode('edit')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit')}`}>{t('mode_edit')}</button>
+        <button onClick={() => switchActionMode('delete')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'delete')}`}>{t('mode_delete')}</button>
+        <button onClick={() => switchActionMode('transfer')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer')}`}>{t('mode_transfer')}</button>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-3">
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">
@@ -405,8 +436,8 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      {/* 桌機版:查詢 / 管理分類 — 點選後內容顯示在左側,取代記帳明細;再點一次收起 */}
-      <div className="hidden gap-2 md:flex">
+      {/* 查詢 / 管理分類 — 點選後才展開(桌機版顯示在左側,取代記帳明細);再點一次收起 */}
+      <div className="mb-4 flex gap-2 md:mb-0">
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
@@ -425,7 +456,7 @@ export default function Transactions() {
 
       <div className="md:order-1">
       {panel === 'categories' ? (
-        <div className="hidden md:block">
+        <div>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-medium">{t('tx_manage_categories')}</p>
             <button type="button" onClick={() => setPanel('list')} className="text-xs text-muted-foreground underline">{t('tx_back_to_list')}</button>
@@ -436,38 +467,13 @@ export default function Transactions() {
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'list' || panel === 'search' ? (
         <div className="space-y-4">
-          {/* 手機版查詢一直顯示;桌機版只有點選「查詢」時才顯示 */}
-          <div className={panel === 'search' ? '' : 'md:hidden'}>{searchBlock}</div>
+          {panel === 'search' && searchBlock}
           {Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
               <Card>
                 <div className="divide-y divide-border">
-                  {items.map((tx) => {
-                    const selectable = actionMode === 'edit' || actionMode === 'delete';
-                    const isActive = activeId === tx.id;
-                    return (
-                      <div
-                        key={tx.id}
-                        onClick={selectable ? () => pickTransaction(tx) : undefined}
-                        className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
-                      >
-                        <div className="min-w-0 flex-1 truncate">
-                          {catColor(tx.category) && (
-                            <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) }} />
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
-                          </span>
-                          <span className="text-xs text-foreground"> - {tx.note || t('tx_no_note')}</span>
-                        </div>
-                        <span className={`font-amount shrink-0 pl-2 flex items-baseline ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
-                          <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
-                          <span className="inline-block w-16 text-right">{tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>
-                        </span>
-                      </div>
-                    );
-                  })}
+                  {items.map(renderTxRow)}
                 </div>
               </Card>
             </div>
@@ -475,7 +481,27 @@ export default function Transactions() {
           {filteredTransactions.length === 0 && <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>}
         </div>
       ) : (
-        <CalendarView grouped={grouped} weekdays={t('cal_weekdays')} dayColor={dayColor} />
+        <div className="space-y-3">
+          <CalendarView
+            grouped={grouped}
+            weekdays={t('cal_weekdays')}
+            dayColor={dayColor}
+            selectedDay={selectedDay}
+            onSelect={(d) => setSelectedDay((prev) => (prev === d ? null : d))}
+          />
+          {selectedDay && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{selectedDay}</p>
+              {(grouped[selectedDay] || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>
+              ) : (
+                <Card>
+                  <div className="divide-y divide-border">{grouped[selectedDay].map(renderTxRow)}</div>
+                </Card>
+              )}
+            </div>
+          )}
+        </div>
       )}
       </div>
       </div>
@@ -483,7 +509,7 @@ export default function Transactions() {
   );
 }
 
-function CalendarView({ grouped, weekdays, dayColor }) {
+function CalendarView({ grouped, weekdays, dayColor, selectedDay, onSelect }) {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
@@ -504,14 +530,16 @@ function CalendarView({ grouped, weekdays, dayColor }) {
             const hasEntries = !!grouped[dateKey];
             const color = dayColor(dateKey);
             return (
-              <div
+              <button
+                type="button"
                 key={idx}
-                className="flex flex-col items-center rounded-md py-1 text-xs md:py-2"
+                onClick={() => onSelect(dateKey)}
+                className={`flex flex-col items-center rounded-md py-1 text-xs md:py-2 ${selectedDay === dateKey ? 'ring-2 ring-ring' : 'hover:bg-muted/50'}`}
                 style={color ? { backgroundColor: `color-mix(in srgb, ${color} 30%, transparent)` } : undefined}
               >
                 <span>{day}</span>
-                {hasEntries && <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground" />}
-              </div>
+                <span className={`mt-0.5 h-1.5 w-1.5 rounded-full ${hasEntries ? 'bg-foreground' : 'bg-transparent'}`} />
+              </button>
             );
           })}
         </div>

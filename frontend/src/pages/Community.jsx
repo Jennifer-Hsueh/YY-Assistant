@@ -153,12 +153,24 @@ export default function Community() {
           key={key}
           type="button"
           onClick={() => switchTab(key)}
-          className={`flex-1 whitespace-nowrap rounded-md px-2.5 py-1.5 transition-colors ${tab === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          className={`flex-1 whitespace-nowrap rounded-md px-1 py-1.5 text-[13px] transition-colors md:px-2.5 md:text-sm ${tab === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >
-          {emoji} {key === 'mine' ? t('cm_mine') : t(`cm_board_${key}`)}
+          <span className="hidden md:inline">{emoji} </span>{key === 'mine' ? t('cm_mine') : t(`cm_board_${key}`)}
         </button>
       ))}
     </div>
+  );
+
+  const boardIntro = tab !== 'mine' && (
+    <Card className="mb-3">
+      <CardContent className="flex items-center gap-3 p-4">
+        <span className="text-3xl leading-none">{BOARD_EMOJI[tab]}</span>
+        <div>
+          <p className="text-sm font-semibold">{t(`cm_board_${tab}`)}</p>
+          <p className="text-xs text-muted-foreground">{t(`cm_intro_${tab}`)}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 
   const composeCard = (
@@ -234,7 +246,11 @@ export default function Community() {
         {t('nav_community')}
       </h1>
 
-      <div className="md:hidden">{tabBar}</div>
+      {/* 手機版順序:版別 → 版名介紹 → 寫文章 → 文章列表 */}
+      <div className="md:hidden">
+        {tabBar}
+        {boardIntro}
+      </div>
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
         <div className="md:sticky md:top-6 md:order-2">
@@ -277,17 +293,7 @@ export default function Community() {
         <div className="md:order-1">
           <div className="hidden md:block">{tabBar}</div>
 
-          {tab !== 'mine' && (
-            <Card className="mb-3">
-              <CardContent className="flex items-center gap-3 p-4">
-                <span className="text-3xl leading-none">{BOARD_EMOJI[tab]}</span>
-                <div>
-                  <p className="text-sm font-semibold">{t(`cm_board_${tab}`)}</p>
-                  <p className="text-xs text-muted-foreground">{t(`cm_intro_${tab}`)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <div className="hidden md:block">{boardIntro}</div>
 
           {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
 

@@ -209,7 +209,7 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('settings_interface')}</span>
-                <div className="flex rounded-lg bg-muted p-1 text-xs">
+                <div className="flex rounded-lg border border-border bg-card p-1 text-xs shadow-sm">
                   {[
                     { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
                     { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
@@ -218,7 +218,7 @@ export default function Settings() {
                       key={name}
                       type="button"
                       onClick={() => selectTheme(name)}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${theme === name ? 'bg-card font-medium shadow-sm' : 'text-muted-foreground'}`}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${theme === name ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
                     >
                       <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: swatch }} />
                       {label}

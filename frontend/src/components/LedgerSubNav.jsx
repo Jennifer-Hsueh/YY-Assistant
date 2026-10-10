@@ -11,13 +11,13 @@ const subTabs = [
 export default function LedgerSubNav() {
   const { t } = useLanguage();
   return (
-    <div className="mb-3 flex rounded-lg bg-muted p-1 text-sm md:hidden">
+    <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
       {subTabs.map(({ to, key }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
-            `flex-1 rounded-md px-2 py-1.5 text-center transition-colors ${isActive ? 'bg-card shadow-sm font-medium' : 'text-muted-foreground'}`
+            `flex-1 rounded-md px-2 py-1.5 text-center transition-colors ${isActive ? 'bg-muted font-medium' : 'text-muted-foreground'}`
           }
         >
           {t(key)}
