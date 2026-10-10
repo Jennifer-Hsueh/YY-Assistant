@@ -176,6 +176,25 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   font-variant-numeric: tabular-nums;
 }
+/* 日期、時間欄位可以跟著格子縮小,不會擠到隔壁欄位 */
+input[type="date"],
+input[type="time"] {
+  min-width: 0;
+  max-width: 100%;
+}
+/* iOS Safari:日期欄位有內建最小寬度,要取消原生外觀才會縮;文字靠左對齊 */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
+
 /* iOS Safari：輸入框文字小於 16px 時會自動放大畫面 */
 @media (max-width: 767px) {
   input,

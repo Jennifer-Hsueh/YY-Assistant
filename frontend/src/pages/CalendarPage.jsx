@@ -419,7 +419,7 @@ export default function CalendarPage() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 [&>*]:min-w-0">
             <div>
               <span className="mb-1 block text-xs text-muted-foreground">{t('search_date_from')}</span>
               <Input type="date" value={filters.from} onChange={(e) => setFilter('from')(e.target.value)} />
