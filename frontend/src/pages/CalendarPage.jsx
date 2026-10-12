@@ -160,6 +160,20 @@ export default function CalendarPage() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+  // 手機版:新增/編輯/刪除/查詢/管理分類 五選一(再點一次已選的項目 = 取消)
+  function selectMobile(key) {
+    if (key === 'search' || key === 'categories') {
+      if (panel === key) { togglePanel(key); return; }
+      setActionMode(null);
+      setActiveId(null);
+      togglePanel(key);
+      return;
+    }
+    if (panel) togglePanel(panel);
+    if (actionMode === key && !panel) { setActionMode(null); setActiveId(null); return; }
+    switchActionMode(key);
+  }
+
   function togglePanel(next) {
     const target = panel === next ? null : next;
     if (target !== 'search') setFilters(emptyFilters);
@@ -288,16 +302,16 @@ export default function CalendarPage() {
       {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
         <button
-          onClick={() => switchActionMode('add')}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))}
+          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_add')}</button>
         <button
-          onClick={() => switchActionMode('edit')}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))}
+          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
         <button
-          onClick={() => switchActionMode('delete')}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          onClick={() => (isDesktop ? switchActionMode('delete') : selectMobile('delete'))}
+          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_delete')}</button>
         {[
           { key: 'search', label: t('search_title') },
@@ -306,7 +320,7 @@ export default function CalendarPage() {
           <button
             key={key}
             type="button"
-            onClick={() => togglePanel(key)}
+            onClick={() => selectMobile(key)}
             className={`col-span-3 rounded-md px-2 py-1.5 transition-colors md:hidden ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
             {label}

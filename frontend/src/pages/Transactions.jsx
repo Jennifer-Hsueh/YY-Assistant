@@ -8,6 +8,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
 import Categories from './Categories';
+import { useIsDesktop } from '../lib/useIsDesktop';
 
 function todayLocal() {
   const d = new Date();
@@ -46,6 +47,7 @@ export default function Transactions() {
   const [rates, setRates] = useState({ TWD: 1 });
   // 桌機版左側顯示內容:記帳明細 / 查詢 / 管理分類
   const [panel, setPanel] = useState('list');
+  const isDesktop = useIsDesktop();
   // 日曆檢視:點選的日期(下方列出當天紀錄,可直接點選編輯/刪除)
   const [selectedDay, setSelectedDay] = useState(null);
 
@@ -76,6 +78,20 @@ export default function Transactions() {
     } catch (err) {
       console.error(err);
     }
+  }
+
+  // 手機版:新增/編輯/刪除/轉帳/查詢/管理分類 六選一
+  function selectMobile(key) {
+    if (key === 'search' || key === 'categories') {
+      if (panel === key) { selectMobile('add'); return; }
+      switchActionMode('add');
+      if (key !== 'search') setFilters(emptyFilters);
+      setPanel(key);
+      return;
+    }
+    setFilters(emptyFilters);
+    setPanel('list');
+    switchActionMode(key);
   }
 
   function togglePanel(next) {
@@ -300,21 +316,22 @@ export default function Transactions() {
 
       {/* 手機版:查詢/管理分類放進同一個功能列(第二排);桌機版另有下方按鈕 */}
       <div className="mb-3 grid grid-cols-4 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add')}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit')}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'delete')}`}>{t('mode_delete')}</button>
-        <button onClick={() => switchActionMode('transfer')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer')}`}>{t('mode_transfer')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add' && (isDesktop || panel === 'list'))}`}>{t('mode_add')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit' && (isDesktop || panel === 'list'))}`}>{t('mode_edit')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('delete') : selectMobile('delete'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'delete' && (isDesktop || panel === 'list'))}`}>{t('mode_delete')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('transfer') : selectMobile('transfer'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && (isDesktop || panel === 'list'))}`}>{t('mode_transfer')}</button>
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
         ].map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => togglePanel(key)} className={`col-span-2 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
+          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-2 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
             {label}
           </button>
         ))}
       </div>
 
-      <Card className="mb-3">
+      {/* 手機版選了查詢/管理分類時,收起新增表單 */}
+      <Card className={`mb-3 ${panel !== 'list' ? 'hidden md:block' : ''}`}>
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">
