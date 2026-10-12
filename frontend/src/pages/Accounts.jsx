@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
@@ -54,6 +55,10 @@ export default function Accounts() {
   const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const touchX = useRef(null);
+  useEffect(() => {
+    if (activeIndex >= accounts.length) setActiveIndex(0);
+  }, [accounts.length]);
   const [loading, setLoading] = useState(true);
 
   const [mode, setMode] = useState('add');
@@ -143,6 +148,8 @@ export default function Accounts() {
   }
 
   const pickingMode = (mode === 'edit' || mode === 'delete') && !pickedId;
+  // 手機版帳戶卡片:左右切換(循環)
+  const step = (dir) => setActiveIndex((i) => (accounts.length ? (i + dir + accounts.length) % accounts.length : 0));
   const pickedAccount = accounts.find((a) => a.id === pickedId);
 
   const subtotals = accounts.reduce((acc, a) => {
@@ -172,9 +179,6 @@ export default function Accounts() {
             </p>
             {Object.keys(subtotals).length > 1 && (
               <>
-                <p className="mt-1 text-xs text-muted-foreground md:hidden">
-                  {Object.entries(subtotals).map(([c, v]) => `${c} ${v.toLocaleString()}`).join(' · ')}
-                </p>
                 <div className="mt-3 hidden flex-wrap gap-x-10 gap-y-2 text-sm text-muted-foreground md:flex">
                   {Object.entries(subtotals).map(([c, v]) => (
                     <span key={c} className="font-amount">
@@ -184,6 +188,25 @@ export default function Accounts() {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 手機版:各幣別金額獨立一個區塊 */}
+      {!loading && Object.keys(subtotals).length > 1 && (
+        <Card className="mb-4 md:hidden">
+          <CardContent className="divide-y divide-border px-4 py-1">
+            {Object.entries(subtotals).map(([c, v]) => (
+              <div key={c} className="flex items-baseline justify-between py-2 font-amount">
+                <span className="text-xs text-muted-foreground">{c}</span>
+                <span className="text-right">
+                  <span className="text-base font-semibold">{v.toLocaleString()}</span>
+                  {c !== 'TWD' && rates[c] != null && (
+                    <span className="ml-2 text-xs text-muted-foreground">≈ TWD {Math.round(v * rates[c]).toLocaleString()}</span>
+                  )}
+                </span>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}
@@ -206,23 +229,56 @@ export default function Accounts() {
             </div>
           ))}
         </div>
-        <div className="relative mb-6 h-40 md:hidden">
-          {accounts.map((acc, idx) => {
-            const offset = idx - activeIndex;
-            if (Math.abs(offset) > 2) return null;
-            return (
-              <button
-                key={acc.id}
-                onClick={() => setActiveIndex(idx)}
-                onDoubleClick={() => setActiveIndex((prev) => (prev + 1) % accounts.length)}
-                className="absolute inset-x-0 h-36 rounded-2xl p-4 text-left text-card shadow-lg transition-all"
-                style={{ backgroundColor: cardColor(acc, idx), top: `${Math.abs(offset) * 10}px`, transform: `scale(${1 - Math.abs(offset) * 0.05})`, zIndex: 10 - Math.abs(offset), opacity: Math.abs(offset) > 1 ? 0.5 : 1 }}
-              >
-                <p className="text-sm opacity-80">{acc.name}</p>
-                <p className="mt-4 text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
+        <div className="mb-6 md:hidden">
+          <div
+            className="relative h-28"
+            onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchX.current == null) return;
+              const dx = e.changedTouches[0].clientX - touchX.current;
+              touchX.current = null;
+              if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+            }}
+          >
+            {accounts.map((acc, idx) => {
+              const offset = (idx - activeIndex + accounts.length) % accounts.length;
+              if (offset > 2) return null;
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => step(1)}
+                  className="absolute inset-x-0 flex h-24 flex-col justify-between rounded-2xl px-4 py-3 text-left text-card shadow-lg transition-all"
+                  style={{ backgroundColor: cardColor(acc, idx), top: `${offset * 8}px`, transform: `scale(${1 - offset * 0.04})`, zIndex: 10 - offset, opacity: offset > 1 ? 0.5 : 1 }}
+                >
+                  <p className="truncate text-xl font-semibold">{acc.name}</p>
+                  <p className="font-amount text-xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
+                </button>
+              );
+            })}
+          </div>
+          {accounts.length > 1 && (
+            <div className="mt-2 flex items-center justify-between">
+              <button type="button" aria-label="prev" onClick={() => step(-1)} className="rounded-full border border-border bg-card p-1.5 shadow-sm">
+                <ChevronLeft className="h-4 w-4" />
               </button>
-            );
-          })}
+              <div className="flex items-center gap-1.5">
+                {accounts.map((acc, idx) => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    aria-label={acc.name}
+                    onClick={() => setActiveIndex(idx)}
+                    className={`h-2 rounded-full transition-all ${idx === activeIndex ? 'w-5 bg-foreground' : 'w-2 bg-border'}`}
+                  />
+                ))}
+                <span className="ml-1.5 font-amount text-xs text-muted-foreground">{activeIndex + 1} / {accounts.length}</span>
+              </div>
+              <button type="button" aria-label="next" onClick={() => step(1)} className="rounded-full border border-border bg-card p-1.5 shadow-sm">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
         </>
       )}

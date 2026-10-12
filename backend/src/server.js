@@ -10,6 +10,7 @@ const eventRoutes = require('./routes/eventRoutes');
 const recurringRoutes = require('./routes/recurringRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const { startRecurringScheduler, runDailyRecurringScan } = require('./jobs/recurringScheduler');
+const { startEventReminders, runEventReminders } = require('./jobs/eventReminder');
 const profileRoutes = require('./routes/profileRoutes');
 const bugReportRoutes = require('./routes/bugReportRoutes');
 const app = express();
@@ -33,6 +34,20 @@ app.get('/cron/recurring', async (req, res) => {
   } catch (err) {
     console.error('[cron/recurring]', err);
     return res.status(500).json({ error: 'Scan failed' });
+  }
+});
+
+// 行程提醒:建議在 cron-job.org 設定每 5 分鐘呼叫一次(同時讓伺服器保持清醒)
+app.get('/cron/event-reminders', async (req, res) => {
+  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    const result = await runEventReminders();
+    return res.json({ status: 'ok', ...result });
+  } catch (err) {
+    console.error('[cron/event-reminders]', err);
+    return res.status(500).json({ error: 'Reminder run failed' });
   }
 });
 
@@ -63,4 +78,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend listening on port ${PORT}`);
   startRecurringScheduler();
+  startEventReminders();
 });

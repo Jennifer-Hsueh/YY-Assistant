@@ -65,9 +65,16 @@ async function createRecurringItem(req, res) {
 async function updateRecurringItem(req, res) {
   try {
     const { id } = req.params;
+    // 只允許更新這些欄位(不能改 user_id 等)
+    const updates = {};
+    for (const k of ['kind', 'title', 'amount', 'category', 'frequency', 'day_of_month', 'day_of_week',
+      'next_trigger_date', 'reminder_method', 'is_active', 'account_id', 'end_date']) {
+      if (req.body[k] !== undefined) updates[k] = req.body[k];
+    }
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
     const { data, error } = await supabase
       .from('yy_recurring_items')
-      .update(req.body)
+      .update(updates)
       .eq('id', id)
       .eq('user_id', req.user.id)
       .select()

@@ -144,10 +144,21 @@ export default function RecurringMoney() {
     <button
       type="button"
       onClick={() => setStatusFilter(value)}
-      className={`flex-1 rounded-md px-3 py-1 transition-colors ${statusFilter === value ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+      className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${statusFilter === value ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
     >
       {label}
     </button>
+  );
+
+  const modeButtons = [['add', 'mode_add'], ['edit', 'mode_edit'], ['delete', 'mode_delete']].map(([m, k]) => (
+    <button key={m} type="button" onClick={() => switchActionMode(m)} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t(k)}</button>
+  ));
+  const filterButtons = (
+    <>
+      {filterButton('all', t('rec_filter_all'))}
+      {filterButton('active', t('rec_filter_active'))}
+      {filterButton('inactive', t('rec_filter_inactive'))}
+    </>
   );
 
   return (
@@ -155,12 +166,17 @@ export default function RecurringMoney() {
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
 
-      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
-      <div>
-      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-        {filterButton('all', t('rec_filter_all'))}
-        {filterButton('active', t('rec_filter_active'))}
-        {filterButton('inactive', t('rec_filter_inactive'))}
+      {/* 手機版:篩選與新增/編輯/刪除放在同一個區塊 */}
+      <div className="mb-3 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
+        <div className="flex">{filterButtons}</div>
+        <div className="my-1 border-t border-border" />
+        <div className="flex">{modeButtons}</div>
+      </div>
+
+      <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
+      <div className="order-2 md:order-none">
+      <div className="mb-3 hidden rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex">
+        {filterButtons}
       </div>
 
       {loading ? (
@@ -216,8 +232,8 @@ export default function RecurringMoney() {
       )}
       </div>
 
-      <div className="md:sticky md:top-6">
-      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+      <div className="order-1 mb-4 md:order-none md:mb-0 md:sticky md:top-6">
+      <div className="mb-3 hidden rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
         <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>

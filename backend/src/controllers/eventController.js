@@ -1,5 +1,10 @@
 const supabase = require('../config/supabase');
 
+// 提醒選項(分鐘):null 不提醒、0 準時、10/30/60 分鐘前、1440 一天前;
+// 全天行程:-480 = 當天早上 8 點、960 = 前一天早上 8 點
+const REMIND_OPTIONS = [null, 0, 10, 30, 60, 1440, -480, 960];
+const validRemind = (v) => v === undefined || REMIND_OPTIONS.includes(v);
+
 async function listEvents(req, res) {
   try {
     const { from, to } = req.query;
@@ -23,10 +28,11 @@ async function listEvents(req, res) {
 
 async function createEvent(req, res) {
   try {
-    const { title, start_at, end_at, category, color, note } = req.body;
+    const { title, start_at, end_at, category, color, note, remind_before_minutes } = req.body;
     if (!title || !start_at) {
       return res.status(400).json({ error: 'title and start_at are required' });
     }
+    if (!validRemind(remind_before_minutes)) return res.status(400).json({ error: 'Invalid reminder' });
 
     const { data, error } = await supabase
       .from('yy_events')
@@ -39,6 +45,7 @@ async function createEvent(req, res) {
         color: color || null, // hex string chosen by the user for this category
         note: note || null,
         source: 'app', // vs 'google' once phase-2 sync lands
+        remind_before_minutes: remind_before_minutes ?? null,
       })
       .select()
       .single();
@@ -53,9 +60,18 @@ async function createEvent(req, res) {
 async function updateEvent(req, res) {
   try {
     const { id } = req.params;
+    // 只允許更新這些欄位(不能改 user_id 等)
+    const updates = {};
+    for (const k of ['title', 'start_at', 'end_at', 'category', 'color', 'note', 'remind_before_minutes']) {
+      if (req.body[k] !== undefined) updates[k] = req.body[k];
+    }
+    if (!validRemind(updates.remind_before_minutes)) return res.status(400).json({ error: 'Invalid reminder' });
+    // 時間或提醒設定改了 → 重新排定提醒
+    if (updates.start_at !== undefined || updates.remind_before_minutes !== undefined) updates.reminder_sent_at = null;
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
     const { data, error } = await supabase
       .from('yy_events')
-      .update(req.body)
+      .update(updates)
       .eq('id', id)
       .eq('user_id', req.user.id)
       .select()

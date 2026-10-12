@@ -298,11 +298,20 @@ export default function Transactions() {
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
 
-      <div className={`mb-3 ${SEG_BAR}`}>
+      {/* 手機版:查詢/管理分類放進同一個功能列(第二排);桌機版另有下方按鈕 */}
+      <div className="mb-3 grid grid-cols-4 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
         <button onClick={() => switchActionMode('add')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add')}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit')}`}>{t('mode_edit')}</button>
         <button onClick={() => switchActionMode('delete')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'delete')}`}>{t('mode_delete')}</button>
         <button onClick={() => switchActionMode('transfer')} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer')}`}>{t('mode_transfer')}</button>
+        {[
+          { key: 'search', label: t('search_title') },
+          { key: 'categories', label: t('tx_manage_categories') },
+        ].map(({ key, label }) => (
+          <button key={key} type="button" onClick={() => togglePanel(key)} className={`col-span-2 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
+            {label}
+          </button>
+        ))}
       </div>
 
       <Card className="mb-3">
@@ -437,7 +446,7 @@ export default function Transactions() {
       </Card>
 
       {/* 查詢 / 管理分類 — 點選後才展開(桌機版顯示在左側,取代記帳明細);再點一次收起 */}
-      <div className="mb-4 flex gap-2 md:mb-0">
+      <div className="hidden gap-2 md:flex">
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },

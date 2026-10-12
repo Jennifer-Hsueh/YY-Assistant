@@ -184,3 +184,9 @@ alter table yy_posts enable row level security;
 alter table yy_post_comments enable row level security;
 alter table yy_post_reactions enable row level security;
 alter table yy_post_reports enable row level security;
+
+-- 行程提醒：提醒時間 = start_at − remind_before_minutes 分鐘（null = 不提醒）
+-- 全天行程用負值表示「當天早上 8 點」（-480）、960 表示「前一天早上 8 點」
+alter table yy_events add column if not exists remind_before_minutes int;
+alter table yy_events add column if not exists reminder_sent_at timestamptz;
+create index if not exists idx_events_reminder on yy_events(start_at) where remind_before_minutes is not null and reminder_sent_at is null;
