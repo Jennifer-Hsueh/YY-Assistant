@@ -71,6 +71,8 @@ export default function Home() {
       }
     }
     loadOverview();
+    window.addEventListener('yy:data-changed', loadOverview);
+    return () => window.removeEventListener('yy:data-changed', loadOverview);
   }, []);
 
   async function pickMood(key) {

@@ -34,6 +34,9 @@ async function createRecurringItem(req, res) {
     if (!kind || !title || !frequency || !next_trigger_date) {
       return res.status(400).json({ error: 'kind, title, frequency and next_trigger_date are required' });
     }
+    if (!['monthly', 'weekly', 'yearly'].includes(frequency)) {
+      return res.status(400).json({ error: 'Invalid frequency' });
+    }
 
     const { data, error } = await supabase
       .from('yy_recurring_items')
@@ -44,8 +47,9 @@ async function createRecurringItem(req, res) {
         amount: amount || null,
         category: category || null,
         frequency,
-        day_of_month: day_of_month || null,
-        day_of_week: day_of_week || null,
+        // 用 ?? 而不是 ||:星期日是 0,不能被當成「沒有」
+        day_of_month: day_of_month ?? null,
+        day_of_week: day_of_week ?? null,
         next_trigger_date,
         reminder_method: reminder_method || 'push',
         account_id: account_id || null,

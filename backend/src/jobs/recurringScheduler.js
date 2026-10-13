@@ -10,12 +10,22 @@ function todayInTaipei() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
-// Next occurrence after `dateStr` (YYYY-MM-DD), keeping the configured day of month.
+const daysIn = (y, monthIndex) => new Date(Date.UTC(y, monthIndex + 1, 0)).getUTCDate();
+
+// Next occurrence after `dateStr` (YYYY-MM-DD).
+// weekly: +7 天;yearly: 明年同月同日(2/29 → 2/28);
+// monthly: 下個月的 day_of_month,超過該月天數就用月底;day_of_month = -1 代表每月最後一天
 function addPeriod(item, dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
-  const next = item.frequency === 'weekly'
-    ? new Date(Date.UTC(y, m - 1, d + 7))
-    : new Date(Date.UTC(y, m, item.day_of_month || d));
+  let next;
+  if (item.frequency === 'weekly') {
+    next = new Date(Date.UTC(y, m - 1, d + 7));
+  } else if (item.frequency === 'yearly') {
+    next = new Date(Date.UTC(y + 1, m - 1, Math.min(d, daysIn(y + 1, m - 1))));
+  } else {
+    const want = item.day_of_month === -1 ? 31 : item.day_of_month || d;
+    next = new Date(Date.UTC(y, m, Math.min(want, daysIn(y, m))));
+  }
   return next.toISOString().slice(0, 10);
 }
 

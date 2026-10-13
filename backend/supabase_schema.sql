@@ -216,3 +216,7 @@ alter table yy_moods enable row level security;
 -- 通知偏好（存在伺服器，換手機或重新安裝也會保留）
 alter table yy_users add column if not exists notify_ledger boolean not null default true;
 alter table yy_users add column if not exists notify_calendar boolean not null default true;
+
+-- 循環頻率增加「每年」；day_of_month = -1 代表「每月最後一天」
+alter table yy_recurring_items drop constraint if exists yy_recurring_items_frequency_check;
+alter table yy_recurring_items add constraint yy_recurring_items_frequency_check check (frequency in ('monthly', 'weekly', 'yearly'));

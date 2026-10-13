@@ -4,6 +4,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
+import FloatingAddButton from './components/FloatingAddButton';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -37,6 +38,7 @@ function ProtectedLayout({ children }) {
         {children}
       </div>
       <BottomNav />
+      <FloatingAddButton />
     </div>
   );
 }

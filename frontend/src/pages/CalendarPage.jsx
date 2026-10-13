@@ -10,6 +10,14 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ymd } from '../lib/recurrence';
+
+// 行程日期一律用本地時間(台灣早上 8 點前的行程,UTC 日期會是前一天)
+const localKey = (iso) => ymd(new Date(iso));
+const hhmm = (iso) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const isMidnight = (iso) => hhmm(iso) === '00:00';
+const startOfWeek = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
 
 function pastelForDate(dateKey) {
   // 顏色定義在 index.css(--pastel-1~6),石墨灰主題會自動換成灰階
@@ -20,7 +28,7 @@ function pastelForDate(dateKey) {
 
 const emptyFilters = { from: '', to: '', category: '', keyword: '' };
 
-const emptyForm = { title: '', date: '', time: '', note: '', category: '', color: '#4F46E5', remind: 'none' };
+const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', note: '', category: '', color: '#4F46E5', remind: 'none' };
 
 // 提醒選項(分鐘,存在 remind_before_minutes):有時間的行程 / 全天行程各一組
 const REMIND_TIMED = ['none', '0', '10', '30', '60', '1440'];
@@ -38,6 +46,9 @@ export default function CalendarPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  // 月檢視 / 週檢視
+  const [view, setView] = useState('month');
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [monthDate, setMonthDate] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -50,8 +61,8 @@ export default function CalendarPage() {
   async function load() {
     setLoading(true);
     try {
-      const monthStart = new Date(year, month, 1).toISOString();
-      const monthEnd = new Date(year, month + 1, 1).toISOString();
+      const monthStart = (view === 'week' ? weekStart : new Date(year, month, 1)).toISOString();
+      const monthEnd = (view === 'week' ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7) : new Date(year, month + 1, 1)).toISOString();
       const [{ events }, { categories }] = await Promise.all([
         api.listEvents({ from: monthStart, to: monthEnd }),
         api.listCategories(),
@@ -65,7 +76,12 @@ export default function CalendarPage() {
     }
   }
 
-  useEffect(() => { load(); }, [monthDate]);
+  useEffect(() => { load(); }, [monthDate, view, weekStart]);
+  useEffect(() => {
+    const onChanged = () => load();
+    window.addEventListener('yy:data-changed', onChanged);
+    return () => window.removeEventListener('yy:data-changed', onChanged);
+  }, [monthDate, view, weekStart]);
 
   function changeMonth(m) {
     setMonthDate(m);
@@ -80,7 +96,7 @@ export default function CalendarPage() {
   }
 
   function toDateInputValue(isoString) {
-    return isoString.slice(0, 10);
+    return localKey(isoString);
   }
 
   function toTimeInputValue(isoString) {
@@ -99,6 +115,12 @@ export default function CalendarPage() {
       category: ev.category || '',
       color: ev.color || '#4F46E5',
       remind: ev.remind_before_minutes == null ? 'none' : String(ev.remind_before_minutes),
+      ...(() => {
+        // 有結束時間(且晚於開始)才帶入
+        if (!ev.end_at || ev.end_at <= ev.start_at) return { end_date: '', end_time: '' };
+        const sameDay = localKey(ev.end_at) === localKey(ev.start_at);
+        return { end_date: sameDay ? '' : localKey(ev.end_at), end_time: isMidnight(ev.end_at) && !sameDay ? '' : hhmm(ev.end_at) };
+      })(),
     });
   }
 
@@ -114,6 +136,10 @@ export default function CalendarPage() {
     const payload = {
       title: form.title,
       start_at: new Date(startAt).toISOString(),
+      // 結束:可只填結束時間(同一天),或填結束日期(跨日)
+      end_at: form.end_date || form.end_time
+        ? new Date(`${form.end_date || form.date}T${form.end_time || (form.end_date ? '23:59' : form.time || '00:00')}:00`).toISOString()
+        : null,
       category: form.category || null,
       color: form.category ? categoryColor(form.category) : '#9CA3AF',
       note: form.note || null,
@@ -137,11 +163,24 @@ export default function CalendarPage() {
     load();
   }
 
+  // 跨日行程會出現在開始到結束的每一天
   const eventsByDay = events.reduce((acc, ev) => {
-    const day = ev.start_at.slice(0, 10);
-    (acc[day] ||= []).push(ev);
+    const start = new Date(localKey(ev.start_at) + 'T00:00:00');
+    const endKey = ev.end_at && ev.end_at > ev.start_at ? localKey(ev.end_at) : localKey(ev.start_at);
+    for (let d = new Date(start), i = 0; ymd(d) <= endKey && i < 62; d.setDate(d.getDate() + 1), i += 1) {
+      (acc[ymd(d)] ||= []).push(ev);
+    }
     return acc;
   }, {});
+
+  // 行程時間文字:全天 / 10:00 / 10:00–12:00 / 10/14–10/16
+  function timeRange(ev) {
+    const hasEnd = ev.end_at && ev.end_at > ev.start_at;
+    const multiDay = hasEnd && localKey(ev.end_at) !== localKey(ev.start_at);
+    if (multiDay) return `${localKey(ev.start_at).slice(5).replace('-', '/')}–${localKey(ev.end_at).slice(5).replace('-', '/')}`;
+    if (isMidnight(ev.start_at) && !hasEnd) return t('home_all_day');
+    return hasEnd ? `${hhmm(ev.start_at)}–${hhmm(ev.end_at)}` : hhmm(ev.start_at);
+  }
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstWeekday = new Date(year, month, 1).getDay();
@@ -289,7 +328,7 @@ export default function CalendarPage() {
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                       <span className="truncate">{ev.title}</span>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{localKey(ev.start_at)}</span>
                   </div>
                 ))}
               </div>
@@ -341,8 +380,65 @@ export default function CalendarPage() {
       </div>
 
       <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' ? 'hidden md:block' : ''}`}>
-      <MonthSwitcher month={monthDate} onChange={changeMonth} t={t} className="mb-3" />
-      <Card className="mb-3">
+      <div className="mb-3 flex gap-2">
+        <div className="flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+          {['month', 'week'].map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => { setView(v); setSelectedDay(null); if (v === 'week') setWeekStart(startOfWeek(new Date())); }}
+              className={`rounded-md px-3 py-1 transition-colors ${view === v ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+            >
+              {t(`cal_view_${v}`)}
+            </button>
+          ))}
+        </div>
+        {view === 'month' ? (
+          <MonthSwitcher month={monthDate} onChange={changeMonth} t={t} className="min-w-0 flex-1" />
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-border bg-card px-1 py-1 text-sm shadow-sm">
+            <button type="button" aria-label="prev week" onClick={() => setWeekStart(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() - 7))} className="rounded-md p-1.5 hover:bg-muted"><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setWeekStart(startOfWeek(new Date()))} className="font-amount font-medium">
+              {weekStart.getMonth() + 1}/{weekStart.getDate()} – {(() => { const e = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6); return `${e.getMonth() + 1}/${e.getDate()}`; })()}
+              {ymd(weekStart) !== ymd(startOfWeek(new Date())) && <span className="ml-2 text-xs font-normal text-muted-foreground underline">{t('cal_this_week')}</span>}
+            </button>
+            <button type="button" aria-label="next week" onClick={() => setWeekStart(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7))} className="rounded-md p-1.5 hover:bg-muted"><ChevronRight className="h-4 w-4" /></button>
+          </div>
+        )}
+      </div>
+
+      {view === 'week' && (
+        <div className="mb-3 space-y-2 md:grid md:grid-cols-7 md:gap-2 md:space-y-0">
+          {Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i)).map((d) => {
+            const key = ymd(d);
+            const list = (eventsByDay[key] || []).slice().sort((a, b) => a.start_at.localeCompare(b.start_at));
+            const isToday = key === ymd(new Date());
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleDayClick(key)}
+                className={`block w-full rounded-lg border bg-card p-2 text-left shadow-sm md:min-h-40 ${selectedDay === key ? 'border-foreground' : 'border-border'}`}
+              >
+                <p className={`mb-1 text-xs ${isToday ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                  {weekdays[d.getDay()]} {d.getMonth() + 1}/{d.getDate()}
+                </p>
+                {list.length === 0 ? (
+                  <p className="text-xs text-muted-foreground/60 md:hidden">—</p>
+                ) : list.map((ev) => (
+                  <p key={ev.id} className="flex items-center gap-1.5 truncate py-0.5 text-xs">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                    <span className="shrink-0 font-amount text-muted-foreground">{timeRange(ev)}</span>
+                    <span className="truncate">{ev.title}</span>
+                  </p>
+                ))}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <Card className={`mb-3 ${view === 'week' ? 'hidden' : ''}`}>
         <CardContent className="p-3">
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
             {weekdays.map((d) => <div key={d}>{d}</div>)}
@@ -390,6 +486,7 @@ export default function CalendarPage() {
                 {selectedDayEvents.map((ev) => (
                   <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
                     <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                    <span className="shrink-0 font-amount text-xs text-muted-foreground">{timeRange(ev)}</span>
                     <span>{ev.title}</span>
                     {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
                     {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
@@ -411,6 +508,11 @@ export default function CalendarPage() {
                 <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                 <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                 
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-9 shrink-0 text-xs text-muted-foreground">{t('cal_end')}</span>
+                <Input type="date" value={form.end_date} min={form.date || undefined} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="min-w-0 flex-1" />
+                <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
               </div>
               <div className="flex items-center gap-2">
                 <span className="shrink-0 text-xs text-muted-foreground">🔔 {t('cal_remind')}</span>
@@ -495,6 +597,11 @@ export default function CalendarPage() {
                   <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
                   <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                   
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-9 shrink-0 text-xs text-muted-foreground">{t('cal_end')}</span>
+                  <Input type="date" value={form.end_date} min={form.date || undefined} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="min-w-0 flex-1" />
+                  <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="shrink-0 text-xs text-muted-foreground">🔔 {t('cal_remind')}</span>

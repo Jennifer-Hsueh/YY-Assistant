@@ -74,6 +74,11 @@ export default function Transactions() {
   }
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const onChanged = () => load();
+    window.addEventListener('yy:data-changed', onChanged);
+    return () => window.removeEventListener('yy:data-changed', onChanged);
+  }, []);
 
   async function reloadCategories() {
     try {

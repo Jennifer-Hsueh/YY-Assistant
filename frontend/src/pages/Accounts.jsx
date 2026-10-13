@@ -90,6 +90,11 @@ export default function Accounts() {
   }
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const onChanged = () => load();
+    window.addEventListener('yy:data-changed', onChanged);
+    return () => window.removeEventListener('yy:data-changed', onChanged);
+  }, []);
 
   useEffect(() => {
     const currencies = [...new Set(accounts.map((a) => a.currency || 'TWD'))].filter((c) => c !== 'TWD');

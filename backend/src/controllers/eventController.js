@@ -14,8 +14,13 @@ async function listEvents(req, res) {
       .eq('user_id', req.user.id)
       .order('start_at', { ascending: true });
 
-    if (from) query = query.gte('start_at', from);
-    if (to) query = query.lte('start_at', to);
+    // 跨日行程:只要和查詢區間有重疊就列出(結束時間在 from 之後、開始時間在 to 之前)
+    const valid = (v) => typeof v === 'string' && !Number.isNaN(Date.parse(v));
+    if (valid(from)) {
+      const f = new Date(from).toISOString();
+      query = query.or(`end_at.gte."${f}",and(end_at.is.null,start_at.gte."${f}")`);
+    }
+    if (valid(to)) query = query.lte('start_at', new Date(to).toISOString());
 
     const { data, error } = await query;
     if (error) throw error;
@@ -40,7 +45,8 @@ async function createEvent(req, res) {
         user_id: req.user.id,
         title,
         start_at,
-        end_at: end_at || start_at,
+        // 結束時間不得早於開始時間
+        end_at: end_at && end_at > start_at ? end_at : start_at,
         category: category || null,
         color: color || null, // hex string chosen by the user for this category
         note: note || null,
