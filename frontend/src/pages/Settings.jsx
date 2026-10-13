@@ -8,14 +8,9 @@ import { applyTheme, getStoredTheme } from '../lib/theme';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import DataTransferCard from '../components/DataTransferCard';
+import ChangePasswordCard from '../components/ChangePasswordCard';
 
-function usePushPreference(storageKey) {
-  const [enabled, setEnabled] = useState(() => localStorage.getItem(storageKey) === 'true');
-  useEffect(() => {
-    localStorage.setItem(storageKey, String(enabled));
-  }, [enabled, storageKey]);
-  return [enabled, setEnabled];
-}
 
 const HOME_IMAGES = [
   null,
@@ -31,8 +26,9 @@ export default function Settings() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [pushStatus, setPushStatus] = useState('idle');
-  const [ledgerPref, setLedgerPref] = usePushPreference('notif_pref_ledger');
-  const [calendarPref, setCalendarPref] = usePushPreference('notif_pref_calendar');
+  // 通知偏好存在伺服器(換手機或重新安裝也會保留)
+  const [ledgerPref, setLedgerPref] = useState(false);
+  const [calendarPref, setCalendarPref] = useState(false);
 
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -94,6 +90,10 @@ export default function Settings() {
         const { profile } = await api.getProfile();
         setProfile(profile);
         setUsernameDraft(profile.username || '');
+        // 開關顯示「伺服器設定 且 這台裝置已註冊推播」;這台還沒授權通知時顯示關閉
+        const granted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+        setLedgerPref(granted && profile.notify_ledger !== false);
+        setCalendarPref(granted && profile.notify_calendar !== false);
       } catch (err) {
         console.error(err);
       } finally {
@@ -119,14 +119,25 @@ export default function Settings() {
     }
   }
 
+  async function savePref(field, value, setter) {
+    setter(value);
+    try {
+      const { profile } = await api.updateProfile({ [field]: value });
+      setProfile(profile);
+    } catch (err) {
+      console.error(err);
+      setter(!value);
+    }
+  }
+
   async function toggleLedgerPref() {
     if (!ledgerPref) { const ok = await ensurePushRegistered(); if (!ok) return; }
-    setLedgerPref((v) => !v);
+    savePref('notify_ledger', !ledgerPref, setLedgerPref);
   }
 
   async function toggleCalendarPref() {
     if (!calendarPref) { const ok = await ensurePushRegistered(); if (!ok) return; }
-    setCalendarPref((v) => !v);
+    savePref('notify_calendar', !calendarPref, setCalendarPref);
   }
 
   async function saveUsername() {
@@ -271,6 +282,8 @@ export default function Settings() {
           {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
         </CardContent>
       </Card>
+
+      <ChangePasswordCard t={t} />
       </div>
 
       <div>
@@ -348,7 +361,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card className="mt-3">
+      <div className="mt-3">
+        <DataTransferCard t={t} />
+      </div>
+
+      <Card>
         <CardContent className="flex items-center justify-between gap-3 p-4">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-medium text-red-600">

@@ -212,3 +212,7 @@ create table if not exists yy_moods (
 
 alter table yy_budgets enable row level security;
 alter table yy_moods enable row level security;
+
+-- 通知偏好（存在伺服器，換手機或重新安裝也會保留）
+alter table yy_users add column if not exists notify_ledger boolean not null default true;
+alter table yy_users add column if not exists notify_calendar boolean not null default true;

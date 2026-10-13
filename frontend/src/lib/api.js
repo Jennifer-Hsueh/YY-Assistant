@@ -97,6 +97,9 @@ updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }
 submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
 getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
 
+  exportData: () => request('/data/export'),
+  importData: (payload) => request('/data/import', { method: 'POST', body: payload }),
+  changePassword: (currentPassword, newPassword) => request('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
   listBudgets: () => request('/budgets'),
   saveBudget: (payload) => request('/budgets', { method: 'PUT', body: payload }),
   deleteBudget: (id) => request(`/budgets/${id}`, { method: 'DELETE' }),

@@ -30,6 +30,8 @@ export default defineConfig({
         // Runtime caching left minimal for MVP — expand once we know
         // which API responses are safe to cache offline.
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Excel 套件很大,只在匯出/匯入時才下載,不放進離線快取
+        globIgnores: ['**/exceljs*'],
       },
     }),
   ],

@@ -47,6 +47,7 @@ async function checkBudgetAfterExpense(userId, tx) {
     const pct = Math.round(after * 100);
     alerts.push(`${name}已使用 ${pct}%`);
     await sendPushToUser(userId, {
+      channel: 'ledger',
       title: crossed >= 1 ? '⚠️ 預算已用完' : '💰 預算提醒',
       body: `${name}已使用 ${pct}%(NT$ ${Math.round(spent).toLocaleString()} / ${Number(b.amount).toLocaleString()})`,
       data: { url: '/' },

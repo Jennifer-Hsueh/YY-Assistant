@@ -3,7 +3,19 @@ const supabase = require('../config/supabase');
 
 // Sends a push notification to every device token the user has registered
 // (a user may be logged in on more than one device/browser).
-async function sendPushToUser(userId, { title, body, data = {} } = {}) {
+// channel: 'ledger'(帳務通知)或 'calendar'(行程通知);使用者在設定裡關掉該類通知就不發
+async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) {
+  if (channel === 'ledger' || channel === 'calendar') {
+    const { data: prefs } = await supabase
+      .from('yy_users')
+      .select('notify_ledger, notify_calendar')
+      .eq('id', userId)
+      .maybeSingle();
+    if (prefs && prefs[`notify_${channel}`] === false) {
+      return { sent: false, reason: `user turned off ${channel} notifications` };
+    }
+  }
+
   const app = getFirebaseApp();
   if (!app) {
     console.log(`[fcmService] (not configured) would push to user ${userId}: ${title} — ${body}`);

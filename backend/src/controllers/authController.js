@@ -189,4 +189,33 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, login, requestPasswordReset, resetPassword };
+// 登入狀態下修改密碼:要先驗證目前密碼
+async function changePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'password must be at least 8 characters' });
+    }
+    const { data: user, error } = await supabase
+      .from('yy_users')
+      .select('id, password_hash')
+      .eq('id', req.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!user || !(await bcrypt.compare(currentPassword, user.password_hash))) {
+      return res.status(400).json({ error: 'Current password is incorrect', code: 'wrong_password' });
+    }
+    const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const { error: upErr } = await supabase.from('yy_users').update({ password_hash }).eq('id', req.user.id);
+    if (upErr) throw upErr;
+    return res.json({ message: 'Password changed' });
+  } catch (err) {
+    console.error('[authController.changePassword]', err);
+    return res.status(500).json({ error: 'Failed to change password' });
+  }
+}
+
+module.exports = { register, login, requestPasswordReset, resetPassword, changePassword };

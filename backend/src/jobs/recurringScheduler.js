@@ -98,6 +98,7 @@ async function runDailyRecurringScan() {
           else if (isLedger) body = `${item.title} 到期提醒`;
           else body = `${item.title} 今天`;
           await sendPushToUser(item.user_id, {
+            channel: item.kind === 'event' ? 'calendar' : 'ledger',
             title: '循環提醒',
             body,
             data: { recurring_item_id: item.id },

@@ -42,6 +42,7 @@ async function runEventReminders(now = new Date()) {
       if (!stale) {
         try {
           await sendPushToUser(ev.user_id, {
+            channel: 'calendar',
             title: `📅 ${ev.title}`,
             body: timeLabel(ev.start_at, ev.remind_before_minutes),
             data: { event_id: ev.id, url: '/calendar' },
