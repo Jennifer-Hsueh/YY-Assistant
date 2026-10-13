@@ -97,6 +97,11 @@ updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }
 submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
 getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
 
+  listBudgets: () => request('/budgets'),
+  saveBudget: (payload) => request('/budgets', { method: 'PUT', body: payload }),
+  deleteBudget: (id) => request(`/budgets/${id}`, { method: 'DELETE' }),
+  listMoods: (params = {}) => request(`/moods?${new URLSearchParams(params).toString()}`),
+  setMood: (date, mood) => request(`/moods/${date}`, { method: 'PUT', body: { mood } }),
   listPosts: (params = {}) => request(`/community/posts?${new URLSearchParams(params).toString()}`),
   getCommunityStats: () => request('/community/stats'),
   createPost: (payload) => request('/community/posts', { method: 'POST', body: payload }),

@@ -55,4 +55,15 @@ async function getExchangeRate(req, res) {
   }
 }
 
-module.exports = { getExchangeRate };
+// 給其他後端程式用:1 單位 from 幣別 = ? TWD(或其他 to 幣別)
+async function rateTo(from, to = 'TWD') {
+  const f = String(from || 'TWD').toLowerCase();
+  const t = String(to).toLowerCase();
+  if (f === t) return 1;
+  const data = await fetchRatesFor(f);
+  const rate = data?.[f]?.[t];
+  if (rate === undefined) throw new Error(`No rate for ${f} -> ${t}`);
+  return Number(rate);
+}
+
+module.exports = { getExchangeRate, rateTo };

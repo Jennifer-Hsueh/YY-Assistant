@@ -190,3 +190,25 @@ alter table yy_post_reports enable row level security;
 alter table yy_events add column if not exists remind_before_minutes int;
 alter table yy_events add column if not exists reminder_sent_at timestamptz;
 create index if not exists idx_events_reminder on yy_events(start_at) where remind_before_minutes is not null and reminder_sent_at is null;
+
+-- 預算：category = '' 代表「每月總預算」，其餘為各分類預算（金額以 TWD 計）
+create table if not exists yy_budgets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  category text not null default '',
+  amount numeric not null check (amount > 0),
+  created_at timestamptz not null default now(),
+  unique (user_id, category)
+);
+
+-- 每日心情（與晴空與雨天同一組天氣）
+create table if not exists yy_moods (
+  user_id uuid not null references yy_users(id) on delete cascade,
+  date date not null,
+  mood text not null check (mood in ('sunny', 'cloudy', 'rainy', 'storm', 'rainbow')),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, date)
+);
+
+alter table yy_budgets enable row level security;
+alter table yy_moods enable row level security;

@@ -17,6 +17,8 @@ const app = express();
 const announcementRoutes = require('./routes/announcementRoutes');
 const exchangeRateRoutes = require('./routes/exchangeRateRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const budgetRoutes = require('./routes/budgetRoutes');
+const moodRoutes = require('./routes/moodRoutes');
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
@@ -63,6 +65,8 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/bug-reports', bugReportRoutes);
 app.use('/api/exchange-rate', exchangeRateRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/budgets', budgetRoutes);
+app.use('/api/moods', moodRoutes);
 
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

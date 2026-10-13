@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { checkBudgetAfterExpense } = require('../services/budgetAlert');
 
 // List transactions for the logged-in user, optionally filtered by date range / account.
 async function listTransactions(req, res) {
@@ -52,6 +53,9 @@ async function createTransaction(req, res) {
     if (account_id) {
       await adjustAccountBalance(account_id, type === 'income' ? amount : -amount);
     }
+
+    // 預算提醒(背景執行,失敗不影響記帳)
+    checkBudgetAfterExpense(req.user.id, tx).catch((err) => console.error('[budgetAlert]', err));
 
     return res.status(201).json({ transaction: tx });
   } catch (err) {

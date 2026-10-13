@@ -6,6 +6,10 @@ import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
+import BudgetBars from '../components/BudgetBars';
+import { Button } from '../components/ui/button';
+import { X } from 'lucide-react';
+import { monthTotals } from '../lib/budget';
 
 const TRANSFER = '轉帳';
 const BALANCE_ADJUST = '餘額調整'; // 帳戶餘額調整,不算收支
@@ -43,6 +47,33 @@ export default function LedgerStats() {
     groupBy: 'category',
   });
   const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+
+  // 每月預算
+  const [budgets, setBudgets] = useState([]);
+  const [budgetCategory, setBudgetCategory] = useState('');
+  const [budgetAmount, setBudgetAmount] = useState('');
+  useEffect(() => {
+    api.listBudgets().then(({ budgets }) => setBudgets(budgets)).catch((err) => console.error(err));
+  }, []);
+  async function saveBudget(e) {
+    e.preventDefault();
+    if (!(Number(budgetAmount) > 0)) return;
+    try {
+      const { budget } = await api.saveBudget({ category: budgetCategory, amount: Number(budgetAmount) });
+      setBudgets((prev) => [...prev.filter((b) => b.category !== budget.category), budget]);
+      setBudgetAmount('');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  async function removeBudget(id) {
+    try {
+      await api.deleteBudget(id);
+      setBudgets((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -161,6 +192,50 @@ export default function LedgerStats() {
                 <div>
                   <p className="text-xs text-muted-foreground">{t('stats_balance')}</p>
                   <p className={`mt-1 font-amount text-lg font-semibold ${balance != null && balance < 0 ? 'text-red-500' : ''}`}>{fmt(balance)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <p className="mb-3 text-sm font-medium">{t('budget_title')} <span className="ml-1 font-amount text-xs font-normal text-muted-foreground">{month}</span></p>
+              <div className="md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-6">
+                <div className="mb-4 md:mb-0">
+                  {budgets.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('budget_empty')}</p>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="min-w-0 flex-1">
+                        <BudgetBars budgets={budgets} totals={monthTotals(transactions, accounts, rates, month)} t={t} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <form onSubmit={saveBudget} className="flex gap-2">
+                    <Select value={budgetCategory || 'total'} onValueChange={(v) => setBudgetCategory(v === 'total' ? '' : v)}>
+                      <SelectTrigger className="w-32 shrink-0"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="total">{t('budget_total')}</SelectItem>
+                        {categories.filter((c) => c.type !== 'income').map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" inputMode="decimal" min="1" placeholder={t('budget_amount_placeholder')} value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} className="min-w-0 flex-1" />
+                    <Button type="submit" disabled={!(Number(budgetAmount) > 0)}>{t('budget_add')}</Button>
+                  </form>
+                  {budgets.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...budgets].sort((a, b) => (a.category === '' ? -1 : b.category === '' ? 1 : a.category.localeCompare(b.category))).map((b) => (
+                        <span key={b.id} className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs">
+                          {b.category === '' ? t('budget_total') : b.category} {Number(b.amount).toLocaleString()}
+                          <button type="button" aria-label="remove" onClick={() => removeBudget(b.id)} className="text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
