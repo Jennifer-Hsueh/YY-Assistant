@@ -8,7 +8,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
 import Categories from './Categories';
-import { useIsDesktop } from '../lib/useIsDesktop';
+import { useIsDesktop, DESKTOP_QUERY } from '../lib/useIsDesktop';
+import MonthSwitcher from '../components/MonthSwitcher';
 
 function todayLocal() {
   const d = new Date();
@@ -39,7 +40,10 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
 
-  const [actionMode, setActionMode] = useState('add');
+  // 桌機版預設「新增」;手機版一進來不選任何功能,直接顯示帳務資料
+  const [actionMode, setActionMode] = useState(() => (window.matchMedia(DESKTOP_QUERY).matches ? 'add' : null));
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [month, setMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const [activeId, setActiveId] = useState(null);
 
   const [transfer, setTransfer] = useState(emptyTransfer);
@@ -80,18 +84,14 @@ export default function Transactions() {
     }
   }
 
-  // 手機版:新增/編輯/刪除/轉帳/查詢/管理分類 六選一
+  // 手機版:新增/編輯/刪除/轉帳/查詢/管理分類 六選一;再點一次已選的項目 = 回到只看帳務資料
   function selectMobile(key) {
-    if (key === 'search' || key === 'categories') {
-      if (panel === key) { selectMobile('add'); return; }
-      switchActionMode('add');
-      if (key !== 'search') setFilters(emptyFilters);
-      setPanel(key);
-      return;
-    }
+    const isPanel = key === 'search' || key === 'categories';
+    const already = isPanel ? panel === key : panel === 'list' && actionMode === key;
     setFilters(emptyFilters);
-    setPanel('list');
-    switchActionMode(key);
+    switchActionMode(null);
+    setPanel(already || !isPanel ? 'list' : key);
+    if (!already && !isPanel) switchActionMode(key);
   }
 
   function togglePanel(next) {
@@ -123,6 +123,7 @@ export default function Transactions() {
     setActionMode(newMode);
     if (panel === 'categories') setPanel('list');
     setActiveId(null);
+    setConfirmDelete(false);
     setForm(emptyForm);
     setTransfer(emptyTransfer);
     setTransferError('');
@@ -130,6 +131,7 @@ export default function Transactions() {
 
   function pickTransaction(t) {
     setActiveId(t.id);
+    setConfirmDelete(false);
     setForm({
       type: t.type,
       amount: String(t.amount),
@@ -140,10 +142,13 @@ export default function Transactions() {
     });
   }
 
+  // 新增後留在新增(方便連續記帳);編輯/刪除後,桌機版回到新增、手機版回到只看帳務資料
   function resetAfterAction() {
+    const next = actionMode === 'add' || isDesktop ? 'add' : null;
     setForm(emptyForm);
-    setActionMode('add');
+    setActionMode(next);
     setActiveId(null);
+    setConfirmDelete(false);
   }
 
   async function handleSubmit(e) {
@@ -233,8 +238,7 @@ export default function Transactions() {
   const [filters, setFilters] = useState(emptyFilters);
   const hasFilter = Object.keys(emptyFilters).some((k) => filters[k] !== emptyFilters[k]);
 
-  const now = new Date();
-  const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthPrefix = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
   const monthTransactions = transactions.filter((tx) => toLocalDateInput(tx.occurred_at).slice(0, 7) === currentMonthPrefix);
 
   // 沒有設定任何查詢條件時顯示本月;有條件時查詢全部紀錄
@@ -296,7 +300,8 @@ export default function Transactions() {
       categories={categories}
       hasFilter={hasFilter}
       count={filteredTransactions.length}
-      onClose={panel === 'search' ? () => togglePanel('search') : null}
+      onClose={panel === 'search' && isDesktop ? () => togglePanel('search') : null}
+      hintKey={isDesktop ? 'search_default_hint' : 'cal_search_hint'}
     />
   );
 
@@ -330,8 +335,12 @@ export default function Transactions() {
         ))}
       </div>
 
-      {/* 手機版選了查詢/管理分類時,收起新增表單 */}
-      <Card className={`mb-3 ${panel !== 'list' ? 'hidden md:block' : ''}`}>
+      {pickingMode && (
+        <p className="mb-3 px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('tx_pick_edit') : t('tx_pick_delete')}</p>
+      )}
+
+      {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
+      <Card className={`mb-3 ${pickingMode ? 'hidden' : !actionMode || panel !== 'list' ? 'hidden md:block' : ''}`}>
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">
@@ -451,12 +460,25 @@ export default function Transactions() {
                 />
                 <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required className="min-w-0 flex-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">{actionMode === 'edit' ? t('tx_save_edit') : t('tx_add_record')}</Button>
-                {actionMode === 'edit' && activeId && (
-                  <Button type="button" variant="outline" onClick={() => { setActiveId(null); setForm(emptyForm); }}>{t('reselect')}</Button>
-                )}
-              </div>
+              {actionMode === 'edit' && activeId ? (
+                confirmDelete ? (
+                  <div className="space-y-2 rounded-md border border-border p-2">
+                    <p className="text-sm">{t('tx_confirm_delete_title')}</p>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
+                    <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{t('mode_delete')}</Button>
+                    <Button type="button" variant="outline" onClick={() => { setActiveId(null); setForm(emptyForm); }}>{t('reselect')}</Button>
+                  </div>
+                )
+              ) : (
+                <Button type="submit" className="w-full">{t('tx_add_record')}</Button>
+              )}
             </form>
           )}
         </CardContent>
@@ -480,7 +502,10 @@ export default function Transactions() {
       </div>
       </div>
 
-      <div className="md:order-1">
+      <div className={`md:order-1 ${panel === 'list' && (actionMode === 'add' || actionMode === 'transfer') ? 'hidden md:block' : ''}`}>
+      {panel !== 'categories' && !(panel === 'search' && hasFilter) && (
+        <MonthSwitcher month={month} onChange={(m) => { setMonth(m); setSelectedDay(null); }} t={t} className={`mb-3 ${panel === 'search' ? 'hidden md:flex' : ''}`} />
+      )}
       {panel === 'categories' ? (
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -494,7 +519,8 @@ export default function Transactions() {
       ) : view === 'list' || panel === 'search' ? (
         <div className="space-y-4">
           {panel === 'search' && searchBlock}
-          {Object.entries(filteredGrouped).map(([day, items]) => (
+          {/* 手機版查詢:有設定條件才列出結果 */}
+          {!(panel === 'search' && !hasFilter && !isDesktop) && Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
               <p className="mb-1 text-xs font-medium text-muted-foreground">{day}</p>
               <Card>
@@ -504,11 +530,12 @@ export default function Transactions() {
               </Card>
             </div>
           ))}
-          {filteredTransactions.length === 0 && <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>}
+          {filteredTransactions.length === 0 && !(panel === 'search' && !hasFilter && !isDesktop) && <p className="text-sm text-muted-foreground">{t('tx_no_records')}</p>}
         </div>
       ) : (
         <div className="space-y-3">
           <CalendarView
+            monthDate={month}
             grouped={grouped}
             weekdays={t('cal_weekdays')}
             dayColor={dayColor}
@@ -535,10 +562,9 @@ export default function Transactions() {
   );
 }
 
-function CalendarView({ grouped, weekdays, dayColor, selectedDay, onSelect }) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+function CalendarView({ grouped, weekdays, dayColor, selectedDay, onSelect, monthDate }) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstWeekday = new Date(year, month, 1).getDay();
   const cells = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
@@ -574,7 +600,7 @@ function CalendarView({ grouped, weekdays, dayColor, selectedDay, onSelect }) {
   );
 }
 
-function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter, count, onClose }) {
+function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter, count, onClose, hintKey = 'search_default_hint' }) {
   const set = (k) => (v) => setFilters((f) => ({ ...f, [k]: v }));
   const label = 'mb-1 block text-xs text-muted-foreground';
   return (
@@ -658,7 +684,7 @@ function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {hasFilter ? `${t('search_count_prefix')}${count}${t('search_count_suffix')}` : t('search_default_hint')}
+          {hasFilter ? `${t('search_count_prefix')}${count}${t('search_count_suffix')}` : t(hintKey)}
         </p>
       </CardContent>
     </Card>

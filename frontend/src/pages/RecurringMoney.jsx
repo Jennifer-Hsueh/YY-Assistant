@@ -22,6 +22,8 @@ function nextDateFor(day) {
   return ymd(candidate);
 }
 
+const isDesktopNow = () => window.matchMedia('(min-width: 768px)').matches;
+
 function isExpired(item, today) {
   return !!item.end_date && (item.end_date < today || item.next_trigger_date > item.end_date);
 }
@@ -36,6 +38,10 @@ export default function RecurringMoney() {
   const [statusFilter, setStatusFilter] = useState('all');
   // 手機版:全部/啟用中/停用中/新增/編輯/刪除 六選一('filter' = 看列表,'mode' = 操作表單)
   const [mobileView, setMobileView] = useState('filter');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  // 重新啟用:要先選新的起始日期
+  const [reactivateId, setReactivateId] = useState(null);
+  const [reactivateDate, setReactivateDate] = useState('');
 
   const [actionMode, setActionMode] = useState('add');
   const [activeId, setActiveId] = useState(null);
@@ -70,6 +76,7 @@ export default function RecurringMoney() {
 
   function pickItem(item) {
     setActiveId(item.id);
+    setConfirmDelete(false);
     setForm({
       kind: item.kind,
       title: item.title,
@@ -83,6 +90,7 @@ export default function RecurringMoney() {
   }
 
   function resetAfterAction() {
+    setConfirmDelete(false);
     setForm(emptyForm);
     setActionMode('add');
     setActiveId(null);
@@ -119,11 +127,27 @@ export default function RecurringMoney() {
   }
 
   async function toggleActive(item) {
-    // Re-activating starts from the next upcoming date, so the paused period is not back-filled.
-    const payload = item.is_active
-      ? { is_active: false }
-      : { is_active: true, next_trigger_date: nextDateFor(item.day_of_month) };
-    await api.updateRecurringItem(item.id, payload);
+    if (item.is_active && !isExpired(item, today)) {
+      await api.updateRecurringItem(item.id, { is_active: false });
+      load();
+      return;
+    }
+    // 停用中/已結束 → 重新啟用前先選新的起始日期
+    setReactivateId(item.id);
+    setReactivateDate(nextDateFor(item.day_of_month));
+  }
+
+  async function confirmReactivate(item) {
+    if (!reactivateDate) return;
+    const day = Math.min(Number(reactivateDate.slice(8, 10)), 28);
+    await api.updateRecurringItem(item.id, {
+      is_active: true,
+      next_trigger_date: reactivateDate,
+      day_of_month: day,
+      // 結束日已過或早於新的起始日 → 清掉,讓循環重新開始
+      ...(item.end_date && item.end_date < reactivateDate ? { end_date: null } : {}),
+    });
+    setReactivateId(null);
     load();
   }
 
@@ -133,9 +157,11 @@ export default function RecurringMoney() {
   const relevantCategories = categories.filter((c) => c.type === form.kind || c.type === 'general');
 
   const rank = (item) => (isExpired(item, today) ? 2 : item.is_active ? 0 : 1);
+  const onlyActive = mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
   const visibleItems = items
     .filter((item) => {
       const on = item.is_active && !isExpired(item, today);
+      if (onlyActive && !isDesktopNow()) return on;
       if (statusFilter === 'active') return on;
       if (statusFilter === 'inactive') return !on;
       return true;
@@ -234,16 +260,22 @@ export default function RecurringMoney() {
                     </p>
                     <p className="truncate text-xs text-muted-foreground">{details}</p>
                   </div>
-                  {!selectable && (
-                    expired ? (
-                      <span className="shrink-0 text-xs text-muted-foreground">{t('rec_ended')}</span>
-                    ) : (
-                      <Button size="sm" className="shrink-0" variant={item.is_active ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
-                        {item.is_active ? t('rec_active') : t('rec_inactive')}
-                      </Button>
-                    )
+                  {!selectable && reactivateId !== item.id && (
+                    <Button size="sm" className="shrink-0" variant={item.is_active && !expired ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
+                      {expired ? t('rec_ended') : item.is_active ? t('rec_active') : t('rec_inactive')}
+                    </Button>
                   )}
                 </CardContent>
+                {reactivateId === item.id && (
+                  <div className="space-y-2 border-t border-border px-3 pb-3 pt-2 text-sm">
+                    <label className="text-xs text-muted-foreground">{t('rec_reactivate_date')}</label>
+                    <div className="flex gap-2">
+                      <Input type="date" value={reactivateDate} min={today} onChange={(e) => setReactivateDate(e.target.value)} className="min-w-0 flex-1" />
+                      <Button size="sm" onClick={() => confirmReactivate(item)} disabled={!reactivateDate}>{t('rec_reactivate')}</Button>
+                      <Button size="sm" variant="outline" onClick={() => setReactivateId(null)}>{t('cancel')}</Button>
+                    </div>
+                  </div>
+                )}
               </Card>
             );
           })}
@@ -259,13 +291,12 @@ export default function RecurringMoney() {
         <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
-      <Card>
+      {pickingMode && (
+        <p className="px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('rec_pick_edit') : t('rec_pick_delete')}</p>
+      )}
+      <Card className={pickingMode ? 'hidden' : ''}>
         <CardContent className="space-y-2 p-4">
-          {pickingMode ? (
-            <p className="py-2 text-center text-sm text-muted-foreground">
-              {actionMode === 'edit' ? t('rec_pick_edit') : t('rec_pick_delete')}
-            </p>
-          ) : actionMode === 'delete' && activeId ? (
+          {actionMode === 'delete' && activeId ? (
             <div className="space-y-2">
               <p className="text-sm font-medium">{t('rec_confirm_delete_title')}</p>
               <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
@@ -337,12 +368,25 @@ export default function RecurringMoney() {
                 <label className="text-xs text-muted-foreground">{t('rec_end_date')}</label>
                 <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">{actionMode === 'edit' ? t('tx_save_edit') : t('rec_add')}</Button>
-                {actionMode === 'edit' && activeId && (
-                  <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
-                )}
-              </div>
+              {actionMode === 'edit' && activeId ? (
+                confirmDelete ? (
+                  <div className="space-y-2 rounded-md border border-border p-2">
+                    <p className="text-sm">{t('rec_confirm_delete_title')}</p>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
+                    <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{t('mode_delete')}</Button>
+                    <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
+                  </div>
+                )
+              ) : (
+                <Button type="submit" className="w-full">{t('rec_add')}</Button>
+              )}
             </form>
           )}
         </CardContent>

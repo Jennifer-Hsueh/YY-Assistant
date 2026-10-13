@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import LedgerSubNav from '../components/LedgerSubNav';
 
 const TRANSFER = '轉帳';
+const BALANCE_ADJUST = '餘額調整'; // 帳戶餘額調整,不算收支
 
 function monthKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -87,7 +88,7 @@ export default function LedgerStats() {
 
   // 月份收支總覽
   const monthTx = useMemo(
-    () => transactions.filter((tx) => localDate(tx.occurred_at).slice(0, 7) === month && tx.category !== TRANSFER),
+    () => transactions.filter((tx) => localDate(tx.occurred_at).slice(0, 7) === month && tx.category !== TRANSFER && tx.category !== BALANCE_ADJUST),
     [transactions, month]
   );
   const monthReady = monthTx.every((tx) => rateOf(tx) != null);
@@ -97,7 +98,7 @@ export default function LedgerStats() {
 
   // 條件分析
   const filtered = transactions.filter((tx) => {
-    if (tx.category === TRANSFER) return false;
+    if (tx.category === TRANSFER || tx.category === BALANCE_ADJUST) return false;
     if (tx.type !== filters.type) return false;
     const d = localDate(tx.occurred_at);
     if (filters.from && d < filters.from) return false;

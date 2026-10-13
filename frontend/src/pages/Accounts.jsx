@@ -8,6 +8,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
 
+export const BALANCE_ADJUST = '餘額調整';
+
 const CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP'];
 
 // 沒自訂顏色的帳戶輪流用的預設色(由 index.css 依主題提供)
@@ -70,6 +72,8 @@ export default function Accounts() {
 
   const [pickedId, setPickedId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [newBalance, setNewBalance] = useState('');
+  const [editBalance, setEditBalance] = useState('');
   const [actionError, setActionError] = useState('');
   const [rates, setRates] = useState({ TWD: 1 });
 
@@ -110,8 +114,9 @@ export default function Accounts() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName) return;
-    await api.createAccount({ name: newName, balance: 0, currency: newCurrency, color: newColor });
+    await api.createAccount({ name: newName, balance: Number(newBalance) || 0, currency: newCurrency, color: newColor });
     setNewName('');
+    setNewBalance('');
     setNewColor(null);
     load();
   }
@@ -120,6 +125,7 @@ export default function Accounts() {
     setPickedId(acc.id);
     setEditName(acc.name);
     setEditColor(acc.color || null);
+    setEditBalance(String(Number(acc.balance)));
   }
 
   async function saveEdit() {
@@ -127,6 +133,19 @@ export default function Accounts() {
     setActionError('');
     try {
       await api.updateAccount(pickedId, { name: editName.trim(), color: editColor });
+      // 餘額有改 → 記一筆「餘額調整」,帳戶餘額由記帳紀錄自動更新(統計分析不會計入)
+      const acc = accounts.find((a) => a.id === pickedId);
+      const delta = Math.round((Number(editBalance) - Number(acc?.balance || 0)) * 100) / 100;
+      if (editBalance !== '' && !Number.isNaN(delta) && delta !== 0) {
+        await api.createTransaction({
+          type: delta > 0 ? 'income' : 'expense',
+          amount: Math.abs(delta),
+          category: BALANCE_ADJUST,
+          note: BALANCE_ADJUST,
+          account_id: pickedId,
+          occurred_at: new Date().toISOString(),
+        });
+      }
       switchMode('edit');
       load();
     } catch (err) {
@@ -307,6 +326,7 @@ export default function Accounts() {
                 </Select>
                 <Button type="submit">{t('acc_add')}</Button>
               </div>
+              <Input type="number" step="0.01" inputMode="decimal" placeholder={t('acc_opening_balance')} value={newBalance} onChange={(e) => setNewBalance(e.target.value)} />
               <ColorPicker value={newColor} onChange={setNewColor} t={t} />
             </form>
           )}
@@ -334,6 +354,10 @@ export default function Accounts() {
             <div className="space-y-2">
               {actionError && <p className="text-sm text-red-500">{actionError}</p>}
               <Input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t('acc_current_balance')}（{accounts.find((a) => a.id === pickedId)?.currency || 'TWD'}）</label>
+                <Input type="number" step="0.01" inputMode="decimal" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
+              </div>
               <ColorPicker value={editColor} onChange={setEditColor} t={t} />
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={saveEdit}>{t('save')}</Button>

@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import DateInputSegmented from '../components/DateInputSegmented';
 import CalendarSubNav from '../components/CalendarSubNav';
 import Categories from './Categories';
+import MonthSwitcher from '../components/MonthSwitcher';
 
 function pastelForDate(dateKey) {
   // 顏色定義在 index.css(--pastel-1~6),石墨灰主題會自動換成灰階
@@ -37,13 +38,14 @@ export default function CalendarPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const [monthDate, setMonthDate] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
 
   const [actionMode, setActionMode] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -63,7 +65,13 @@ export default function CalendarPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [monthDate]);
+
+  function changeMonth(m) {
+    setMonthDate(m);
+    setSelectedDay(null);
+    setActiveId(null);
+  }
 
   function switchActionMode(newMode) {
     setActionMode(newMode);
@@ -82,6 +90,7 @@ export default function CalendarPage() {
 
   function pickEvent(ev) {
     setActiveId(ev.id);
+    setConfirmDelete(false);
     setForm({
       title: ev.title,
       date: toDateInputValue(ev.start_at),
@@ -331,7 +340,8 @@ export default function CalendarPage() {
 
       </div>
 
-      <div className="md:col-start-1 md:row-span-2 md:row-start-1">
+      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' ? 'hidden md:block' : ''}`}>
+      <MonthSwitcher month={monthDate} onChange={changeMonth} t={t} className="mb-3" />
       <Card className="mb-3">
         <CardContent className="p-3">
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
@@ -442,36 +452,42 @@ export default function CalendarPage() {
       )}
 
       {/* 選了編輯/刪除模式:直接列出當月所有行程供選擇,不用先點日期 */}
-      {(actionMode === 'edit' || actionMode === 'delete') && (
+      {(actionMode === 'edit' || actionMode === 'delete') && !activeId && (
+        !selectedDay ? (
+          <p className="px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('cal_pick_day_edit') : t('cal_pick_day_delete')}</p>
+        ) : (
+          <Card>
+            <CardContent className="space-y-1 p-4">
+              <p className="mb-1 text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
+              {selectedDayEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
+              ) : (
+                selectedDayEvents
+                  .slice()
+                  .sort((a, b) => a.start_at.localeCompare(b.start_at))
+                  .map((ev) => (
+                    <button
+                      key={ev.id}
+                      type="button"
+                      onClick={() => pickEvent(ev)}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                    >
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                      <span>{ev.title}</span>
+                      {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                      {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
+                    </button>
+                  ))
+              )}
+            </CardContent>
+          </Card>
+        )
+      )}
+
+      {(actionMode === 'edit' || actionMode === 'delete') && activeId && (
         <Card>
           <CardContent className="space-y-3 p-4">
-            {!activeId ? (
-              <div className="space-y-1">
-                {events.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
-                ) : (
-                  <>
-                    <p className="text-xs text-muted-foreground">{actionMode === 'edit' ? t('cal_pick_edit') : t('cal_pick_delete')}</p>
-                    {events
-                      .slice()
-                      .sort((a, b) => a.start_at.localeCompare(b.start_at))
-                      .map((ev) => (
-                        <button
-                          key={ev.id}
-                          type="button"
-                          onClick={() => pickEvent(ev)}
-                          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                        >
-                          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
-                          <span className="text-xs text-muted-foreground">{ev.start_at.slice(0, 10)}</span>
-                          <span>{ev.title}</span>
-                          {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                        </button>
-                      ))}
-                  </>
-                )}
-              </div>
-            ) : actionMode === 'edit' ? (
+            {actionMode === 'edit' ? (
               <form onSubmit={handleSubmit} className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">{t('cal_editing')}</p>
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -512,8 +528,18 @@ export default function CalendarPage() {
                 />
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
+                  <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{t('mode_delete')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
+                {confirmDelete && (
+                  <div className="space-y-2 rounded-md border border-border p-2">
+                    <p className="text-sm">{t('cal_confirm_delete_title')}</p>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>
+                    </div>
+                  </div>
+                )}
               </form>
             ) : (
               <div className="space-y-2">
