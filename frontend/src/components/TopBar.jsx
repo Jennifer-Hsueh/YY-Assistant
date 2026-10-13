@@ -1,6 +1,7 @@
 import { LogOut, Languages } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import AnnouncementBell from './AnnouncementBell';
 
 export default function TopBar() {
   const { logout } = useAuth();
@@ -16,7 +17,8 @@ export default function TopBar() {
             <span className="text-muted-foreground" style={{ fontSize: '12px', display: 'inline-block' }}>Assistant</span>
           </div>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex items-center gap-3">
+          <AnnouncementBell />
           <button
             type="button"
             onClick={toggleLanguage}

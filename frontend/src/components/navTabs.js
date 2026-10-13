@@ -1,7 +1,7 @@
 import { Home as HomeIcon, Wallet, Calendar, Users, Settings } from 'lucide-react';
 
 export const navTabs = [
-  { to: '/', key: 'nav_home', Icon: HomeIcon, color: 'var(--ink)', end: true, match: ['/announcements'] },
+  { to: '/', key: 'nav_home', Icon: HomeIcon, color: 'var(--ink)', end: true },
   { to: '/transactions', key: 'nav_ledger', Icon: Wallet, color: 'var(--module-transactions)', match: ['/recurring-money', '/accounts', '/categories', '/ledger-stats'], children: [
     { to: '/transactions', key: 'tx_pageTitle' },
     { to: '/recurring-money', key: 'sub_recurring' },

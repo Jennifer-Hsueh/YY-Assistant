@@ -3,6 +3,7 @@ import { Megaphone } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
+import { markAnnouncementsSeen } from '../lib/annStatus';
 
 export default function Announcements() {
   const { t } = useLanguage();
@@ -14,6 +15,7 @@ export default function Announcements() {
       try {
         const { announcements } = await api.listAnnouncements();
         setAnnouncements(announcements);
+        markAnnouncementsSeen(); // 打開公告頁就算看過:鈴鐺紅點與重要橫幅一起消失
       } catch (err) {
         console.error(err);
       } finally {
@@ -40,7 +42,12 @@ export default function Announcements() {
             <Card key={a.id}>
               <CardContent className="p-4">
                 <p className="mb-1 text-xs text-muted-foreground">{a.published_at.slice(0, 10)}</p>
-                <p className="mb-1 font-medium">{a.title}</p>
+                <p className="mb-1 flex items-center gap-2 font-medium">
+                  {a.is_important && (
+                    <span className="shrink-0 rounded bg-[#C1666B] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{t('ann_important')}</span>
+                  )}
+                  {a.title}
+                </p>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">{a.content}</p>
               </CardContent>
             </Card>

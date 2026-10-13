@@ -220,3 +220,8 @@ alter table yy_users add column if not exists notify_calendar boolean not null d
 -- 循環頻率增加「每年」；day_of_month = -1 代表「每月最後一天」
 alter table yy_recurring_items drop constraint if exists yy_recurring_items_frequency_check;
 alter table yy_recurring_items add constraint yy_recurring_items_frequency_check check (frequency in ('monthly', 'weekly', 'yearly'));
+
+-- 2026-10-14 公告鈴鐺(未讀數)與重要公告橫幅
+alter table yy_users add column if not exists announcements_seen_at timestamptz;
+alter table yy_users add column if not exists announcement_banner_dismissed_at timestamptz;
+alter table yy_announcements add column if not exists is_important boolean not null default false;

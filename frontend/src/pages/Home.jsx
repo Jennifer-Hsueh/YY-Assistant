@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Calendar, Megaphone, PiggyBank, CloudSun, ChevronRight } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, PiggyBank, CloudSun, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
+import { useAnnStatus, dismissAnnBanner } from '../lib/annStatus';
 
 const MOODS = [
   { key: 'sunny', emoji: '☀️' },
@@ -34,10 +35,9 @@ function CardTitle({ Icon, color, title, to }) {
 
 export default function Home() {
   const { t } = useLanguage();
-  const [announcements, setAnnouncements] = useState([]);
-  const [loadingAnn, setLoadingAnn] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [homeImgH, setHomeImgH] = useState(0);
+  const { banner } = useAnnStatus();
   const [overview, setOverview] = useState(null); // { events, totals, budgets }
   const [mood, setMood] = useState(null);
   const todayKey = ymd(new Date());
@@ -87,21 +87,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [{ announcements }, { profile }] = await Promise.all([
-          api.listAnnouncements(),
-          api.getProfile(),
-        ]);
-        setAnnouncements(announcements.slice(0, 4));
-        setProfile(profile);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingAnn(false);
-      }
-    }
-    load();
+    api.getProfile()
+      .then(({ profile }) => setProfile(profile))
+      .catch((err) => console.error(err))
+      .finally(() => setProfileLoaded(true));
   }, []);
 
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
@@ -109,7 +98,7 @@ export default function Home() {
   return (
     <div className="relative mx-auto max-w-xl px-4 pt-4 pb-24 md:max-w-5xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
-{!loadingAnn && !profile?.home_image && (
+{profileLoaded && !profile?.home_image && (
   <img
     src="/home-watermark-logo.png"
     alt=""
@@ -119,36 +108,44 @@ export default function Home() {
 )}
 
       <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
-      {displayName && (
-        <p className="mb-3 text-muted-foreground md:mb-5" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
+      {/* 重要公告橫幅:點進公告頁或按 ✕ 就不再出現 */}
+      {banner && (
+        <div
+          className="relative z-30 mb-3 mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm md:mb-5"
+          style={{ background: 'color-mix(in srgb, var(--module-recurring) 18%, var(--card))' }}
+        >
+          <Megaphone className="h-4 w-4 shrink-0" style={{ color: 'var(--module-recurring)' }} />
+          <Link to="/announcements" className="min-w-0 flex-1 truncate">
+            <span className="mr-1.5 font-medium" style={{ color: 'var(--module-recurring)' }}>{t('ann_important')}</span>
+            {banner.title}
+          </Link>
+          <button type="button" aria-label={t('ann_close')} onClick={dismissAnnBanner} className="shrink-0 text-muted-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
-      <Link to="/announcements" className="relative z-10 mb-3 block md:mb-5">
-        <Card
-          className="border-none"
-          style={{ background: `linear-gradient(135deg, color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 12%, var(--card)) 50%, transparent), color-mix(in srgb, color-mix(in srgb, var(--module-recurring) 32%, var(--card)) 50%, transparent))` }}
-        >
-          <CardContent className="p-3 md:p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-[1.3125rem] font-medium" style={{ color: 'var(--module-recurring)' }}>
-              <Megaphone className="h-4 w-4" />
-              {t('ann_latest')}
-            </p>
-            {loadingAnn ? (
-              <p className="text-xs text-muted-foreground">{t('loading')}</p>
-            ) : announcements.length === 0 ? (
-              <p className="text-[0.975rem] text-muted-foreground">{t('ann_empty')}</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {announcements.map((a) => (
-                  <li key={a.id} className="truncate text-xs text-foreground">
-                    <span className="text-muted-foreground">{a.published_at.slice(0, 10)}</span> · {a.title}
-                  </li>
-                ))}
-              </ul>
+      {/* 角色放大,下緣約 2/5 壓在「今日行程」卡片上(負 margin = 40% 圖高 + 原本的間距) */}
+      <div className="mb-3 flex items-end gap-[64px] md:mb-5 md:gap-[92px]">
+        <div className="min-w-0 pb-1">
+          <p className="text-muted-foreground" style={{ fontSize: '15.4px' }}>
+            {new Intl.DateTimeFormat(t('home_date_locale'), { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())}
+          </p>
+          {displayName && (
+            <p className="mt-0.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
+          )}
+        </div>
+        {profile?.home_image && (
+          <div className="pointer-events-none relative z-20 -mb-[63px] shrink-0 md:-mb-[84px]">
+            <img src={profile.home_image} alt="" className="h-32 w-auto md:h-40" style={{ maxWidth: 'none' }} />
+            {mood && (
+              <span className="absolute -left-2 top-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-base shadow-sm">
+                {MOODS.find((m) => m.key === mood)?.emoji}
+              </span>
             )}
-          </CardContent>
-        </Card>
-      </Link>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-5">
         {/* 今日行程 */}
@@ -231,15 +228,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
-      {!loadingAnn && profile?.home_image && (
-        <img
-          src={profile.home_image}
-          alt=""
-          onLoad={(e) => setHomeImgH(e.currentTarget.offsetHeight)}
-          className="pointer-events-none relative z-20 ml-auto block w-[280px] opacity-[0.63]"
-          style={{ maxWidth: 'none', width: 'auto', height: '220px', marginTop: -homeImgH / 3 }}
-        />
-      )}
     </div>
   );
 }
