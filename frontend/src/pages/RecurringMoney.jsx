@@ -144,7 +144,7 @@ export default function RecurringMoney() {
   }
 
   const accountOf = (id) => accounts.find((a) => a.id === id);
-  const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
+  const pickingMode = actionMode === 'edit' && !activeId;
   const kindLabel = { expense: t('rec_kind_expense'), income: t('rec_kind_income') };
   const relevantCategories = categories.filter((c) => c.type === form.kind || c.type === 'general');
 
@@ -170,7 +170,7 @@ export default function RecurringMoney() {
     </button>
   );
 
-  const modeButtons = [['add', 'mode_add'], ['edit', 'mode_edit'], ['delete', 'mode_delete']].map(([m, k]) => (
+  const modeButtons = [['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
     <button key={m} type="button" onClick={() => switchActionMode(m)} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t(k)}</button>
   ));
   const filterButtons = (
@@ -186,7 +186,7 @@ export default function RecurringMoney() {
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
 
-      {/* 手機版:篩選與新增/編輯/刪除放在同一個區塊,一次只選一個 */}
+      {/* 手機版:篩選與新增/編輯(含刪除)放在同一個區塊,一次只選一個 */}
       <div className="mb-3 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
         <div className="flex">
           {[['all', 'rec_filter_all'], ['active', 'rec_filter_active'], ['inactive', 'rec_filter_inactive']].map(([v, k]) => (
@@ -200,7 +200,7 @@ export default function RecurringMoney() {
         </div>
         <div className="my-1 border-t border-border" />
         <div className="flex">
-          {[['add', 'mode_add'], ['edit', 'mode_edit'], ['delete', 'mode_delete']].map(([m, k]) => (
+          {[['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
             <button
               key={m}
               type="button"
@@ -222,7 +222,7 @@ export default function RecurringMoney() {
       ) : (
         <div className="mb-6 space-y-2">
           {visibleItems.map((item) => {
-            const selectable = actionMode === 'edit' || actionMode === 'delete';
+            const selectable = actionMode === 'edit';
             const isActive = activeId === item.id;
             const expired = isExpired(item, today);
             const muted = expired || !item.is_active;
@@ -280,30 +280,14 @@ export default function RecurringMoney() {
       <div className="mb-3 hidden rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchActionMode('delete')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
       </div>
 
       {pickingMode && (
-        <p className="px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('rec_pick_edit') : t('rec_pick_delete')}</p>
+        <p className="px-1 text-sm text-muted-foreground">{t('rec_pick_edit')}</p>
       )}
       <Card className={pickingMode ? 'hidden' : ''}>
         <CardContent className="space-y-2 p-4">
-          {actionMode === 'delete' && activeId ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t('rec_confirm_delete_title')}</p>
-              <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                <p>{kindLabel[form.kind]} · {form.title}</p>
-                <p>
-                  {describeRecurrence({ ...form, ...recurrencePayload(form) }, t)}
-                  {form.amount && ` · ${accountOf(form.account_id)?.currency || 'TWD'} ${Number(form.amount).toLocaleString()}`}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
-              </div>
-            </div>
-          ) : (
+          {(
             <form onSubmit={handleSubmit} className="space-y-2">
               {actionMode === 'edit' && activeId && (
                 <p className="text-xs font-medium text-muted-foreground">{t('rec_editing')}</p>

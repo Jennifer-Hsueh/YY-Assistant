@@ -210,6 +210,8 @@ export default function CalendarPage() {
   }, []);
   // 新增/編輯/查詢/管理分類 四選一(手機、網頁相同;再點一次已選的項目 = 取消)
   function selectMobile(key) {
+    // 每次切換功能,下方明細回到「未點選日期」的空白狀態
+    setSelectedDay(null);
     if (key === 'search' || key === 'categories') {
       if (panel === key) { togglePanel(key); return; }
       setActionMode(null);
@@ -385,7 +387,8 @@ export default function CalendarPage() {
           <Categories scope="calendar" embedded onChanged={load} />
         </div>
       )}
-      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' ? 'hidden md:block' : ''} ${panel === 'categories' ? 'hidden' : ''}`}>
+      {/* 手機版:查詢、新增時不顯示行事曆;管理分類時手機、網頁都不顯示 */}
+      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' || (actionMode === 'add' && !panel) ? 'hidden md:block' : ''} ${panel === 'categories' ? 'hidden' : ''}`}>
       <div className="mb-3 flex gap-2">
         <div className="flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
           {['month', 'week'].map((v) => (

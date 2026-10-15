@@ -339,6 +339,9 @@ export default function Transactions() {
         ))}
       </div>
 
+      {/* 網頁版:查詢條件放在右側功能列下方,左側顯示查詢結果 */}
+      {panel === 'search' && isDesktop && <div className="mb-3">{searchBlock}</div>}
+
       {pickingMode && (
         <p className="mb-3 px-1 text-sm text-muted-foreground">{t('tx_pick_edit')}</p>
       )}
@@ -492,7 +495,7 @@ export default function Transactions() {
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'list' || panel === 'search' ? (
         <div className="space-y-4">
-          {panel === 'search' && searchBlock}
+          {panel === 'search' && !isDesktop && searchBlock}
           {/* 手機版查詢:有設定條件才列出結果 */}
           {!(panel === 'search' && !hasFilter && !isDesktop) && Object.entries(filteredGrouped).map(([day, items]) => (
             <div key={day}>
