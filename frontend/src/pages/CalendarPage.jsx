@@ -208,7 +208,7 @@ export default function CalendarPage() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-  // 手機版:新增/編輯/刪除/查詢/管理分類 五選一(再點一次已選的項目 = 取消)
+  // 新增/編輯/查詢/管理分類 四選一(手機、網頁相同;再點一次已選的項目 = 取消)
   function selectMobile(key) {
     if (key === 'search' || key === 'categories') {
       if (panel === key) { togglePanel(key); return; }
@@ -348,14 +348,14 @@ export default function CalendarPage() {
       <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯(含刪除) / 查詢 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
-      <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
+      <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
         <button
-          onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))}
-          className={`col-span-3 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          onClick={() => selectMobile('add')}
+          className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && !panel ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_add')}</button>
         <button
-          onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))}
-          className={`col-span-3 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          onClick={() => selectMobile('edit')}
+          className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && !panel ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
         {[
           { key: 'search', label: t('search_title') },
@@ -365,7 +365,7 @@ export default function CalendarPage() {
             key={key}
             type="button"
             onClick={() => selectMobile(key)}
-            className={`col-span-3 rounded-md px-2 py-1.5 transition-colors md:hidden ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+            className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
             {label}
           </button>
@@ -658,22 +658,6 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       )}
-
-      <div className="mt-3 hidden gap-2 md:flex">
-        {[
-          { key: 'search', label: t('search_title') },
-          { key: 'categories', label: t('tx_manage_categories') },
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => togglePanel(key)}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors ${panel === key ? 'border-primary bg-primary font-medium text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:bg-muted'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {isDesktop && panelContent}
 

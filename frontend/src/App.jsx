@@ -68,7 +68,8 @@ export default function App() {
             <Route path="/calendar-stats" element={<ProtectedLayout><CalendarStats /></ProtectedLayout>} />
 
             <Route path="/announcements" element={<ProtectedLayout><Announcements /></ProtectedLayout>} />
-            <Route path="/community" element={<ProtectedLayout><Community /></ProtectedLayout>} />
+            <Route path="/community" element={<Navigate to="/community/mood" replace />} />
+            <Route path="/community/:board" element={<ProtectedLayout><Community /></ProtectedLayout>} />
             <Route path="/notes" element={<ProtectedLayout><Notes /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
 

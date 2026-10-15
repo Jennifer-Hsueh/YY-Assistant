@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
@@ -58,7 +59,10 @@ function relativeTime(t, iso) {
 
 export default function Community() {
   const { t } = useLanguage();
-  const [tab, setTab] = useState('mood');
+  // 版別由網址決定(/community/mood 等),左側選單與頁內版別列共用
+  const { board } = useParams();
+  const navigate = useNavigate();
+  const tab = TABS.some((x) => x.key === board) ? board : 'mood';
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -99,9 +103,12 @@ export default function Community() {
 
   useEffect(() => { load(); }, [tab, mineFilter]);
 
+  useEffect(() => {
+    if (tab !== 'mine') setDraft((d) => ({ ...d, board: tab }));
+  }, [tab]);
+
   function switchTab(key) {
-    setTab(key);
-    if (key !== 'mine') setDraft((d) => ({ ...d, board: key }));
+    navigate(`/community/${key}`);
   }
 
   const draftBoard = tab === 'mine' ? draft.board : tab;
@@ -246,11 +253,10 @@ export default function Community() {
         {t('nav_community')}
       </h1>
 
+      {/* 版別列:手機與網頁都橫跨整個內容寬度 */}
+      {tabBar}
       {/* 手機版順序:版別 → 版名介紹 → 寫文章 → 文章列表 */}
-      <div className="md:hidden">
-        {tabBar}
-        {boardIntro}
-      </div>
+      <div className="md:hidden">{boardIntro}</div>
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
         <div className="md:sticky md:top-6 md:order-2">
@@ -291,8 +297,6 @@ export default function Community() {
         </div>
 
         <div className="md:order-1">
-          <div className="hidden md:block">{tabBar}</div>
-
           <div className="hidden md:block">{boardIntro}</div>
 
           {error && <p className="mb-3 text-sm text-red-500">{error}</p>}

@@ -314,9 +314,7 @@ export default function Settings() {
         </div>
       )}
 
-      <MoodCard t={t} />
 
-      <ChangePasswordCard t={t} />
       </div>
 
       <div>
@@ -395,8 +393,10 @@ export default function Settings() {
       </Card>
 
       <div className="mt-3">
-        <DataTransferCard t={t} />
+        <ChangePasswordCard t={t} />
       </div>
+
+      <DataTransferCard t={t} />
 
       <Card>
         <CardContent className="flex items-center justify-between gap-3 p-4">
@@ -413,6 +413,10 @@ export default function Settings() {
           </Button>
         </CardContent>
       </Card>
+
+      <div className="mt-3">
+        <MoodCard t={t} />
+      </div>
 
       {clearOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => clearStatus !== 'clearing' && setClearOpen(false)}>

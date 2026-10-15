@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 
-const MOODS = ['sunny', 'cloudy', 'rainy', 'storm', 'rainbow'];
+// 九種心情;rainbow 為舊資料,仍接受
+const MOODS = ['question', 'angry', 'rainy', 'storm', 'love', 'sunny', 'cloudy', 'exclaim', 'flower', 'rainbow'];
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 // GET /moods?from=YYYY-MM-DD&to=YYYY-MM-DD

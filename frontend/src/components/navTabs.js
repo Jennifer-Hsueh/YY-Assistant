@@ -13,7 +13,12 @@ export const navTabs = [
     { to: '/recurring-events', key: 'sub_recurring_events' },
     { to: '/calendar-stats', key: 'sub_stats' },
   ] },
-  { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)' },
+  { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)', children: [
+    { to: '/community/mood', key: 'cm_board_mood' },
+    { to: '/community/finance', key: 'cm_board_finance' },
+    { to: '/community/wish', key: 'cm_board_wish' },
+    { to: '/community/mine', key: 'cm_mine' },
+  ] },
   // 墨箋絮語:只放在網頁版左側選單;手機版從首頁卡片標題進入
   { to: '/notes', key: 'nav_notes', Icon: NotebookPen, color: 'var(--module-notes)', desktopOnly: true },
   { to: '/settings', key: 'nav_settings', Icon: Settings, color: 'var(--ink)' },

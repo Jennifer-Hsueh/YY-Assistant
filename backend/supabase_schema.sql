@@ -237,3 +237,15 @@ create table if not exists yy_notes (
   updated_at timestamptz not null default now()
 );
 create index if not exists yy_notes_user_idx on yy_notes (user_id, is_done, created_at desc);
+
+-- 2026-10-15 本日心情改為九種(rainbow 保留給舊資料)
+-- 先移除 yy_moods 上舊的心情檢查(不論名稱)
+do $$
+declare r record;
+begin
+  for r in select conname from pg_constraint where conrelid = 'yy_moods'::regclass and contype = 'c' loop
+    execute format('alter table yy_moods drop constraint %I', r.conname);
+  end loop;
+end $$;
+alter table yy_moods add constraint yy_moods_mood_check
+  check (mood in ('question', 'angry', 'rainy', 'storm', 'love', 'sunny', 'cloudy', 'exclaim', 'flower', 'rainbow'));

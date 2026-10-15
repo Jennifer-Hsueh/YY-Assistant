@@ -34,14 +34,15 @@ export default function MoodCard({ t }) {
           <CloudSun className="h-4 w-4" />
           {t('home_mood')}
         </p>
-        <div className="flex justify-between gap-1.5">
+        <div className="grid grid-cols-5 gap-1.5 md:grid-cols-9">
           {MOODS.map((m) => (
             <button
               key={m.key}
               type="button"
-              aria-label={t(`cm_mood_${m.key}`)}
+              aria-label={t(`mood_${m.key}`)}
+              title={t(`mood_${m.key}`)}
               onClick={() => pick(m.key)}
-              className={`flex-1 rounded-xl border py-2 text-2xl leading-none transition-all ${mood === m.key ? 'scale-105 border-foreground bg-card shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
+              className={`rounded-xl border py-2 text-2xl leading-none transition-all ${mood === m.key ? 'scale-105 border-foreground bg-card shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
             >
               {m.emoji}
             </button>

@@ -89,7 +89,7 @@ export default function Transactions() {
     }
   }
 
-  // 手機版:新增/編輯/刪除/轉帳/查詢/管理分類 六選一;再點一次已選的項目 = 回到只看帳務資料
+  // 新增/編輯/轉帳/查詢/管理分類 五選一(手機、網頁相同);再點一次已選的項目 = 回到只看帳務資料
   function selectMobile(key) {
     const isPanel = key === 'search' || key === 'categories';
     const already = isPanel ? panel === key : panel === 'list' && actionMode === key;
@@ -324,16 +324,16 @@ export default function Transactions() {
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
 
-      {/* 手機版:查詢/管理分類放進同一個功能列(第二排);桌機版另有下方按鈕 */}
-      <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
-        <button onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add' && (isDesktop || panel === 'list'))}`}>{t('mode_add')}</button>
-        <button onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit' && (isDesktop || panel === 'list'))}`}>{t('mode_edit')}</button>
-        <button onClick={() => (isDesktop ? switchActionMode('transfer') : selectMobile('transfer'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && (isDesktop || panel === 'list'))}`}>{t('mode_transfer')}</button>
+      {/* 新增/編輯/轉帳 + 查詢/管理分類 同一個功能列,一次只能選一個(再點一次取消) */}
+      <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+        <button onClick={() => selectMobile('add')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'add' && panel === 'list')}`}>{t('mode_add')}</button>
+        <button onClick={() => selectMobile('edit')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'edit' && panel === 'list')}`}>{t('mode_edit')}</button>
+        <button onClick={() => selectMobile('transfer')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && panel === 'list')}`}>{t('mode_transfer')}</button>
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
         ].map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-3 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
+          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-3 px-2 py-1.5 ${segBtn(panel === key)}`}>
             {label}
           </button>
         ))}
@@ -344,7 +344,7 @@ export default function Transactions() {
       )}
 
       {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
-      <Card className={`mb-3 ${pickingMode ? 'hidden' : !actionMode || panel !== 'list' ? 'hidden md:block' : ''}`}>
+      <Card className={`mb-3 ${pickingMode || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">
@@ -474,23 +474,6 @@ export default function Transactions() {
           )}
         </CardContent>
       </Card>
-
-      {/* 查詢 / 管理分類 — 點選後才展開(桌機版顯示在左側,取代記帳明細);再點一次收起 */}
-      <div className="hidden gap-2 md:flex">
-        {[
-          { key: 'search', label: t('search_title') },
-          { key: 'categories', label: t('tx_manage_categories') },
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => togglePanel(key)}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors ${panel === key ? 'border-primary bg-primary font-medium text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:bg-muted'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
       </div>
 
       <div className={`md:order-1 ${panel === 'list' && (actionMode === 'add' || actionMode === 'transfer') ? 'hidden md:block' : ''}`}>

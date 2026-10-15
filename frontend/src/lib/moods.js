@@ -1,10 +1,17 @@
-// 本日心情(五種天氣);首頁角色旁的小圖示與設定頁的選擇共用
+// 本日心情(九種);首頁角色旁的小圖示與設定頁的選擇共用
 export const MOODS = [
-  { key: 'sunny', emoji: '☀️' },
-  { key: 'cloudy', emoji: '⛅' },
+  { key: 'question', emoji: '❓' },
+  { key: 'angry', emoji: '😠' },
   { key: 'rainy', emoji: '🌧️' },
   { key: 'storm', emoji: '⛈️' },
-  { key: 'rainbow', emoji: '🌈' },
+  { key: 'love', emoji: '❤️' },
+  { key: 'sunny', emoji: '☀️' },
+  { key: 'cloudy', emoji: '☁️' },
+  { key: 'exclaim', emoji: '❗' },
+  { key: 'flower', emoji: '🌸' },
 ];
 
-export const moodEmoji = (key) => MOODS.find((m) => m.key === key)?.emoji || null;
+// 舊資料可能還有 rainbow,照樣顯示
+const LEGACY = { rainbow: '🌈' };
+
+export const moodEmoji = (key) => MOODS.find((m) => m.key === key)?.emoji || LEGACY[key] || null;
