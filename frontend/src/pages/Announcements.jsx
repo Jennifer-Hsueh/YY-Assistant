@@ -26,7 +26,7 @@ export default function Announcements() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10">
       <h1 className="page-title-row page-title mb-4 flex items-center gap-2 text-lg font-semibold">
         <Megaphone className="h-5 w-5 md:hidden" style={{ color: 'var(--module-recurring)' }} />
         {t('nav_announcements')}

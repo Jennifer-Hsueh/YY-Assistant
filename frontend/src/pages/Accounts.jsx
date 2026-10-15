@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
+import { useIsDesktop } from '../lib/useIsDesktop';
 
 export const BALANCE_ADJUST = '餘額調整';
 
@@ -63,7 +64,9 @@ export default function Accounts() {
   }, [accounts.length]);
   const [loading, setLoading] = useState(true);
 
-  const [mode, setMode] = useState('add');
+  // 新增/編輯/刪除:點了才出現內容,再點一次收起
+  const [mode, setMode] = useState(null);
+  const isDesktop = useIsDesktop();
 
   const [newName, setNewName] = useState('');
   const [newCurrency, setNewCurrency] = useState('TWD');
@@ -108,8 +111,8 @@ export default function Accounts() {
     ).then((pairs) => setRates((prev) => ({ ...prev, ...Object.fromEntries(pairs) })));
   }, [accounts]);
 
-  function switchMode(newMode) {
-    setMode(newMode);
+  function switchMode(newMode, { keep = false } = {}) {
+    setMode(!keep && mode === newMode ? null : newMode);
     setPickedId(null);
     setEditName('');
     setEditColor(null);
@@ -151,7 +154,7 @@ export default function Accounts() {
           occurred_at: new Date().toISOString(),
         });
       }
-      switchMode('edit');
+      switchMode('edit', { keep: true });
       load();
     } catch (err) {
       console.error(err);
@@ -163,7 +166,7 @@ export default function Accounts() {
     setActionError('');
     try {
       await api.deleteAccount(pickedId);
-      switchMode('delete');
+      switchMode('delete', { keep: true });
       load();
     } catch (err) {
       console.error(err);
@@ -186,13 +189,24 @@ export default function Accounts() {
     ? Object.entries(subtotals).reduce((sum, [c, v]) => sum + v * rates[c], 0)
     : null;
 
+  // 新增/編輯/刪除功能列:手機版緊接在上方功能列下面,桌機版在右側
+  const actionBar = (
+    <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+      {['add', 'edit', 'delete'].map((m) => (
+        <button key={m} type="button" onClick={() => switchMode(m)} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t(`mode_${m}`)}</button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-accounts)', '--ring': 'var(--module-accounts)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('acc_pageTitle')}</h1>
       <LedgerSubNav />
+      {!isDesktop && actionBar}
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
-      <div>
+      {/* 手機版:選了功能時只顯示功能內容,不同時顯示總資產與各帳戶金額 */}
+      <div className={mode && !isDesktop ? 'hidden' : ''}>
 
       {!loading && accounts.length > 0 && (
         <Card className="mb-4">
@@ -309,13 +323,9 @@ export default function Accounts() {
       </div>
 
       <div className="md:sticky md:top-6">
-      <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-        <button onClick={() => switchMode('add')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchMode('edit')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
-        <button onClick={() => switchMode('delete')} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === 'delete' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_delete')}</button>
-      </div>
+      {isDesktop && actionBar}
 
-      <Card>
+      <Card className={mode ? '' : 'hidden'}>
         <CardContent className="p-4">
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="space-y-3">

@@ -61,13 +61,13 @@ export default function Home() {
         const rates = await loadRates(api, accounts);
         setOverview({
           events: events.slice().sort((a, b) => a.start_at.localeCompare(b.start_at)),
-          totals: monthTotals(transactions, accounts, rates, todayKey.slice(0, 7)),
+          totals: monthTotals(transactions, accounts, rates, todayKey.slice(0, 7), todayKey),
           budgets,
         });
         setMood(moods[0]?.mood || null);
       } catch (err) {
         console.error(err);
-        setOverview({ events: [], totals: { expense: 0, income: 0, byCategory: {} }, budgets: [] });
+        setOverview({ events: [], totals: { expense: 0, income: 0, dayExpense: 0, byCategory: {} }, budgets: [] });
       }
     }
     loadOverview();
@@ -96,7 +96,7 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
-    <div className="relative mx-auto max-w-xl px-4 pt-4 pb-24 md:max-w-5xl md:px-8 md:py-10">
+    <div className="relative mx-auto max-w-xl px-4 pt-4 pb-40 md:max-w-5xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
 {profileLoaded && !profile?.home_image && (
   <img
@@ -185,8 +185,7 @@ export default function Home() {
                   {Math.round(overview.totals.expense).toLocaleString()}
                 </p>
                 <p className="mt-1 font-amount text-xs text-muted-foreground">
-                  {t('home_month_income')} {Math.round(overview.totals.income).toLocaleString()}
-                  {' · '}{t('home_month_balance')} {Math.round(overview.totals.income - overview.totals.expense).toLocaleString()}
+                  {t('home_today_spend')} TWD {Math.round(overview.totals.dayExpense || 0).toLocaleString()}
                 </p>
               </>
             )}

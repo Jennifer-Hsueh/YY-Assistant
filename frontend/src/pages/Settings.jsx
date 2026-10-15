@@ -170,7 +170,7 @@ export default function Settings() {
   const planLabel = { free: t('settings_plan_free'), ledger: t('settings_plan_ledger'), calendar: t('settings_plan_calendar'), full: t('settings_plan_full') };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10">
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10">
       <h1 className="page-title-row page-title mb-4 flex items-center gap-2 text-lg font-semibold">
         <SettingsIcon className="h-5 w-5 md:hidden" style={{ color: 'var(--ink)' }} />
         {t('nav_settings')}

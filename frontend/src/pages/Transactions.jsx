@@ -237,7 +237,7 @@ export default function Transactions() {
     return accounts.find((a) => a.id === id)?.currency || 'TWD';
   }
 
-  const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
+  const pickingMode = actionMode === 'edit' && !activeId;
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
 
   const [filters, setFilters] = useState(emptyFilters);
@@ -271,7 +271,7 @@ export default function Transactions() {
   const catColor = (name) => categories.find((c) => c.name === name)?.color || null;
 
   function renderTxRow(tx) {
-    const selectable = actionMode === 'edit' || actionMode === 'delete';
+    const selectable = actionMode === 'edit';
     const isActive = activeId === tx.id;
     return (
       <div
@@ -283,10 +283,10 @@ export default function Transactions() {
           {catColor(tx.category) && (
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) }} />
           )}
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground">
             {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
           </span>
-          <span className="text-xs text-foreground"> - {tx.note || t('tx_no_note')}</span>
+          <span className="text-foreground"> - {tx.note || t('tx_no_note')}</span>
         </div>
         <span className={`font-amount shrink-0 pl-2 flex items-baseline ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
           <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
@@ -311,7 +311,7 @@ export default function Transactions() {
   );
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="page-title-row mb-3 flex items-center justify-between">
         <h1 className="page-title text-lg font-semibold">{t('tx_pageTitle')}</h1>
         <div className={SEG_BAR}>
@@ -325,23 +325,22 @@ export default function Transactions() {
       <div className="md:sticky md:top-6 md:order-2">
 
       {/* 手機版:查詢/管理分類放進同一個功能列(第二排);桌機版另有下方按鈕 */}
-      <div className="mb-3 grid grid-cols-4 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
-        <button onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add' && (isDesktop || panel === 'list'))}`}>{t('mode_add')}</button>
-        <button onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit' && (isDesktop || panel === 'list'))}`}>{t('mode_edit')}</button>
-        <button onClick={() => (isDesktop ? switchActionMode('delete') : selectMobile('delete'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'delete' && (isDesktop || panel === 'list'))}`}>{t('mode_delete')}</button>
-        <button onClick={() => (isDesktop ? switchActionMode('transfer') : selectMobile('transfer'))} className={`flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && (isDesktop || panel === 'list'))}`}>{t('mode_transfer')}</button>
+      <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
+        <button onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'add' && (isDesktop || panel === 'list'))}`}>{t('mode_add')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'edit' && (isDesktop || panel === 'list'))}`}>{t('mode_edit')}</button>
+        <button onClick={() => (isDesktop ? switchActionMode('transfer') : selectMobile('transfer'))} className={`col-span-2 flex-1 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && (isDesktop || panel === 'list'))}`}>{t('mode_transfer')}</button>
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
         ].map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-2 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
+          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-3 px-2 py-1.5 md:hidden ${segBtn(panel === key)}`}>
             {label}
           </button>
         ))}
       </div>
 
       {pickingMode && (
-        <p className="mb-3 px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('tx_pick_edit') : t('tx_pick_delete')}</p>
+        <p className="mb-3 px-1 text-sm text-muted-foreground">{t('tx_pick_edit')}</p>
       )}
 
       {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
@@ -399,21 +398,8 @@ export default function Transactions() {
             </form>
           ) : pickingMode ? (
             <p className="py-2 text-center text-sm text-muted-foreground">
-              {actionMode === 'edit' ? t('tx_pick_edit') : t('tx_pick_delete')}
+              {t('tx_pick_edit')}
             </p>
-          ) : actionMode === 'delete' && activeId ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t('tx_confirm_delete_title')}</p>
-              <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                <p>{form.type === 'income' ? t('type_income') : t('type_expense')} · {form.category || t('tx_no_category')} · {accountCurrency(form.account_id)} {Number(form.amount).toLocaleString()}</p>
-                <p>{form.occurred_at}</p>
-                {form.note && <p>{form.note}</p>}
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => { setActiveId(null); setForm(emptyForm); }}>{t('reselect')}</Button>
-              </div>
-            </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-2">
               {actionMode === 'edit' && activeId && (

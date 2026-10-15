@@ -11,15 +11,17 @@ export function ymd(d) {
 }
 
 // 指定月份(YYYY-MM)的支出/收入,換算成 TWD;byCategory 為各分類支出
-export function monthTotals(transactions, accounts, rates, monthPrefix) {
+// dayKey(選填,YYYY-MM-DD):另外算出當天的支出 dayExpense
+export function monthTotals(transactions, accounts, rates, monthPrefix, dayKey = null) {
   const currencyOf = (id) => accounts.find((a) => a.id === id)?.currency || 'TWD';
-  const result = { expense: 0, income: 0, byCategory: {} };
+  const result = { expense: 0, income: 0, dayExpense: 0, byCategory: {} };
   for (const tx of transactions) {
     if (EXCLUDED_CATEGORIES.includes(tx.category)) continue;
     if (localDate(tx.occurred_at).slice(0, 7) !== monthPrefix) continue;
     const twd = Number(tx.amount) * (rates[currencyOf(tx.account_id)] ?? 1);
     if (tx.type === 'expense') {
       result.expense += twd;
+      if (dayKey && localDate(tx.occurred_at) === dayKey) result.dayExpense += twd;
       if (tx.category) result.byCategory[tx.category] = (result.byCategory[tx.category] || 0) + twd;
     } else {
       result.income += twd;

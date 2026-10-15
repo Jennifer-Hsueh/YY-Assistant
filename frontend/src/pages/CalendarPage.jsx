@@ -268,7 +268,7 @@ export default function CalendarPage() {
 
   const panelContent = (
     <>
-      {panel === 'categories' && (
+      {panel === 'categories' && !isDesktop && (
         <div className="mt-3">
           <Categories scope="calendar" embedded onChanged={load} />
         </div>
@@ -340,27 +340,23 @@ export default function CalendarPage() {
   );
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
       <CalendarSubNav />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
       <div className="md:col-start-2 md:row-start-1">
 
-      {/* Action mode switch: 新增 / 編輯 / 刪除 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
+      {/* Action mode switch: 新增 / 編輯(含刪除) / 查詢 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex md:gap-0">
         <button
           onClick={() => (isDesktop ? switchActionMode('add') : selectMobile('add'))}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          className={`col-span-3 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_add')}</button>
         <button
           onClick={() => (isDesktop ? switchActionMode('edit') : selectMobile('edit'))}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          className={`col-span-3 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
-        <button
-          onClick={() => (isDesktop ? switchActionMode('delete') : selectMobile('delete'))}
-          className={`col-span-2 flex-1 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'delete' && (isDesktop || !panel) ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
-        >{t('mode_delete')}</button>
         {[
           { key: 'search', label: t('search_title') },
           { key: 'categories', label: t('tx_manage_categories') },
@@ -379,7 +375,17 @@ export default function CalendarPage() {
 
       </div>
 
-      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' ? 'hidden md:block' : ''}`}>
+      {/* 管理分類:不顯示月曆(桌機版把分類管理放在月曆原本的位置) */}
+      {panel === 'categories' && isDesktop && (
+        <div className="md:col-start-1 md:row-span-2 md:row-start-1">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium">{t('tx_manage_categories')}</p>
+            <button type="button" onClick={() => togglePanel('categories')} className="text-xs text-muted-foreground underline">{t('cal_back_to_calendar')}</button>
+          </div>
+          <Categories scope="calendar" embedded onChanged={load} />
+        </div>
+      )}
+      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' ? 'hidden md:block' : ''} ${panel === 'categories' ? 'hidden' : ''}`}>
       <div className="mb-3 flex gap-2">
         <div className="flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
           {['month', 'week'].map((v) => (
@@ -553,10 +559,10 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {/* 選了編輯/刪除模式:直接列出當月所有行程供選擇,不用先點日期 */}
-      {(actionMode === 'edit' || actionMode === 'delete') && !activeId && (
+      {/* 選了編輯模式:先選日期,再選當日行程(刪除在編輯表單內) */}
+      {actionMode === 'edit' && !activeId && (
         !selectedDay ? (
-          <p className="px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('cal_pick_day_edit') : t('cal_pick_day_delete')}</p>
+          <p className="px-1 text-sm text-muted-foreground">{t('cal_pick_day_edit')}</p>
         ) : (
           <Card>
             <CardContent className="space-y-1 p-4">
@@ -586,10 +592,10 @@ export default function CalendarPage() {
         )
       )}
 
-      {(actionMode === 'edit' || actionMode === 'delete') && activeId && (
+      {actionMode === 'edit' && activeId && (
         <Card>
           <CardContent className="space-y-3 p-4">
-            {actionMode === 'edit' ? (
+            {(
               <form onSubmit={handleSubmit} className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">{t('cal_editing')}</p>
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -648,18 +654,6 @@ export default function CalendarPage() {
                   </div>
                 )}
               </form>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">{t('cal_confirm_delete_title')}</p>
-                <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                  <p>{form.title}</p>
-                  <p>{form.date} {form.category && `· ${form.category}`}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
-                </div>
-              </div>
             )}
           </CardContent>
         </Card>

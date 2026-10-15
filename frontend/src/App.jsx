@@ -33,7 +33,8 @@ function ProtectedLayout({ children }) {
   return (
     <div className="min-h-screen overflow-x-clip">
       <Sidebar />
-      <div className="md:pl-56">
+      {/* 手機版:多留出 iPhone 底部安全區域的高度,內容不會被底部導覽列蓋住 */}
+      <div className="pb-[env(safe-area-inset-bottom)] md:pb-0 md:pl-56">
         <TopBar />
         {children}
       </div>

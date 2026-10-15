@@ -213,7 +213,7 @@ export default function Categories({ scope = 'ledger', embedded = false, onChang
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-32 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={isCalendar ? { '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' } : { '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <div className="page-title-row mb-4 flex items-center justify-between">
         <h1 className="page-title text-lg font-semibold">{t(isCalendar ? 'cat_calendar_pageTitle' : 'cat_pageTitle')}</h1>
         <Link to={isCalendar ? '/calendar' : '/transactions'} className="text-sm text-muted-foreground underline">{t(isCalendar ? 'cat_back_to_calendar' : 'cat_back_to_transactions')}</Link>

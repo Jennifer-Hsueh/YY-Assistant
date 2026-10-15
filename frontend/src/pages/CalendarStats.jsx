@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -22,6 +22,8 @@ export default function CalendarStats() {
   const { t } = useLanguage();
   const weekdays = t('cal_weekdays');
   const [events, setEvents] = useState([]);
+  // 手機版:條件分析點了才展開
+  const [customOpen, setCustomOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(() => monthKey(new Date()));
@@ -103,7 +105,7 @@ export default function CalendarStats() {
   const groupColor = (k) => (filters.groupBy === 'category' ? categoryColor(k) : 'var(--module-calendar)');
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 pb-24 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
+    <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_stats')}</h1>
       <CalendarSubNav />
 
@@ -148,9 +150,12 @@ export default function CalendarStats() {
 
           <Card>
             <CardContent className="p-4">
-              <p className="mb-3 text-sm font-medium">{t('stats_custom')}</p>
+              <button type="button" onClick={() => setCustomOpen((o) => !o)} className="flex w-full items-center justify-between text-left text-sm font-medium md:pointer-events-none md:mb-3">
+                {t('stats_custom')}
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform md:hidden ${customOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-              <div className="space-y-2 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-6 md:space-y-0">
+              <div className={`space-y-2 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-6 md:space-y-0 ${customOpen ? 'mt-3 md:mt-0' : 'hidden'}`}>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Input type="date" value={filters.from} onChange={(e) => setFilter('from', e.target.value)} className="min-w-0 flex-1" />
