@@ -9,7 +9,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="mx-auto flex max-w-xl justify-around">
-        {navTabs.map((tab) => {
+        {navTabs.filter((tab) => !tab.desktopOnly).map((tab) => {
           const { to, key, Icon, color } = tab;
           const active = isTabActive(tab, pathname);
           return (

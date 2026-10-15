@@ -1,4 +1,4 @@
-import { Home as HomeIcon, Wallet, Calendar, Users, Settings } from 'lucide-react';
+import { Home as HomeIcon, Wallet, Calendar, Users, Settings, NotebookPen } from 'lucide-react';
 
 export const navTabs = [
   { to: '/', key: 'nav_home', Icon: HomeIcon, color: 'var(--ink)', end: true },
@@ -14,6 +14,8 @@ export const navTabs = [
     { to: '/calendar-stats', key: 'sub_stats' },
   ] },
   { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)' },
+  // 墨箋絮語:只放在網頁版左側選單;手機版從首頁卡片標題進入
+  { to: '/notes', key: 'nav_notes', Icon: NotebookPen, color: 'var(--module-notes)', desktopOnly: true },
   { to: '/settings', key: 'nav_settings', Icon: Settings, color: 'var(--ink)' },
 ];
 

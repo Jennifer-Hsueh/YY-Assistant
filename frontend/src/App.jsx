@@ -19,6 +19,7 @@ import RecurringEvents from './pages/RecurringEvents';
 import CalendarStats from './pages/CalendarStats';
 import Categories from './pages/Categories';
 import Announcements from './pages/Announcements';
+import Notes from './pages/Notes';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
 
@@ -68,6 +69,7 @@ export default function App() {
 
             <Route path="/announcements" element={<ProtectedLayout><Announcements /></ProtectedLayout>} />
             <Route path="/community" element={<ProtectedLayout><Community /></ProtectedLayout>} />
+            <Route path="/notes" element={<ProtectedLayout><Notes /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
 
             <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />

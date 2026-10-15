@@ -225,3 +225,15 @@ alter table yy_recurring_items add constraint yy_recurring_items_frequency_check
 alter table yy_users add column if not exists announcements_seen_at timestamptz;
 alter table yy_users add column if not exists announcement_banner_dismissed_at timestamptz;
 alter table yy_announcements add column if not exists is_important boolean not null default false;
+
+-- 2026-10-15 墨箋絮語(隨手記事)
+create table if not exists yy_notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  content text not null check (char_length(content) between 1 and 2000),
+  is_done boolean not null default false,
+  done_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists yy_notes_user_idx on yy_notes (user_id, is_done, created_at desc);

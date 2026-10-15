@@ -124,7 +124,7 @@ async function deleteCategory(req, res) {
 // recurring items, categories). The login account and profile are kept.
 async function clearAllData(req, res) {
   try {
-    const tables = ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_accounts', 'yy_budgets', 'yy_moods'];
+    const tables = ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_accounts', 'yy_budgets', 'yy_moods', 'yy_notes'];
     for (const table of tables) {
       const { error } = await supabase.from(table).delete().eq('user_id', req.user.id);
       if (error) throw error;

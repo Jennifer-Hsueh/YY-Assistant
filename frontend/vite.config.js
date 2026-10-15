@@ -31,7 +31,8 @@ export default defineConfig({
         // which API responses are safe to cache offline.
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
         // Excel 套件很大,只在匯出/匯入時才下載,不放進離線快取
-        globIgnores: ['**/exceljs*'],
+        // 首頁人物大圖不預先快取(12 張約 3MB),用到時才下載;縮圖仍預先快取
+        globIgnores: ['**/exceljs*', 'home-images/yy-*.png'],
       },
     }),
   ],

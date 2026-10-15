@@ -1,20 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Calendar, Megaphone, PiggyBank, CloudSun, ChevronRight, X } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
 import { useAnnStatus, dismissAnnBanner } from '../lib/annStatus';
-
-const MOODS = [
-  { key: 'sunny', emoji: '☀️' },
-  { key: 'cloudy', emoji: '⛅' },
-  { key: 'rainy', emoji: '🌧️' },
-  { key: 'storm', emoji: '⛈️' },
-  { key: 'rainbow', emoji: '🌈' },
-];
+import { moodEmoji } from '../lib/moods';
+import HomeNotesCard from '../components/HomeNotesCard';
 
 // 首頁卡片的淡色漸層底(依模組顏色)
 const tint = (color) => ({
@@ -42,7 +36,7 @@ export default function Home() {
   const [mood, setMood] = useState(null);
   const todayKey = ymd(new Date());
 
-  // 今日總覽:今日行程、本月消費、預算、本日心情
+  // 今日總覽:今日行程、本月消費、預算;心情在設定頁選,首頁角色旁顯示
   useEffect(() => {
     async function loadOverview() {
       const now = new Date();
@@ -74,12 +68,6 @@ export default function Home() {
     window.addEventListener('yy:data-changed', loadOverview);
     return () => window.removeEventListener('yy:data-changed', loadOverview);
   }, []);
-
-  async function pickMood(key) {
-    const next = mood === key ? null : key;
-    setMood(next);
-    try { await api.setMood(todayKey, next); } catch (err) { console.error(err); }
-  }
 
   const timeOf = (iso) => {
     const d = new Date(iso);
@@ -140,7 +128,7 @@ export default function Home() {
             <img src={profile.home_image} alt="" className="h-32 w-auto md:h-40" style={{ maxWidth: 'none' }} />
             {mood && (
               <span className="absolute -left-2 top-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-base shadow-sm">
-                {MOODS.find((m) => m.key === mood)?.emoji}
+                {moodEmoji(mood)}
               </span>
             )}
           </div>
@@ -206,26 +194,8 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* 本日心情 */}
-        <Card className="relative z-10 border-none" style={tint('var(--module-accounts)')}>
-          <CardContent className="p-4 md:p-5">
-            <CardTitle Icon={CloudSun} color="var(--module-accounts)" title={t('home_mood')} />
-            <div className="flex justify-between gap-1.5">
-              {MOODS.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  aria-label={t(`cm_mood_${m.key}`)}
-                  onClick={() => pickMood(m.key)}
-                  className={`flex-1 rounded-xl border py-2 text-2xl leading-none transition-all ${mood === m.key ? 'scale-105 border-foreground bg-card shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                >
-                  {m.emoji}
-                </button>
-              ))}
-            </div>
-            <Link to="/community" className="mt-3 inline-block text-xs text-muted-foreground underline">{t('home_mood_share')}</Link>
-          </CardContent>
-        </Card>
+        {/* 墨箋絮語:只顯示未完成的項目 */}
+        <HomeNotesCard t={t} style={tint('var(--module-notes)')} />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import DataTransferCard from '../components/DataTransferCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
+import MoodCard from '../components/MoodCard';
 
 
 const HOME_IMAGES = [
@@ -20,7 +21,15 @@ const HOME_IMAGES = [
   '/home-images/yy-4.png',
   '/home-images/yy-5.png',
   '/home-images/yy-6.png',
+  '/home-images/yy-7.png',
+  '/home-images/yy-8.png',
+  '/home-images/yy-9.png',
+  '/home-images/yy-10.png',
+  '/home-images/yy-11.png',
+  '/home-images/yy-12.png',
 ];
+// 縮圖(約 200px 高),點了才載入完整圖案預覽
+const thumbOf = (src) => (src ? src.replace('/home-images/', '/home-images/thumbs/') : '/home-watermark-logo.png');
 
 export default function Settings() {
   const { user } = useAuth();
@@ -45,6 +54,7 @@ export default function Settings() {
   const [clearStatus, setClearStatus] = useState('idle');
 
   const [imageStatus, setImageStatus] = useState('idle');
+  const [previewSrc, setPreviewSrc] = useState(undefined); // undefined = 沒有開啟預覽
   const [theme, setTheme] = useState(getStoredTheme);
 
   // 立即套用,再存到伺服器(Web 與 APP 共用同一個設定)
@@ -64,6 +74,7 @@ export default function Settings() {
       const { profile } = await api.updateProfile({ home_image: src });
       setProfile(profile);
       setImageStatus('idle');
+      setPreviewSrc(undefined);
     } catch (err) {
       console.error(err);
       setImageStatus('failed');
@@ -271,10 +282,10 @@ export default function Settings() {
                   key={src || 'default'}
                   type="button"
                   disabled={imageStatus === 'saving'}
-                  onClick={() => selectImage(src)}
+                  onClick={() => setPreviewSrc(src)}
                   className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-1 transition-colors ${selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:bg-muted'}`}
                 >
-                  <img src={src || '/home-watermark-logo.png'} alt="" className="max-h-full max-w-full object-contain" />
+                  <img src={thumbOf(src)} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
                 </button>
               );
             })}
@@ -282,6 +293,28 @@ export default function Settings() {
           {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
         </CardContent>
       </Card>
+
+      {/* 點縮圖跳出完整圖案預覽,確認後才選用 */}
+      {previewSrc !== undefined && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => imageStatus !== 'saving' && setPreviewSrc(undefined)}>
+          <div className="w-full max-w-xs rounded-2xl bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex h-80 items-center justify-center rounded-xl bg-muted/40 p-3">
+              <img src={previewSrc || '/home-watermark-logo.png'} alt="" className="max-h-full max-w-full object-contain" />
+            </div>
+            {(profile?.home_image || null) === previewSrc && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">{t('settings_home_image_current')}</p>
+            )}
+            <div className="mt-3 flex gap-2">
+              <Button className="flex-1" disabled={imageStatus === 'saving'} onClick={() => selectImage(previewSrc)}>
+                {imageStatus === 'saving' ? t('loading') : t('settings_home_image_use')}
+              </Button>
+              <Button variant="outline" className="flex-1" disabled={imageStatus === 'saving'} onClick={() => setPreviewSrc(undefined)}>{t('cancel')}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <MoodCard t={t} />
 
       <ChangePasswordCard t={t} />
       </div>

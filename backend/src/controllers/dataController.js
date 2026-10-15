@@ -30,7 +30,7 @@ async function insertChunks(table, rows) {
 async function exportData(req, res) {
   try {
     const uid = req.user.id;
-    const [accounts, categories, transactions, events, recurring_items, budgets, moods] = await Promise.all([
+    const [accounts, categories, transactions, events, recurring_items, budgets, moods, notes] = await Promise.all([
       selectAll('yy_accounts', uid),
       selectAll('yy_categories', uid),
       selectAll('yy_transactions', uid),
@@ -38,12 +38,14 @@ async function exportData(req, res) {
       selectAll('yy_recurring_items', uid),
       selectAll('yy_budgets', uid),
       selectAll('yy_moods', uid),
+      // 墨箋絮語:資料表尚未建立時不影響匯出
+      selectAll('yy_notes', uid).catch(() => []),
     ]);
     return res.json({
       app: 'YY手帳',
       version: BACKUP_VERSION,
       exported_at: new Date().toISOString(),
-      data: { accounts, categories, transactions, events, recurring_items, budgets, moods },
+      data: { accounts, categories, transactions, events, recurring_items, budgets, moods, notes },
     });
   } catch (err) {
     console.error('[dataController.exportData]', err);
@@ -101,7 +103,7 @@ async function importData(req, res) {
     if (!data || typeof data !== 'object') return res.status(400).json({ error: 'Invalid backup file' });
 
     if (mode === 'replace') {
-      for (const table of ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_budgets', 'yy_moods', 'yy_accounts']) {
+      for (const table of ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_budgets', 'yy_moods', 'yy_notes', 'yy_accounts']) {
         const { error } = await supabase.from(table).delete().eq('user_id', uid);
         if (error) throw error;
       }
@@ -164,6 +166,16 @@ async function importData(req, res) {
       if (error) throw error;
     }
     summary.moods = moodRows.length;
+
+    summary.notes = await insertChunks('yy_notes', (data.notes || [])
+      .filter((n) => typeof n.content === 'string' && n.content.trim())
+      .map((n) => ({
+        user_id: uid,
+        content: n.content.trim().slice(0, 2000),
+        is_done: n.is_done === true,
+        done_at: n.is_done === true ? (n.done_at || new Date().toISOString()) : null,
+        ...(n.created_at ? { created_at: n.created_at } : {}),
+      })));
 
     return res.json({ status: 'ok', summary });
   } catch (err) {

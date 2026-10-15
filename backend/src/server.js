@@ -20,6 +20,7 @@ const communityRoutes = require('./routes/communityRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const dataRoutes = require('./routes/dataRoutes');
+const noteRoutes = require('./routes/noteRoutes');
 app.use(cors());
 // 匯入備份檔可能比較大,這個路徑放寬上限(要放在全域 json 解析之前)
 app.use('/api/data', express.json({ limit: '15mb' }));
@@ -71,6 +72,7 @@ app.use('/api/community', communityRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/notes', noteRoutes);
 
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

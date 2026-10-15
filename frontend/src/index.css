@@ -69,6 +69,8 @@
   --module-calendar-bg: color-mix(in srgb, var(--ink) 8%, white);
   --module-recurring: var(--highlight);
   --module-recurring-bg: color-mix(in srgb, var(--highlight) 12%, white);
+  /* 墨箋絮語:墨色偏暖的棕 */
+  --module-notes: #8A6A54;
 
   /* 帳戶卡片預設色(使用者沒自訂顏色時輪流使用) */
   --acc-1: var(--income);
@@ -133,6 +135,7 @@
   --module-calendar-bg: var(--g-mist);
   --module-recurring: var(--g-stone);
   --module-recurring-bg: var(--g-mist);
+  --module-notes: var(--g-ink);
 
   --acc-1: var(--g-ink);
   --acc-2: var(--g-stone);
