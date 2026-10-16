@@ -21,6 +21,9 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const dataRoutes = require('./routes/dataRoutes');
 const noteRoutes = require('./routes/noteRoutes');
+const { runBackup, notify } = require('./services/backupService');
+// Render 前面有一層代理,讓 req.ip 取得使用者真正的 IP(次數限制會用到)
+app.set('trust proxy', 1);
 app.use(cors());
 // 匯入備份檔可能比較大,這個路徑放寬上限(要放在全域 json 解析之前)
 app.use('/api/data', express.json({ limit: '15mb' }));
@@ -54,6 +57,23 @@ app.get('/cron/event-reminders', async (req, res) => {
   } catch (err) {
     console.error('[cron/event-reminders]', err);
     return res.status(500).json({ error: 'Reminder run failed' });
+  }
+});
+
+// 每週自動備份:建議在 cron-job.org 設定每週一次(例如週日 03:10 台灣時間)
+app.get('/cron/backup', async (req, res) => {
+  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    const result = await runBackup();
+    await notify(true, result);
+    const { counts, ...summary } = result;
+    return res.json({ status: 'ok', ...summary });
+  } catch (err) {
+    console.error('[cron/backup]', err);
+    await notify(false, err.message);
+    return res.status(500).json({ error: 'Backup failed' });
   }
 });
 

@@ -24,7 +24,7 @@ export default function ChangePasswordCard({ t }) {
       setStatus({ ok: true, text: t('pw_changed') });
       setOpen(false);
     } catch (err) {
-      setStatus({ ok: false, text: /incorrect/i.test(err.message) ? t('pw_wrong_current') : t('pw_failed') });
+      setStatus({ ok: false, text: err.status === 429 ? err.message : /incorrect/i.test(err.message) ? t('pw_wrong_current') : t('pw_failed') });
     } finally {
       setSaving(false);
     }

@@ -45,7 +45,9 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    const err = new Error(data.error || `Request failed (${res.status})`);
+    err.status = res.status; // 429 = 嘗試次數過多
+    throw err;
   }
   return data;
 }

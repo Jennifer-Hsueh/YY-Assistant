@@ -253,3 +253,16 @@ alter table yy_moods add constraint yy_moods_mood_check
 -- 2026-10-16 個人資訊「國別」(社群安心專線依國別顯示;未設定時顯示台灣)
 alter table yy_users add column if not exists country text
   check (country in ('TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'));
+
+-- 2026-10-16 資料庫權限檢查:所有 yy_ 資料表都要開啟 RLS
+-- 後端用 service role 連線(不受 RLS 影響);開啟 RLS 且不設政策 = 公開金鑰完全讀寫不到
+do $$
+declare r record;
+begin
+  for r in
+    select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'yy\_%' and not c.relrowsecurity
+  loop
+    execute format('alter table public.%I enable row level security', r.relname);
+  end loop;
+end $$;
