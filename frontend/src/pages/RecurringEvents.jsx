@@ -131,7 +131,7 @@ export default function RecurringEvents() {
     load();
   }
 
-  const pickingMode = (actionMode === 'edit' || actionMode === 'delete') && !activeId;
+  const pickingMode = actionMode === 'edit' && !activeId;
 
   const rank = (item) => (isExpired(item, today) ? 2 : item.is_active ? 0 : 1);
   const onlyActive = mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
@@ -148,7 +148,7 @@ export default function RecurringEvents() {
   const filterButtons = [['all', 'rec_filter_all'], ['active', 'rec_filter_active'], ['inactive', 'rec_filter_inactive']].map(([v, k]) => (
     <button key={v} type="button" onClick={() => setStatusFilter(v)} className={segBtn(statusFilter === v)}>{t(k)}</button>
   ));
-  const modeButtons = [['add', 'mode_add'], ['edit', 'mode_edit'], ['delete', 'mode_delete']].map(([m, k]) => (
+  const modeButtons = [['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
     <button key={m} type="button" onClick={() => switchActionMode(m)} className={segBtn(actionMode === m)}>{t(k)}</button>
   ));
 
@@ -171,7 +171,7 @@ export default function RecurringEvents() {
         </div>
         <div className="my-1 border-t border-border" />
         <div className="flex">
-          {[['add', 'mode_add'], ['edit', 'mode_edit'], ['delete', 'mode_delete']].map(([m, k]) => (
+          {[['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
             <button
               key={m}
               type="button"
@@ -191,7 +191,7 @@ export default function RecurringEvents() {
       ) : (
         <div className="mb-6 space-y-2">
           {visibleItems.map((item) => {
-            const selectable = actionMode === 'edit' || actionMode === 'delete';
+            const selectable = actionMode === 'edit';
             const isActive = activeId === item.id;
             const expired = isExpired(item, today);
             const muted = expired || !item.is_active;
@@ -239,23 +239,11 @@ export default function RecurringEvents() {
       <div className={`mb-3 hidden md:flex ${SEG_BAR}`}>{modeButtons}</div>
 
       {pickingMode && (
-        <p className="px-1 text-sm text-muted-foreground">{actionMode === 'edit' ? t('rec_pick_edit') : t('rec_pick_delete')}</p>
+        <p className="px-1 text-sm text-muted-foreground">{t('rec_pick_edit')}</p>
       )}
       <Card className={pickingMode ? 'hidden' : ''}>
         <CardContent className="space-y-2 p-4">
-          {actionMode === 'delete' && activeId ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t('rec_confirm_delete_title')}</p>
-              <div className="rounded-md border border-border p-3 text-sm text-muted-foreground">
-                <p>{form.title}</p>
-                <p>{describeRecurrence({ ...form, ...recurrencePayload(form) }, t)}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
-              </div>
-            </div>
-          ) : (
+          {(
             <form onSubmit={handleSubmit} className="space-y-2">
               {actionMode === 'edit' && activeId && (
                 <p className="text-xs font-medium text-muted-foreground">{t('rec_editing')}</p>

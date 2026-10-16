@@ -249,3 +249,7 @@ begin
 end $$;
 alter table yy_moods add constraint yy_moods_mood_check
   check (mood in ('question', 'angry', 'rainy', 'storm', 'love', 'sunny', 'cloudy', 'exclaim', 'flower', 'rainbow'));
+
+-- 2026-10-16 個人資訊「國別」(社群安心專線依國別顯示;未設定時顯示台灣)
+alter table yy_users add column if not exists country text
+  check (country in ('TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'));

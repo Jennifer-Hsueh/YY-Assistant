@@ -78,6 +78,8 @@ export default function Accounts() {
   const [newBalance, setNewBalance] = useState('');
   const [editBalance, setEditBalance] = useState('');
   const [actionError, setActionError] = useState('');
+  // 編輯裡的刪除確認
+  const [editDeleteOpen, setEditDeleteOpen] = useState(false);
   const [rates, setRates] = useState({ TWD: 1 });
 
   async function load() {
@@ -114,6 +116,7 @@ export default function Accounts() {
   function switchMode(newMode, { keep = false } = {}) {
     setMode(!keep && mode === newMode ? null : newMode);
     setPickedId(null);
+    setEditDeleteOpen(false);
     setEditName('');
     setEditColor(null);
     setActionError('');
@@ -166,7 +169,8 @@ export default function Accounts() {
     setActionError('');
     try {
       await api.deleteAccount(pickedId);
-      switchMode('delete', { keep: true });
+      setEditDeleteOpen(false);
+      switchMode(mode, { keep: true });
       load();
     } catch (err) {
       console.error(err);
@@ -192,7 +196,8 @@ export default function Accounts() {
   // 新增/編輯/刪除功能列:手機版緊接在上方功能列下面,桌機版在右側
   const actionBar = (
     <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-      {['add', 'edit', 'delete'].map((m) => (
+      {/* 手機版:刪除改在編輯裡操作 */}
+      {(isDesktop ? ['add', 'edit', 'delete'] : ['add', 'edit']).map((m) => (
         <button key={m} type="button" onClick={() => switchMode(m)} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t(`mode_${m}`)}</button>
       ))}
     </div>
@@ -374,10 +379,22 @@ export default function Accounts() {
                 <Input type="number" step="0.01" inputMode="decimal" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
               </div>
               <ColorPicker value={editColor} onChange={setEditColor} t={t} />
-              <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={saveEdit}>{t('save')}</Button>
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setPickedId(null)}>{t('reselect')}</Button>
-              </div>
+              {editDeleteOpen ? (
+                <div className="space-y-2 rounded-md border border-border p-2">
+                  <p className="text-sm font-medium">{t('acc_confirm_delete_prefix')}{pickedAccount?.name}{t('acc_confirm_delete_suffix')}</p>
+                  <p className="text-xs text-muted-foreground">{t('acc_delete_note')}</p>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="destructive" className="flex-1" onClick={confirmDelete}>{t('tx_confirm_delete')}</Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={() => setEditDeleteOpen(false)}>{t('cancel')}</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button type="button" className="flex-1" onClick={saveEdit}>{t('save')}</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditDeleteOpen(true)}>{t('mode_delete')}</Button>
+                  <Button type="button" variant="outline" onClick={() => setPickedId(null)}>{t('reselect')}</Button>
+                </div>
+              )}
             </div>
           )}
 

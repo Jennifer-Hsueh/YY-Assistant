@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
+import { helplineText } from '../lib/helplines';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -58,7 +59,8 @@ function relativeTime(t, iso) {
 }
 
 export default function Community() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [country, setCountry] = useState(null);
   // 版別由網址決定(/community/mood 等),左側選單與頁內版別列共用
   const { board } = useParams();
   const navigate = useNavigate();
@@ -75,7 +77,7 @@ export default function Community() {
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
-    api.getProfile().then(({ profile }) => setIsAdmin(profile?.role === 'admin')).catch(() => {});
+    api.getProfile().then(({ profile }) => { setIsAdmin(profile?.role === 'admin'); setCountry(profile?.country || null); }).catch(() => {});
   }, []);
 
   function refreshStats() {
@@ -239,8 +241,9 @@ export default function Community() {
           </div>
           <Button type="submit" className="w-full" disabled={posting || !draft.content.trim()}>{t('cm_publish')}</Button>
         </form>
-        {draftBoard === 'mood' && (
-          <p className="border-t border-dashed border-border pt-3 text-xs text-muted-foreground">{t('cm_help')}</p>
+        {/* 安心專線:依個人資訊的國別顯示,未設定時顯示台灣;國別沒有專線則整列不顯示 */}
+        {draftBoard === 'mood' && helplineText(country, language) && (
+          <p className="border-t border-dashed border-border pt-3 text-xs text-muted-foreground">{t('cm_help')} {helplineText(country, language)}</p>
         )}
       </CardContent>
     </Card>

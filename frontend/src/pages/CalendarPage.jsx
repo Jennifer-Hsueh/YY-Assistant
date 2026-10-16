@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import DateInputSegmented from '../components/DateInputSegmented';
+import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
@@ -31,15 +32,6 @@ const emptyFilters = { from: '', to: '', category: '', keyword: '' };
 const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', note: '', category: '', color: '#4F46E5', remind: 'none' };
 
 // 提醒選項(分鐘,存在 remind_before_minutes):有時間的行程 / 全天行程各一組
-const REMIND_TIMED = ['none', '0', '10', '30', '60', '1440'];
-const REMIND_ALL_DAY = ['none', '-480', '960'];
-// 切換「有沒有填時間」時,把提醒換成另一組裡最接近的選項
-function normalizeRemind(remind, hasTime) {
-  if (remind === 'none') return 'none';
-  if (hasTime) return remind === '960' ? '1440' : remind === '-480' ? '0' : remind;
-  return remind === '1440' ? '960' : REMIND_ALL_DAY.includes(remind) ? remind : '-480';
-}
-
 export default function CalendarPage() {
   const { t } = useLanguage();
   const [events, setEvents] = useState([]);
@@ -343,7 +335,7 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
-      <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')} — {year}-{String(month + 1).padStart(2, '0')}</h1>
+      <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')}<span className="ml-3">{year}.{String(month + 1).padStart(2, '0')}</span></h1>
       <CalendarSubNav />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">

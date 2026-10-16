@@ -62,6 +62,12 @@ export default function Notes() {
     return () => clearTimeout(timer);
   }, [filters, searching]);
 
+  useEffect(() => {
+    const onChanged = () => load();
+    window.addEventListener('yy:data-changed', onChanged);
+    return () => window.removeEventListener('yy:data-changed', onChanged);
+  }, [filters, searching]);
+
   function switchMode(next) {
     setMode((cur) => (cur === next ? null : next));
     setActiveId(null);

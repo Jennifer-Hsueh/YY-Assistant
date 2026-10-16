@@ -23,7 +23,12 @@ export default function HomeNotesCard({ t, style }) {
       setNotes([]);
     }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // 快速新增(+)存了記事後重新載入
+    window.addEventListener('yy:data-changed', load);
+    return () => window.removeEventListener('yy:data-changed', load);
+  }, []);
 
   async function tick(note) {
     setLeaving((ids) => [...ids, note.id]);

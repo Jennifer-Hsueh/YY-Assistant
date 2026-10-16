@@ -11,6 +11,9 @@ import { Card, CardContent } from '../components/ui/card';
 import DataTransferCard from '../components/DataTransferCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
 import MoodCard from '../components/MoodCard';
+import { useIsDesktop } from '../lib/useIsDesktop';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import { COUNTRY_CODES, countryName } from '../lib/helplines';
 
 
 const HOME_IMAGES = [
@@ -33,7 +36,8 @@ const thumbOf = (src) => (src ? src.replace('/home-images/', '/home-images/thumb
 
 export default function Settings() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isDesktop = useIsDesktop();
   const [pushStatus, setPushStatus] = useState('idle');
   // 通知偏好存在伺服器(換手機或重新安裝也會保留)
   const [ledgerPref, setLedgerPref] = useState(false);
@@ -65,6 +69,17 @@ export default function Settings() {
       setProfile(profile);
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function saveCountry(country) {
+    setProfileError('');
+    try {
+      const { profile } = await api.updateProfile({ country });
+      setProfile(profile);
+    } catch (err) {
+      console.error(err);
+      setProfileError(t('settings_profile_error'));
     }
   }
 
@@ -249,6 +264,17 @@ export default function Settings() {
                 </div>
               </div>
 
+              <div className="flex items-center justify-between gap-4">
+                <span className="shrink-0 text-muted-foreground">{t('settings_country')}</span>
+                <Select value={profile?.country || 'none'} onValueChange={(v) => saveCountry(v === 'none' ? null : v)}>
+                  <SelectTrigger className="h-8 w-auto min-w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('settings_country_none')}</SelectItem>
+                    {COUNTRY_CODES.map((c) => <SelectItem key={c} value={c}>{countryName(c, language)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('settings_role')}</span>
                 <span>{roleLabel[profile?.role] || profile?.role}</span>
@@ -293,6 +319,8 @@ export default function Settings() {
           {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
         </CardContent>
       </Card>
+
+      {!isDesktop && <MoodCard t={t} />}
 
       {/* 點縮圖跳出完整圖案預覽,確認後才選用 */}
       {previewSrc !== undefined && (
@@ -414,9 +442,12 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <div className="mt-3">
-        <MoodCard t={t} />
-      </div>
+      {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
+      {isDesktop && (
+        <div className="mt-3">
+          <MoodCard t={t} />
+        </div>
+      )}
 
       {clearOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => clearStatus !== 'clearing' && setClearOpen(false)}>
