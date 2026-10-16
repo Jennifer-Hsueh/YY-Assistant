@@ -2,6 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // 登入過期(或 token 無效)時:清掉登入資料,通知 AuthContext 導回登入頁
 export const SESSION_EXPIRED_KEY = 'yy_session_expired';
+export const ACCOUNT_DISABLED_KEY = 'yy_account_disabled';
 
 export function clearSession({ expired = false } = {}) {
   localStorage.removeItem('token');
@@ -37,13 +38,15 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (res.status === 401 && auth) {
-    clearSession({ expired: true });
-  }
-
   if (res.status === 204) return null;
 
   const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401 && auth) {
+    // 帳號被停用:登入頁顯示停用說明,而不是「登入已逾時」
+    if (data.code === 'ACCOUNT_DISABLED') sessionStorage.setItem(ACCOUNT_DISABLED_KEY, '1');
+    clearSession({ expired: data.code !== 'ACCOUNT_DISABLED' });
+  }
   if (!res.ok) {
     const err = new Error(data.error || `Request failed (${res.status})`);
     err.status = res.status; // 429 = 嘗試次數過多

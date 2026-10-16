@@ -266,3 +266,9 @@ begin
     execute format('alter table public.%I enable row level security', r.relname);
   end loop;
 end $$;
+
+-- 2026-10-16 管理後台:權限截止日、停用帳號
+alter table yy_users add column if not exists plan_expires_at date;
+alter table yy_users add column if not exists is_disabled boolean not null default false;
+alter table yy_users add column if not exists disabled_reason text;
+alter table yy_users add column if not exists disabled_at timestamptz;

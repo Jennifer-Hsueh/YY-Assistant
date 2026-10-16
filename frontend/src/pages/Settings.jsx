@@ -289,6 +289,11 @@ export default function Settings() {
                 <span className="text-muted-foreground">{t('settings_last_payment')}</span>
                 <span>{profile?.last_payment_date || '—'}</span>
               </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('settings_plan_expires')}</span>
+                <span>{profile?.plan_expires_at || '—'}</span>
+              </div>
             </div>
           )}
         </CardContent>

@@ -21,6 +21,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const dataRoutes = require('./routes/dataRoutes');
 const noteRoutes = require('./routes/noteRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const { runBackup, notify } = require('./services/backupService');
 // Render 前面有一層代理,讓 req.ip 取得使用者真正的 IP(次數限制會用到)
 app.set('trust proxy', 1);
@@ -93,6 +94,7 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 fallback
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

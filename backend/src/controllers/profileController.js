@@ -1,6 +1,6 @@
 const supabase = require('../config/supabase');
 
-const PROFILE_COLUMNS = 'id, email, username, role, plan, last_payment_date, created_at, home_image, theme, notify_ledger, notify_calendar, country';
+const PROFILE_COLUMNS = 'id, email, username, role, plan, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country';
 // 國別(決定社群顯示哪一國的安心專線);只開放已查證有專線的國家
 const COUNTRIES = ['TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'];
 

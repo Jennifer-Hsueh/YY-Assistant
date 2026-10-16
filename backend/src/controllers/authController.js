@@ -62,7 +62,7 @@ async function login(req, res) {
 
     const { data: user, error } = await supabase
       .from('yy_users')
-      .select('id, email, password_hash')
+      .select('*')
       .eq('email', email)
       .maybeSingle();
 
@@ -74,6 +74,11 @@ async function login(req, res) {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // 被管理員停用:密碼正確才告知,避免透露帳號狀態
+    if (user.is_disabled) {
+      return res.status(403).json({ error: process.env.SUPPORT_EMAIL ? `此帳號已停用，如有疑問請來信 ${process.env.SUPPORT_EMAIL}` : '此帳號已停用，如有疑問請與我們聯絡', code: 'ACCOUNT_DISABLED' });
     }
 
     await supabase

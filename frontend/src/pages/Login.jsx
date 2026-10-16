@@ -16,6 +16,11 @@ export default function Login() {
     sessionStorage.removeItem('yy_session_expired');
     return v;
   });
+  const [disabled] = useState(() => {
+    const v = sessionStorage.getItem('yy_account_disabled') === '1';
+    sessionStorage.removeItem('yy_account_disabled');
+    return v;
+  });
   const from = location.state?.from?.pathname || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +50,7 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {expired && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">登入已逾時，請重新登入</p>}
+            {disabled && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-destructive">此帳號已停用，如有疑問請與我們聯絡</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
