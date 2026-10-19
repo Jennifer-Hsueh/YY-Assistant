@@ -40,6 +40,16 @@ const SCOPES = [
   { key: 'anon', label: 'cm_public_anon', value: { visibility: 'public', anonymous: true } },
   { key: 'named', label: 'cm_public_named', value: { visibility: 'public', anonymous: false } },
 ];
+// 檢舉原因(對應使用條款第 10 條);存進資料庫一律用中文,方便後台閱讀
+const REPORT_REASONS = [
+  { key: 'ad', zh: '廣告／引流' },
+  { key: 'scam', zh: '詐騙或要求轉帳' },
+  { key: 'harass', zh: '騷擾、霸凌或仇恨言論' },
+  { key: 'sexual', zh: '色情或暴力內容' },
+  { key: 'privacy', zh: '公開他人個人資料' },
+  { key: 'selfharm', zh: '鼓勵自我傷害或危險行為' },
+  { key: 'other', zh: '其他' },
+];
 const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.anonymous ? 'anon' : 'named');
 
 const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', images: [] };
@@ -346,6 +356,8 @@ export default function Community() {
 function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
   const member = usePlan().can('community');
   const [confirm, setConfirm] = useState(null); // 'delete' | 'report' | 'reported'
+  const [reportReason, setReportReason] = useState(null);
+  const [reportDetail, setReportDetail] = useState('');
   const [scopeOpen, setScopeOpen] = useState(false);
   // 編輯自己的文章:標題、內容、照片
   const [editing, setEditing] = useState(null);
@@ -400,7 +412,12 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
       setSavingEdit(false);
     }
   }
-  const report = () => run(async () => { await api.reportPost(post.id); setConfirm('reported'); });
+  const report = () => run(async () => {
+    const r = REPORT_REASONS.find((x) => x.key === reportReason);
+    const detail = reportDetail.trim();
+    await api.reportPost(post.id, `${r.zh}${detail ? `:${detail}` : ''}`.slice(0, 200));
+    setConfirm('reported');
+  });
   const setStatus = (s) => run(async () => { const { post: p } = await api.setWishStatus(post.id, s || null); onChange(p); });
 
   return (
@@ -528,7 +545,40 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
           </div>
         )}
 
-        {(confirm === 'delete' || confirm === 'report') && (
+        {confirm === 'report' && (
+          <div className="mt-3 space-y-2 rounded-md border border-border p-3 text-xs">
+            <p className="font-medium">{t('cm_report_reason')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {REPORT_REASONS.map((r) => (
+                <button key={r.key} type="button" onClick={() => setReportReason(r.key)} className={pillClass(reportReason === r.key)}>
+                  {t(`cm_reason_${r.key}`)}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={reportDetail}
+              onChange={(e) => setReportDetail(e.target.value)}
+              maxLength={150}
+              rows={2}
+              placeholder={reportReason === 'other' ? t('cm_report_detail_required') : t('cm_report_detail')}
+              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+                disabled={!reportReason || (reportReason === 'other' && !reportDetail.trim())}
+                onClick={report}
+              >
+                {t('cm_report_submit')}
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => { setConfirm(null); setReportReason(null); setReportDetail(''); }}>{t('cancel')}</Button>
+            </div>
+          </div>
+        )}
+        {confirm === 'delete' && (
           <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-xs">
             <span>{confirm === 'delete' ? t('cm_confirm_delete') : t('cm_confirm_report')}</span>
             <span className="flex gap-2">
