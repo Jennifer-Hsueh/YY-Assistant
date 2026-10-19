@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, requestPasswordReset, resetPassword, changePassword } = require('../controllers/authController');
+const { register, login, requestPasswordReset, resetPassword, changePassword, deleteAccount } = require('../controllers/authController');
 const { requireAuth } = require('../middleware/auth');
 const { loginLimit, registerLimit, forgotLimit, resetLimit, changePasswordLimit } = require('../middleware/rateLimit');
 
@@ -11,5 +11,7 @@ router.post('/login', loginLimit, login);
 router.post('/forgot-password', forgotLimit, requestPasswordReset);
 router.post('/reset-password', resetLimit, resetPassword);
 router.post('/change-password', requireAuth, changePasswordLimit, changePassword);
+// 刪除帳號:要確認密碼,與修改密碼共用次數限制
+router.delete('/account', requireAuth, changePasswordLimit, deleteAccount);
 
 module.exports = router;

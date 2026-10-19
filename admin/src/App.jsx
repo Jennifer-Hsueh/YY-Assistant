@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Megaphone, ShieldAlert, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Megaphone, ShieldAlert, Bug, DatabaseBackup, LogOut } from 'lucide-react';
 import { api, getToken, setToken } from './api';
 import Login from './pages/Login';
 import Overview from './pages/Overview';
 import UsersPage from './pages/Users';
 import Announcements from './pages/Announcements';
 import Reports from './pages/Reports';
+import BugReports from './pages/BugReports';
+import Backups from './pages/Backups';
 
 const NAV = [
   ['overview', '總覽', LayoutDashboard],
   ['users', '使用者管理', Users],
   ['announcements', '公告管理', Megaphone],
   ['reports', '檢舉與社群', ShieldAlert],
+  ['bugs', '故障通報', Bug],
+  ['backups', '備份還原', DatabaseBackup],
 ];
 
 // 以網址 # 記住目前頁面(例如 #users?status=expiring)
@@ -88,8 +92,10 @@ export default function App() {
         <div className="mx-auto max-w-6xl">
           {page === 'overview' && <Overview go={go} />}
           {page === 'users' && <UsersPage key={JSON.stringify(params)} initial={params} selfId={admin.id} />}
-          {page === 'announcements' && <Announcements />}
+          {page === 'announcements' && <Announcements key={JSON.stringify(params)} initial={params} />}
           {page === 'reports' && <Reports key={JSON.stringify(params)} initial={params} />}
+          {page === 'bugs' && <BugReports go={go} />}
+          {page === 'backups' && <Backups />}
         </div>
       </main>
     </div>

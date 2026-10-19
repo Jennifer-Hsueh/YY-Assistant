@@ -10,6 +10,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import DataTransferCard from '../components/DataTransferCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
+import DeleteAccountCard from '../components/DeleteAccountCard';
 import MoodCard from '../components/MoodCard';
 import { useIsDesktop } from '../lib/useIsDesktop';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
@@ -440,6 +441,8 @@ export default function Settings() {
           </Button>
         </CardContent>
       </Card>
+
+      <DeleteAccountCard t={t} />
 
       {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
       {isDesktop && (

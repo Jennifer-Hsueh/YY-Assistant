@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { forgetUserStatus } = require('../middleware/auth');
 const { BUCKET } = require('../services/backupService');
+const R = require('../services/restoreService');
 const E = require('../lib/entitlements');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
@@ -69,11 +70,13 @@ async function lastBackup() {
 
 async function overview(req, res) {
   try {
-    const [users, posts, reports, backup] = await Promise.all([
+    const bugQ = supabase.from('yy_bug_reports').select('id', { count: 'exact', head: true }).eq('status', 'new');
+    const [users, posts, reports, backup, bugs] = await Promise.all([
       fetchAll('yy_users', '*'),
       fetchAll('yy_posts', 'id, board, visibility, hidden, created_at'),
       fetchAll('yy_post_reports', 'post_id'),
       lastBackup(),
+      bugQ.then((r) => r, () => ({ count: null })),
     ]);
     const now = Date.now();
     const since = (days) => new Date(now - days * DAY).toISOString();
@@ -114,6 +117,7 @@ async function overview(req, res) {
         reported: [...reportedIds].filter((id) => !hiddenIds.has(id)).length,
       },
       backup,
+      bugsNew: bugs?.count ?? null,
     });
   } catch (err) {
     return fail(res, 'overview', err, 'Failed to load overview');
@@ -230,6 +234,7 @@ async function createPayment(req, res) {
 
     const { data: payment, error: pErr } = await supabase.from('yy_payments').insert({
       user_id: user.id,
+      user_email: user.email,
       paid_at: b.paid_at,
       plan: b.plan,
       addon_community: addon,
@@ -452,7 +457,107 @@ async function setWishStatus(req, res) {
   }
 }
 
+// ---------- 故障通報 ----------
+const BUG_STATUSES = ['new', 'in_progress', 'done'];
+
+async function listBugReports(req, res) {
+  try {
+    const { status = 'open' } = req.query; // open = 未處理+處理中 | new | in_progress | done | all
+    let q = supabase.from('yy_bug_reports').select('*').order('created_at', { ascending: false }).limit(300);
+    if (BUG_STATUSES.includes(status)) q = q.eq('status', status);
+    if (status === 'open') q = q.in('status', ['new', 'in_progress']);
+    const { data, error } = await q;
+    if (error) throw error;
+    const people = await authorsOf([...new Set(data.map((r) => r.user_id).filter(Boolean))]);
+    return res.json({ reports: data.map((r) => ({ ...r, reporter: r.user_id ? people[r.user_id] || null : null })) });
+  } catch (err) {
+    return fail(res, 'listBugReports', err, 'Failed to load bug reports');
+  }
+}
+
+async function updateBugReport(req, res) {
+  try {
+    const b = req.body || {};
+    const updates = { updated_at: new Date().toISOString() };
+    if (b.status !== undefined) {
+      if (!BUG_STATUSES.includes(b.status)) return res.status(400).json({ error: '狀態不正確' });
+      updates.status = b.status;
+    }
+    if (b.admin_note !== undefined) updates.admin_note = String(b.admin_note || '').trim().slice(0, 2000) || null;
+    const { data, error } = await supabase.from('yy_bug_reports').update(updates).eq('id', req.params.id).select().maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: '找不到這筆通報' });
+    return res.json({ report: data });
+  } catch (err) {
+    return fail(res, 'updateBugReport', err, 'Failed to update bug report');
+  }
+}
+
+// ---------- 備份還原 ----------
+const errStatus = (res, where, err, msg) => (err.status ? res.status(err.status).json({ error: err.message }) : fail(res, where, err, msg));
+
+async function listBackups(req, res) {
+  try {
+    return res.json({ backups: await R.listBackups() });
+  } catch (err) {
+    return fail(res, 'listBackups', err, 'Failed to list backups');
+  }
+}
+
+async function backupSummary(req, res) {
+  try {
+    const backup = await R.readBackup(req.query.path);
+    const out = R.summarize(backup);
+    if (req.query.user) out.userCounts = R.userCounts(backup, req.query.user);
+    return res.json(out);
+  } catch (err) {
+    return errStatus(res, 'backupSummary', err, 'Failed to read backup');
+  }
+}
+
+async function downloadBackup(req, res) {
+  try {
+    const raw = await R.downloadRaw(req.query.path);
+    res.set('Content-Type', 'application/gzip');
+    res.set('Content-Disposition', `attachment; filename="${req.query.path.split('/').pop()}"`);
+    return res.send(raw);
+  } catch (err) {
+    return errStatus(res, 'downloadBackup', err, 'Failed to download backup');
+  }
+}
+
+// 還原要再輸入一次確認文字(全站:「全站還原」;單一使用者:該使用者在備份裡的 Email)
+async function restoreBackup(req, res) {
+  const { path, scope, user_id, confirm } = req.body || {};
+  try {
+    const backup = await R.readBackup(path);
+    if (scope === 'all') {
+      if (confirm !== '全站還原') return res.status(400).json({ error: '確認文字不正確' });
+      const result = await R.restoreAll(backup);
+      console.log('[admin.restore] all from', path, 'by', req.user.id, result.counts);
+      return res.json({ ok: true, ...result });
+    }
+    if (scope === 'user') {
+      const u = (backup.tables.yy_users || []).find((x) => x.id === user_id);
+      if (!u) return res.status(404).json({ error: '這份備份裡沒有這位使用者' });
+      if (String(confirm || '').trim().toLowerCase() !== String(u.email).toLowerCase()) return res.status(400).json({ error: '確認文字不正確' });
+      const result = await R.restoreUser(backup, user_id);
+      forgetUserStatus(user_id);
+      console.log('[admin.restore] user', user_id, 'from', path, 'by', req.user.id, result.counts);
+      return res.json({ ok: true, ...result });
+    }
+    return res.status(400).json({ error: '請選擇還原範圍' });
+  } catch (err) {
+    if (err.safety) {
+      console.error('[admin.restore] failed', err);
+      return res.status(500).json({ error: `還原失敗:${err.message}。還原前的資料已存在 ${err.safety},可用它再還原一次。`, safety: err.safety });
+    }
+    return errStatus(res, 'restoreBackup', err, 'Failed to restore');
+  }
+}
+
 module.exports = {
+  listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
   me, overview, listUsers, updateUser, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,

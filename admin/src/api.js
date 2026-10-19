@@ -44,5 +44,21 @@ export const api = {
   setHidden: (id, hidden) => request(`/admin/posts/${id}/hidden`, { method: 'PUT', body: { hidden } }),
   deletePost: (id) => request(`/admin/posts/${id}`, { method: 'DELETE' }),
   wishes: (status) => request(`/admin/wishes${qs({ status })}`),
+  bugReports: (status) => request(`/admin/bug-reports${qs({ status })}`),
+  updateBugReport: (id, body) => request(`/admin/bug-reports/${id}`, { method: 'PUT', body }),
+  backups: () => request('/admin/backups'),
+  backupSummary: (path, user) => request(`/admin/backups/summary${qs({ path, user })}`),
+  restoreBackup: (body) => request('/admin/backups/restore', { method: 'POST', body }),
+  // 下載備份檔(帶登入憑證,取得檔案後交給瀏覽器存檔)
+  async downloadBackup(path) {
+    const res = await fetch(`${BASE_URL}/admin/backups/download${qs({ path })}`, { headers: { Authorization: `Bearer ${getToken()}` } });
+    if (!res.ok) throw new Error('下載失敗');
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = path.split('/').pop();
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
   setWishStatus: (id, wish_status) => request(`/admin/posts/${id}/wish-status`, { method: 'PUT', body: { wish_status } }),
 };

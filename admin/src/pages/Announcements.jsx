@@ -57,7 +57,7 @@ function TargetPicker({ target, onChange }) {
   );
 }
 
-export default function Announcements() {
+export default function Announcements({ initial = {} }) {
   const [list, setList] = useState(null);
   const [editingId, setEditingId] = useState(null); // null = 新增
   const [form, setForm] = useState(blank);
@@ -67,6 +67,15 @@ export default function Announcements() {
 
   const load = () => api.announcements().then(({ announcements }) => setList(announcements)).catch((e) => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
+
+  // 從故障通報按「發公告回覆」過來:預先帶入發放對象與標題
+  useEffect(() => {
+    if (!initial.to) return;
+    api.users({ q: initial.to }).then(({ users }) => {
+      const u = users.find((x) => x.id === initial.to);
+      setForm((f) => ({ ...f, title: initial.title || f.title, target: u ? { id: u.id, email: u.email, username: u.username } : f.target }));
+    }).catch(() => {});
+  }, [initial.to]);
 
   function startNew() {
     setEditingId(null);

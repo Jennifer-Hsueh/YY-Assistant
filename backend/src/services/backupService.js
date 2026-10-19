@@ -7,17 +7,22 @@ const { sendEmail } = require('./emailService');
 // 不備份:密碼重設 token、推播 token(都是暫時性資料,還原後也用不到)
 const BUCKET = 'yy-backups';
 const KEEP = 8;
+// 順序 = 還原時寫入的順序(被參照的表在前)
 const TABLES = [
   'yy_users', 'yy_accounts', 'yy_categories', 'yy_transactions', 'yy_recurring_items',
   'yy_events', 'yy_budgets', 'yy_moods', 'yy_notes', 'yy_announcements',
   'yy_posts', 'yy_post_comments', 'yy_post_reactions', 'yy_post_reports',
+  'yy_payments', 'yy_plan_notices', 'yy_bug_reports',
 ];
+// 後來才新增的表:資料庫還沒建立時略過,不讓整份備份失敗
+const OPTIONAL = new Set(['yy_payments', 'yy_plan_notices', 'yy_bug_reports']);
 const PAGE = 1000;
 
 async function dumpTable(table) {
   const rows = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase.from(table).select('*').range(from, from + PAGE - 1);
+    if (error && OPTIONAL.has(table)) return null;
     if (error) throw new Error(`${table}: ${error.message}`);
     rows.push(...data);
     if (data.length < PAGE) break;
@@ -37,15 +42,23 @@ function stamp(d = new Date()) {
   return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 10).replaceAll('-', '');
 }
 
-async function runBackup() {
-  const started = Date.now();
+// 把目前所有資料表打包成一份備份內容
+async function buildSnapshot(kind = 'full-backup') {
   const tables = {};
   const counts = {};
   for (const t of TABLES) {
-    tables[t] = await dumpTable(t);
-    counts[t] = tables[t].length;
+    const rows = await dumpTable(t);
+    if (rows === null) continue;
+    tables[t] = rows;
+    counts[t] = rows.length;
   }
-  const payload = { app: 'YY手帳', kind: 'full-backup', created_at: new Date().toISOString(), counts, tables };
+  return { app: 'YY手帳', kind, created_at: new Date().toISOString(), counts, tables };
+}
+
+async function runBackup() {
+  const started = Date.now();
+  const payload = await buildSnapshot();
+  const { counts } = payload;
   const gz = zlib.gzipSync(Buffer.from(JSON.stringify(payload)));
 
   await ensureBucket();
@@ -92,4 +105,4 @@ async function notify(ok, info) {
   }
 }
 
-module.exports = { runBackup, notify, TABLES, BUCKET, KEEP };
+module.exports = { runBackup, notify, buildSnapshot, ensureBucket, stamp, TABLES, BUCKET, KEEP };

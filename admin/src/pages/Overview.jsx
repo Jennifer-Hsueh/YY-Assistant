@@ -109,6 +109,8 @@ export default function Overview({ go }) {
       </div>
 
       <p className="mb-2 text-sm font-medium text-muted-foreground">系統</p>
+      <div className="grid grid-cols-[1fr_3fr] gap-3">
+      <Stat label="待處理故障通報" value={data.bugsNew ?? '—'} tone={data.bugsNew ? 'red' : undefined} onClick={() => go('bugs')} />
       <Card className="flex items-center gap-4 p-5">
         <DatabaseBackup className={`h-8 w-8 ${backup && backupAge <= 8 ? 'text-ok' : 'text-danger'}`} />
         <div>
@@ -123,6 +125,7 @@ export default function Overview({ go }) {
           )}
         </div>
       </Card>
+      </div>
     </>
   );
 }

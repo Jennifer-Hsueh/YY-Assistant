@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const supabase = require('../config/supabase');
-const { sendPasswordResetEmail } = require('../services/emailService');
+const { sendPasswordResetEmail, sendEmail } = require('../services/emailService');
+const { forgetUserStatus } = require('../middleware/auth');
 
 const SALT_ROUNDS = 10;
 const RESET_TOKEN_TTL_MINUTES = 30;
@@ -223,4 +224,43 @@ async function changePassword(req, res) {
   }
 }
 
-module.exports = { register, login, requestPasswordReset, resetPassword, changePassword };
+// 刪除帳號(App Store 規定要提供):確認密碼後刪除帳號與所有資料。
+// 繳費紀錄依稅法保留,只留下 Email 快照;管理員帳號不能從 App 刪除
+async function deleteAccount(req, res) {
+  try {
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ error: 'password is required' });
+    const { data: user, error } = await supabase
+      .from('yy_users')
+      .select('id, email, role, password_hash')
+      .eq('id', req.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(400).json({ error: 'Current password is incorrect', code: 'wrong_password' });
+    }
+    if (user.role === 'admin') {
+      return res.status(400).json({ error: '管理員帳號不能從 App 刪除,請先在後台改為一般使用者', code: 'admin_account' });
+    }
+
+    // 繳費紀錄留 Email 快照(帳號刪除後 user_id 會變成空白)
+    await supabase.from('yy_payments').update({ user_email: user.email }).eq('user_id', user.id);
+
+    const { error: delErr } = await supabase.from('yy_users').delete().eq('id', user.id);
+    if (delErr) throw delErr;
+    forgetUserStatus(user.id);
+
+    sendEmail({
+      to: user.email,
+      subject: 'YY手帳 帳號已刪除',
+      html: '<div style="font-family:sans-serif;line-height:1.6"><p>您好:</p><p>您的 YY手帳 帳號與所有資料已依您的要求刪除,無法復原。</p><p>如果這不是您本人的操作,請立即與我們聯絡。</p><p>謝謝您曾經使用 YY手帳。</p></div>',
+    }).catch((err) => console.error('[authController.deleteAccount] email failed', err.message));
+
+    return res.json({ message: 'Account deleted' });
+  } catch (err) {
+    console.error('[authController.deleteAccount]', err);
+    return res.status(500).json({ error: 'Failed to delete account' });
+  }
+}
+
+module.exports = { register, login, requestPasswordReset, resetPassword, changePassword, deleteAccount };

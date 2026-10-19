@@ -326,3 +326,26 @@ alter table yy_plan_notices enable row level security;
 
 -- 公告發放對象:null = 公開,否則只給那位使用者
 alter table yy_announcements add column if not exists target_user_id uuid references yy_users(id) on delete cascade;
+
+-- 2026-10-19 故障通報清單(原本只寄信,改為也存進資料庫,後台可管理)
+create table if not exists yy_bug_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references yy_users(id) on delete set null,
+  email text,
+  title text not null,
+  description text not null,
+  user_agent text,
+  status text not null default 'new' check (status in ('new', 'in_progress', 'done')),
+  admin_note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists yy_bug_reports_status_idx on yy_bug_reports (status, created_at desc);
+alter table yy_bug_reports enable row level security;
+
+-- 2026-10-19 刪除帳號:繳費紀錄依稅法保留,帳號刪除後只留 Email 快照
+alter table yy_payments add column if not exists user_email text;
+alter table yy_payments alter column user_id drop not null;
+alter table yy_payments drop constraint if exists yy_payments_user_id_fkey;
+alter table yy_payments add constraint yy_payments_user_id_fkey foreign key (user_id) references yy_users(id) on delete set null;
+update yy_payments p set user_email = u.email from yy_users u where p.user_id = u.id and p.user_email is null;

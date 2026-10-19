@@ -23,4 +23,11 @@ router.delete('/posts/:id', c.deletePost);
 router.get('/wishes', c.listWishes);
 router.put('/posts/:id/wish-status', c.setWishStatus);
 
+router.get('/bug-reports', c.listBugReports);
+router.put('/bug-reports/:id', c.updateBugReport);
+router.get('/backups', c.listBackups);
+router.get('/backups/summary', c.backupSummary);
+router.get('/backups/download', c.downloadBackup);
+router.post('/backups/restore', c.restoreBackup);
+
 module.exports = router;
