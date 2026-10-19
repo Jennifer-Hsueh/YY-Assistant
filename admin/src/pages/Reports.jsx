@@ -14,6 +14,16 @@ function PostBody({ post }) {
     <>
       {post.title && <p className="mb-1 font-medium">{post.title}</p>}
       <p className="whitespace-pre-wrap break-words text-sm">{post.content}</p>
+      {post.images?.length > 0 && (
+        <div className="mt-2 flex gap-2">
+          {post.images.map((img) => (
+            <a key={img.key} href={img.url} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden rounded-lg bg-muted">
+              <img src={img.thumb} alt="" className="h-full w-full object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+      {post.edited_at && <p className="mt-1 text-xs text-muted-foreground">已編輯・{new Date(post.edited_at).toLocaleString('zh-TW', { hour12: false })}</p>}
     </>
   );
 }

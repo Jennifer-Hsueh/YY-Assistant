@@ -349,3 +349,7 @@ alter table yy_payments alter column user_id drop not null;
 alter table yy_payments drop constraint if exists yy_payments_user_id_fkey;
 alter table yy_payments add constraint yy_payments_user_id_fkey foreign key (user_id) references yy_users(id) on delete set null;
 update yy_payments p set user_email = u.email from yy_users u where p.user_id = u.id and p.user_email is null;
+
+-- 2026-10-19 社群:文章照片(最多 3 張,存在私人 bucket「yy-community」)與編輯時間
+alter table yy_posts add column if not exists images jsonb not null default '[]'::jsonb;
+alter table yy_posts add column if not exists edited_at timestamptz;

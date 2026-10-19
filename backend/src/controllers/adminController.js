@@ -2,6 +2,7 @@ const supabase = require('../config/supabase');
 const { forgetUserStatus } = require('../middleware/auth');
 const { BUCKET } = require('../services/backupService');
 const R = require('../services/restoreService');
+const communityImages = require('../services/communityImages');
 const E = require('../lib/entitlements');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
@@ -383,7 +384,7 @@ async function listReports(req, res) {
     const { data: posts, error: pErr } = await supabase.from('yy_posts').select('*').in('id', ids);
     if (pErr) throw pErr;
     const people = await authorsOf([...new Set([...posts.map((p) => p.user_id), ...reports.map((r) => r.user_id)])]);
-    let list = posts.map((p) => {
+    let list = (await communityImages.signPosts(posts)).map((p) => {
       const rs = reports.filter((r) => r.post_id === p.id);
       return {
         ...p,
@@ -413,7 +414,8 @@ async function setPostHidden(req, res) {
       const { error: dErr } = await supabase.from('yy_post_reports').delete().eq('post_id', data.id);
       if (dErr) throw dErr;
     }
-    return res.json({ post: data });
+    const [signed] = await communityImages.signPosts([data]);
+    return res.json({ post: signed });
   } catch (err) {
     return fail(res, 'setPostHidden', err, 'Failed to update post');
   }
@@ -421,8 +423,10 @@ async function setPostHidden(req, res) {
 
 async function deletePost(req, res) {
   try {
+    const { data: post } = await supabase.from('yy_posts').select('images').eq('id', req.params.id).maybeSingle();
     const { error } = await supabase.from('yy_posts').delete().eq('id', req.params.id);
     if (error) throw error;
+    await communityImages.removeImages(post?.images);
     return res.json({ ok: true });
   } catch (err) {
     return fail(res, 'deletePost', err, 'Failed to delete post');
@@ -438,7 +442,8 @@ async function listWishes(req, res) {
     const { data, error } = await q;
     if (error) throw error;
     const people = await authorsOf([...new Set(data.map((p) => p.user_id))]);
-    return res.json({ posts: data.map((p) => ({ ...p, author: people[p.user_id] || null })) });
+    const signed = await communityImages.signPosts(data);
+    return res.json({ posts: signed.map((p) => ({ ...p, author: people[p.user_id] || null })) });
   } catch (err) {
     return fail(res, 'listWishes', err, 'Failed to load wishes');
   }

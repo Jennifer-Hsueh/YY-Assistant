@@ -10,6 +10,7 @@ router.get('/stats', c.myStats);
 // 社群為加購功能:沒有時只能瀏覽、刪除自己的內容
 const member = requireFeature('community');
 router.post('/posts', member, c.createPost);
+router.post('/images', member, c.uploadImage);
 router.put('/posts/:id', member, c.updatePost);
 router.delete('/posts/:id', c.deletePost);
 router.get('/posts/:id/comments', c.listComments);

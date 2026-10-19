@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const images = require('../services/communityImages');
 
 // 社群:三個板 + 「我的」。
 // 可見性一律由後端判斷 —— 私人文章只回傳給作者本人,
@@ -43,7 +44,7 @@ async function decorate(posts, userId) {
     supabase.from('yy_post_comments').select('post_id').in('post_id', ids),
     supabase.from('yy_users').select('id, username, email').in('id', authorIds),
   ]);
-  return posts.map((p) => {
+  return images.signPosts(posts.map((p) => {
     const mine = p.user_id === userId;
     const author = (authors || []).find((a) => a.id === p.user_id);
     const counts = {};
@@ -62,7 +63,7 @@ async function decorate(posts, userId) {
       my_reaction: myReaction,
       comment_count: (comments || []).filter((c) => c.post_id === p.id).length,
     };
-  });
+  }));
 }
 
 async function fetchPost(id) {
@@ -129,6 +130,8 @@ async function createPost(req, res) {
     if (!BOARDS.includes(board)) return res.status(400).json({ error: 'Invalid board' });
     if (!content) return res.status(400).json({ error: 'content is required' });
     if (board === 'mood' && mood != null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
+    const keys = images.validKeys(req.user.id, req.body.images);
+    if (keys === null) return res.status(400).json({ error: 'Invalid images' });
 
     const { data, error } = await supabase
       .from('yy_posts')
@@ -140,6 +143,7 @@ async function createPost(req, res) {
         mood: board === 'mood' ? mood || null : null,
         title: board === 'mood' ? null : clean(title, MAX_TITLE) || null,
         content,
+        images: keys || [],
       })
       .select()
       .single();
@@ -171,8 +175,18 @@ async function updatePost(req, res) {
       if (!c) return res.status(400).json({ error: 'content is required' });
       updates.content = c;
     }
+    const keys = images.validKeys(req.user.id, req.body.images);
+    if (keys === null) return res.status(400).json({ error: 'Invalid images' });
+    const oldKeys = Array.isArray(post.images) ? post.images : [];
+    if (keys !== undefined) updates.images = keys;
+    // 內容、標題或照片有變才算「已編輯」(只改公開範圍不算)
+    const edited = (updates.content !== undefined && updates.content !== post.content)
+      || (updates.title !== undefined && updates.title !== post.title)
+      || (keys !== undefined && JSON.stringify(keys) !== JSON.stringify(oldKeys));
+    if (edited) updates.edited_at = updates.updated_at;
     const { data, error } = await supabase.from('yy_posts').update(updates).eq('id', post.id).select().single();
     if (error) throw error;
+    if (keys !== undefined) await images.removeImages(oldKeys.filter((k) => !keys.includes(k)));
     const [decorated] = await decorate([data], req.user.id);
     return res.json({ post: decorated });
   } catch (err) {
@@ -190,6 +204,7 @@ async function deletePost(req, res) {
     }
     const { error } = await supabase.from('yy_posts').delete().eq('id', post.id);
     if (error) throw error;
+    await images.removeImages(post.images);
     return res.json({ message: 'Post deleted' });
   } catch (err) {
     console.error('[communityController.deletePost]', err);
@@ -341,7 +356,21 @@ async function setWishStatus(req, res) {
   }
 }
 
+// 上傳一張照片(前端已壓縮並附縮圖),回傳之後發文要帶的 key
+async function uploadImage(req, res) {
+  try {
+    const key = await images.uploadImage(req.user.id, req.body?.image, req.body?.thumb);
+    const [signed] = await images.signPosts([{ images: [key] }]);
+    return res.status(201).json({ image: signed.images[0] || { key } });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    console.error('[communityController.uploadImage]', err);
+    return res.status(500).json({ error: 'Failed to upload image' });
+  }
+}
+
 module.exports = {
+  uploadImage,
   listPosts, myStats, createPost, updatePost, deletePost,
   listComments, createComment, deleteComment, react, report, setWishStatus,
 };

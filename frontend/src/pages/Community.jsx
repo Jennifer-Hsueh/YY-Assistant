@@ -9,6 +9,7 @@ import { helplineText } from '../lib/helplines';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import { PostImages, ImagePicker } from '../components/PostImages';
 
 const TABS = [
   { key: 'mood', emoji: '🌦️' },
@@ -41,7 +42,7 @@ const SCOPES = [
 ];
 const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.anonymous ? 'anon' : 'named');
 
-const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private' };
+const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', images: [] };
 
 function pillClass(active) {
   return `rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${active ? 'border-foreground bg-muted font-medium text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`;
@@ -79,6 +80,7 @@ export default function Community() {
   const member = can('community');
   const [error, setError] = useState('');
   const [posting, setPosting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     api.getProfile().then(({ profile }) => { setIsAdmin(profile?.role === 'admin'); setCountry(profile?.country || null); }).catch(() => {});
@@ -132,6 +134,7 @@ export default function Community() {
         mood: draftBoard === 'mood' ? draft.mood : null,
         title: draftBoard === 'mood' ? null : draft.title,
         content: draft.content,
+        images: draft.images.map((i) => i.key),
         ...scope,
       });
       setDraft({ ...emptyDraft, board: draftBoard, scope: draft.scope });
@@ -233,6 +236,12 @@ export default function Community() {
             required
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
           />
+          <ImagePicker
+            value={draft.images}
+            onChange={(fn) => setDraft((d) => ({ ...d, images: typeof fn === 'function' ? fn(d.images) : fn }))}
+            onBusy={setUploading}
+            t={t}
+          />
           <div>
             <p className="mb-1.5 text-xs text-muted-foreground">{t('cm_visibility')}</p>
             <div className="flex flex-wrap gap-1.5">
@@ -244,7 +253,7 @@ export default function Community() {
               ))}
             </div>
           </div>
-          <Button type="submit" className="w-full" disabled={posting || !draft.content.trim()}>{t('cm_publish')}</Button>
+          <Button type="submit" className="w-full" disabled={posting || uploading || !draft.content.trim()}>{t('cm_publish')}</Button>
         </form>
         {/* 安心專線:依個人資訊的國別顯示,未設定時顯示台灣;國別沒有專線則整列不顯示 */}
         {draftBoard === 'mood' && helplineText(country, language) && (
@@ -338,6 +347,10 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
   const member = usePlan().can('community');
   const [confirm, setConfirm] = useState(null); // 'delete' | 'report' | 'reported'
   const [scopeOpen, setScopeOpen] = useState(false);
+  // 編輯自己的文章:標題、內容、照片
+  const [editing, setEditing] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editUploading, setEditUploading] = useState(false);
   const isPrivate = post.visibility === 'private';
   const [commentsOpen, setCommentsOpen] = useState(isPrivate && post.comment_count > 0);
   const isMoodPublic = post.board === 'mood' && !isPrivate;
@@ -362,6 +375,31 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
     if (inMine || p.visibility === 'public') onChange(p); else onRemove(post.id);
   });
   const remove = () => run(async () => { await api.deletePost(post.id); onRemove(post.id); });
+  function startEdit() {
+    if (!member) { askUpgrade('community'); return; }
+    setEditing({ title: post.title || '', content: post.content, images: post.images || [] });
+    setScopeOpen(false);
+    setConfirm(null);
+  }
+  async function saveEdit(e) {
+    e.preventDefault();
+    if (!editing.content.trim()) return;
+    setSavingEdit(true);
+    try {
+      const { post: p } = await api.updatePost(post.id, {
+        ...(post.board !== 'mood' ? { title: editing.title } : {}),
+        content: editing.content,
+        images: editing.images.map((i) => i.key),
+      });
+      onChange(p);
+      setEditing(null);
+    } catch (err) {
+      console.error(err);
+      onError();
+    } finally {
+      setSavingEdit(false);
+    }
+  }
   const report = () => run(async () => { await api.reportPost(post.id); setConfirm('reported'); });
   const setStatus = (s) => run(async () => { const { post: p } = await api.setWishStatus(post.id, s || null); onChange(p); });
 
@@ -384,11 +422,40 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
               <span>{displayName}</span>
             )}
           </span>
-          <span className="shrink-0">{relativeTime(t, post.created_at)}</span>
+          <span className="shrink-0">{relativeTime(t, post.created_at)}{post.edited_at && `・${t('cm_edited')}`}</span>
         </div>
 
-        {post.title && <p className="mb-1 font-semibold">{post.title}</p>}
-        <p className="whitespace-pre-wrap leading-relaxed">{post.content}</p>
+        {editing ? (
+          <form onSubmit={saveEdit} className="space-y-2">
+            {post.board !== 'mood' && (
+              <Input placeholder={t('cm_title')} value={editing.title} maxLength={80} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+            )}
+            <textarea
+              value={editing.content}
+              onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+              maxLength={2000}
+              rows={5}
+              required
+              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            />
+            <ImagePicker
+              value={editing.images}
+              onChange={(fn) => setEditing((d) => ({ ...d, images: typeof fn === 'function' ? fn(d.images) : fn }))}
+              onBusy={setEditUploading}
+              t={t}
+            />
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" className="flex-1" disabled={savingEdit || editUploading || !editing.content.trim()}>{t('cm_save')}</Button>
+              <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setEditing(null)}>{t('cancel')}</Button>
+            </div>
+          </form>
+        ) : (
+          <>
+            {post.title && <p className="mb-1 font-semibold">{post.title}</p>}
+            <p className="whitespace-pre-wrap leading-relaxed">{post.content}</p>
+            <PostImages images={post.images} />
+          </>
+        )}
         {post.hidden && <p className="mt-2 text-xs text-muted-foreground">{t('cm_post_hidden')}</p>}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -436,6 +503,9 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
           )}
 
           <span className="ml-auto flex gap-3 text-xs text-muted-foreground">
+            {post.is_mine && !editing && (
+              <button type="button" onClick={startEdit} className="underline">{t('cm_edit')}</button>
+            )}
             {post.is_mine && (
               <button type="button" onClick={() => setScopeOpen((v) => !v)} className="underline">{t('cm_change_visibility')}</button>
             )}

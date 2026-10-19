@@ -29,6 +29,8 @@ app.set('trust proxy', 1);
 app.use(cors());
 // 匯入備份檔可能比較大,這個路徑放寬上限(要放在全域 json 解析之前)
 app.use('/api/data', express.json({ limit: '15mb' }));
+// 社群照片以 base64 上傳(前端已壓縮,單張約 0.2–1.5MB)
+app.use('/api/community', express.json({ limit: '4mb' }));
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));

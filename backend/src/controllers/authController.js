@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const supabase = require('../config/supabase');
 const { sendPasswordResetEmail, sendEmail } = require('../services/emailService');
 const { forgetUserStatus } = require('../middleware/auth');
+const { removeUserFolder } = require('../services/communityImages');
 
 const SALT_ROUNDS = 10;
 const RESET_TOKEN_TTL_MINUTES = 30;
@@ -249,6 +250,7 @@ async function deleteAccount(req, res) {
     const { error: delErr } = await supabase.from('yy_users').delete().eq('id', user.id);
     if (delErr) throw delErr;
     forgetUserStatus(user.id);
+    await removeUserFolder(user.id);
 
     sendEmail({
       to: user.email,
