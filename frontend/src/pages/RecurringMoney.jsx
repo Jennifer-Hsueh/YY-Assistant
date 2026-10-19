@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import RecurrenceFields from '../components/RecurrenceFields';
 import { emptyRecurrence, recurrenceFromItem, recurrencePayload, reactivationPayload, describeRecurrence } from '../lib/recurrence';
 import { api } from '../lib/api';
@@ -126,6 +126,7 @@ export default function RecurringMoney() {
   }
 
   async function toggleActive(item) {
+    if (!canRec) { askUpgrade('ledger_recurring'); return; }
     if (item.is_active && !isExpired(item, today)) {
       await api.updateRecurringItem(item.id, { is_active: false });
       load();
@@ -189,8 +190,6 @@ export default function RecurringMoney() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
-      {/* 方案沒有循環功能:只能查看 */}
-      <ReadOnlyNotice feature="ledger_recurring" />
 
       {/* 手機版:篩選與新增/編輯(含刪除)放在同一個區塊,一次只選一個 */}
       <div className="mb-3 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
@@ -204,13 +203,13 @@ export default function RecurringMoney() {
             >{t(k)}</button>
           ))}
         </div>
-        {canRec && <div className="my-1 border-t border-border" />}
-        <div className={canRec ? 'flex' : 'hidden'}>
+        <div className="my-1 border-t border-border" />
+        <div className="flex">
           {[['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
             <button
               key={m}
               type="button"
-              onClick={() => { setStatusFilter('all'); setMobileView('mode'); switchActionMode(m); }}
+              onClick={() => { if (!canRec) { askUpgrade('ledger_recurring'); return; } setStatusFilter('all'); setMobileView('mode'); switchActionMode(m); }}
               className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${mobileView === 'mode' && actionMode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
             >{t(k)}</button>
           ))}
@@ -258,7 +257,7 @@ export default function RecurringMoney() {
                     </p>
                     <p className="truncate text-xs text-muted-foreground">{details}</p>
                   </div>
-                  {!selectable && reactivateId !== item.id && canRec && (
+                  {!selectable && reactivateId !== item.id && (
                     <Button size="sm" className="shrink-0" variant={item.is_active && !expired ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
                       {expired ? t('rec_ended') : item.is_active ? t('rec_active') : t('rec_inactive')}
                     </Button>
@@ -282,16 +281,16 @@ export default function RecurringMoney() {
       )}
       </div>
 
-      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`} style={canRec ? undefined : { display: 'none' }}>
+      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`}>
       <div className="mb-3 hidden rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex">
-        <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
-        <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
+        <button onClick={() => (canRec ? switchActionMode('add') : askUpgrade('ledger_recurring'))} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
+        <button onClick={() => (canRec ? switchActionMode('edit') : askUpgrade('ledger_recurring'))} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>
       </div>
 
       {pickingMode && (
         <p className="px-1 text-sm text-muted-foreground">{t('rec_pick_edit')}</p>
       )}
-      <Card className={pickingMode ? 'hidden' : ''}>
+      <Card className={pickingMode || !canRec ? 'hidden' : ''}>
         <CardContent className="space-y-2 p-4">
           {(
             <form onSubmit={handleSubmit} className="space-y-2">

@@ -15,7 +15,7 @@ import { useIsDesktop } from '../lib/useIsDesktop';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { COUNTRY_CODES, countryName } from '../lib/helplines';
 import { usePlan } from '../context/PlanContext';
-import { PlanCard, ReadOnlyNotice } from '../components/PlanNotice';
+import { PlanCard, LockedArea, askUpgrade } from '../components/PlanNotice';
 
 
 const HOME_IMAGES = [
@@ -299,16 +299,15 @@ export default function Settings() {
             <ImageIcon className="h-4 w-4" />
             {t('settings_home_image')}
           </p>
-          <ReadOnlyNotice feature="home_image" locked />
-          <div className={`grid grid-cols-4 gap-2 ${can('home_image') ? '' : 'pointer-events-none opacity-50'}`}>
+          <div className="grid grid-cols-4 gap-2">
             {HOME_IMAGES.map((src) => {
               const selected = (profile?.home_image || null) === src;
               return (
                 <button
                   key={src || 'default'}
                   type="button"
-                  disabled={imageStatus === 'saving' || !can('home_image')}
-                  onClick={() => setPreviewSrc(src)}
+                  disabled={imageStatus === 'saving'}
+                  onClick={() => (can('home_image') ? setPreviewSrc(src) : askUpgrade('home_image'))}
                   className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-1 transition-colors ${selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:bg-muted'}`}
                 >
                   <img src={thumbOf(src)} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
@@ -320,7 +319,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {!isDesktop && (can('mood') ? <MoodCard t={t} /> : <ReadOnlyNotice feature="mood" locked />)}
+      {!isDesktop && <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>}
 
       {/* 點縮圖跳出完整圖案預覽,確認後才選用 */}
       {previewSrc !== undefined && (
@@ -349,14 +348,13 @@ export default function Settings() {
       <Card className="mb-3">
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-medium">{t('settings_notifications')}</p>
-          <ReadOnlyNotice feature="notifications" locked className="" />
 
           <div className="flex items-center justify-between rounded-md border border-border p-3">
             <div className="flex items-center gap-2">
               <Wallet className="h-4 w-4" style={{ color: 'var(--module-transactions)' }} />
               <span className="text-sm">{t('settings_push_ledger')}</span>
             </div>
-            <Button size="sm" variant={ledgerPref ? 'default' : 'outline'} onClick={toggleLedgerPref} disabled={pushStatus === 'enabling' || !can('notifications')}>
+            <Button size="sm" variant={ledgerPref ? 'default' : 'outline'} onClick={() => (can('notifications') ? toggleLedgerPref() : askUpgrade('notifications'))} disabled={pushStatus === 'enabling'}>
               {ledgerPref ? t('rec_active') : t('rec_inactive')}
             </Button>
           </div>
@@ -366,7 +364,7 @@ export default function Settings() {
               <Calendar className="h-4 w-4" style={{ color: 'var(--module-calendar)' }} />
               <span className="text-sm">{t('settings_push_calendar')}</span>
             </div>
-            <Button size="sm" variant={calendarPref ? 'default' : 'outline'} onClick={toggleCalendarPref} disabled={pushStatus === 'enabling' || !can('notifications')}>
+            <Button size="sm" variant={calendarPref ? 'default' : 'outline'} onClick={() => (can('notifications') ? toggleCalendarPref() : askUpgrade('notifications'))} disabled={pushStatus === 'enabling'}>
               {calendarPref ? t('rec_active') : t('rec_inactive')}
             </Button>
           </div>
@@ -446,7 +444,7 @@ export default function Settings() {
       {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
       {isDesktop && (
         <div className="mt-3">
-          {can('mood') ? <MoodCard t={t} /> : <ReadOnlyNotice feature="mood" locked />}
+          <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>
         </div>
       )}
 

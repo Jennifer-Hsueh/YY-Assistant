@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -118,6 +118,7 @@ export default function Accounts() {
   }, [accounts]);
 
   function switchMode(newMode, { keep = false } = {}) {
+    if (!canLedger) { askUpgrade('ledger'); return; }
     setMode(!keep && mode === newMode ? null : newMode);
     setPickedId(null);
     setEditDeleteOpen(false);
@@ -199,7 +200,7 @@ export default function Accounts() {
 
   // 新增/編輯/刪除功能列:手機版緊接在上方功能列下面,桌機版在右側
   // 方案沒有記帳功能時只顯示唯讀提示
-  const actionBar = !canLedger ? <ReadOnlyNotice feature="ledger" /> : (
+  const actionBar = (
     <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
       {/* 手機版:刪除改在編輯裡操作 */}
       {(isDesktop ? ['add', 'edit', 'delete'] : ['add', 'edit']).map((m) => (

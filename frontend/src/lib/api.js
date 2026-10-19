@@ -52,7 +52,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     err.status = res.status; // 429 = 嘗試次數過多
     err.code = data.code;
     // 方案不允許(例如到期後):重新讀取方案,畫面上的按鈕會跟著更新
-    if (data.code === 'PLAN_REQUIRED') window.dispatchEvent(new Event('yy:plan-changed'));
+    if (data.code === 'PLAN_REQUIRED') {
+      window.dispatchEvent(new Event('yy:plan-changed'));
+      window.dispatchEvent(new CustomEvent('yy:plan-locked', { detail: { feature: data.feature } }));
+    }
     throw err;
   }
   return data;

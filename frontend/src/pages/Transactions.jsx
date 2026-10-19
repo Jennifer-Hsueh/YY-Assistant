@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -95,6 +95,8 @@ export default function Transactions() {
 
   // 新增/編輯/轉帳/查詢/管理分類 五選一(手機、網頁相同);再點一次已選的項目 = 回到只看帳務資料
   function selectMobile(key) {
+    // 方案沒有記帳功能:只能查詢,其他功能跳出提示
+    if (!canLedger && key !== 'search') { askUpgrade('ledger'); return; }
     const isPanel = key === 'search' || key === 'categories';
     const already = isPanel ? panel === key : panel === 'list' && actionMode === key;
     setFilters(emptyFilters);
@@ -330,9 +332,8 @@ export default function Transactions() {
 
       {/* 新增/編輯/轉帳 + 查詢/管理分類 同一個功能列,一次只能選一個(再點一次取消) */}
       {/* 方案沒有記帳功能時:只能查看與查詢 */}
-      <ReadOnlyNotice feature="ledger" />
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-        {canLedger && (
+        {(
           <>
             <button onClick={() => selectMobile('add')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'add' && panel === 'list')}`}>{t('mode_add')}</button>
             <button onClick={() => selectMobile('edit')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'edit' && panel === 'list')}`}>{t('mode_edit')}</button>
@@ -341,9 +342,9 @@ export default function Transactions() {
         )}
         {[
           { key: 'search', label: t('search_title') },
-          ...(canLedger ? [{ key: 'categories', label: t('tx_manage_categories') }] : []),
+          { key: 'categories', label: t('tx_manage_categories') },
         ].map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => selectMobile(key)} className={`${canLedger ? 'col-span-3' : 'col-span-6'} px-2 py-1.5 ${segBtn(panel === key)}`}>
+          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-3 px-2 py-1.5 ${segBtn(panel === key)}`}>
             {label}
           </button>
         ))}

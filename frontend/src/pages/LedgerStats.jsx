@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -62,6 +62,7 @@ export default function LedgerStats() {
   }, []);
   async function saveBudget(e) {
     e.preventDefault();
+    if (!can('ledger')) { askUpgrade('ledger'); return; }
     if (!(Number(budgetAmount) > 0)) return;
     try {
       const { budget } = await api.saveBudget({ category: budgetCategory, amount: Number(budgetAmount) });
@@ -72,6 +73,7 @@ export default function LedgerStats() {
     }
   }
   async function removeBudget(id) {
+    if (!can('ledger')) { askUpgrade('ledger'); return; }
     try {
       await api.deleteBudget(id);
       setBudgets((prev) => prev.filter((b) => b.id !== id));
@@ -217,7 +219,7 @@ export default function LedgerStats() {
                     </div>
                   )}
                 </div>
-                {!can('ledger') ? <ReadOnlyNotice feature="ledger" className="" /> : (
+                {(
                 <div className="space-y-2">
                   <form onSubmit={saveBudget} className="flex gap-2">
                     <Select value={budgetCategory || 'total'} onValueChange={(v) => setBudgetCategory(v === 'total' ? '' : v)}>

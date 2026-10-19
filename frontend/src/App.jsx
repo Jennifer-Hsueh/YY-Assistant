@@ -6,6 +6,7 @@ import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
+import { PlanLockModal } from './components/PlanNotice';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -42,6 +43,7 @@ function ProtectedLayout({ children }) {
       </div>
       <BottomNav />
       <FloatingAddButton />
+      <PlanLockModal />
     </div>
   );
 }

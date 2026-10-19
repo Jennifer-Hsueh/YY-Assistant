@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { LockedArea } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -227,7 +227,7 @@ export default function Categories({ scope = 'ledger', embedded = false, onChang
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
-      {canEdit ? formCard : <ReadOnlyNotice feature={isCalendar ? 'calendar' : 'ledger'} />}
+      <LockedArea feature={isCalendar ? 'calendar' : 'ledger'}>{formCard}</LockedArea>
       </div>
 
       <div className="md:order-1">

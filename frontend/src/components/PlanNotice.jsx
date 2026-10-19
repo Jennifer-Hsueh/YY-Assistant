@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Clock, Check, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { usePlan } from '../context/PlanContext';
@@ -10,17 +10,55 @@ import { Card, CardContent } from './ui/card';
 
 const fmt = (ymd) => (ymd ? `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}` : '');
 
-// 沒有權限時的提示:資料可以看,不能新增或修改
-export function ReadOnlyNotice({ feature, locked = false, className = 'mb-3' }) {
-  const { can } = usePlan();
+// 沒有權限時:跳出視窗告知(任何地方呼叫 askUpgrade,或 API 回 PLAN_REQUIRED 時)
+export function askUpgrade(feature) {
+  window.dispatchEvent(new CustomEvent('yy:plan-locked', { detail: { feature } }));
+}
+
+// 放在路由裡(ProtectedLayout),全站共用一個視窗
+export function PlanLockModal() {
+  const { ent } = usePlan();
   const { language } = useLanguage();
-  if (can(feature)) return null;
+  const navigate = useNavigate();
+  const [feature, setFeature] = useState(null);
+
+  useEffect(() => {
+    const onLocked = (e) => setFeature(e.detail?.feature || 'ledger');
+    window.addEventListener('yy:plan-locked', onLocked);
+    return () => window.removeEventListener('yy:plan-locked', onLocked);
+  }, []);
+
+  if (!feature) return null;
   const T = planText(language);
+  const name = T.feat[feature] || feature;
+  const needChoice = ent?.status === 'basic' && !ent.basic_choice && (feature === 'ledger' || feature === 'calendar');
+  const close = () => setFeature(null);
+
   return (
-    <div className={`flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm ${className}`}>
-      <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 flex-1">{locked ? T.locked(T.feat[feature]) : T.readOnly(T.feat[feature])}</span>
-      <Link to="/settings#plan" className="shrink-0 text-xs underline">{T.viewPlan}</Link>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6" onClick={close}>
+      <div role="dialog" aria-modal="true" className="w-full max-w-xs rounded-2xl bg-card p-5 text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-muted">
+          <Lock className="h-5 w-5" />
+        </div>
+        <p className="mb-1 font-semibold">{T.lockTitle}</p>
+        <p className="text-sm text-muted-foreground">{needChoice ? T.chooseNow : T.locked(name)}</p>
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={close} className="flex-1 rounded-lg border border-border px-3 py-2 text-sm">{T.ok}</button>
+          <button type="button" onClick={() => { close(); navigate('/settings#plan'); }} className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">{T.viewPlan}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 包住整塊沒有權限的區域:看得到,點了就跳出提示
+export function LockedArea({ feature, children, className = '' }) {
+  const { can } = usePlan();
+  if (can(feature)) return children;
+  return (
+    <div className={`relative ${className}`}>
+      <div className="pointer-events-none opacity-60" aria-hidden="true">{children}</div>
+      <button type="button" aria-label="locked" onClick={() => askUpgrade(feature)} className="absolute inset-0 cursor-pointer" />
     </div>
   );
 }
@@ -56,6 +94,10 @@ export function PlanCard() {
   const { language } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // 從「查看方案」連過來時捲到這張卡片
+  useEffect(() => {
+    if (ent && window.location.hash === '#plan') document.getElementById('plan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [ent]);
   if (!ent) return null;
   const T = planText(language);
   const isBasic = ent.status === 'basic';

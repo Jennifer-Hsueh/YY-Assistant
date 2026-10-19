@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -206,6 +206,8 @@ export default function CalendarPage() {
   }, []);
   // 新增/編輯/查詢/管理分類 四選一(手機、網頁相同;再點一次已選的項目 = 取消)
   function selectMobile(key) {
+    // 方案沒有行事曆功能:只能查詢,其他功能跳出提示
+    if (!canCal && key !== 'search') { askUpgrade('calendar'); return; }
     // 每次切換功能,下方明細回到「未點選日期」的空白狀態
     setSelectedDay(null);
     if (key === 'search' || key === 'categories') {
@@ -347,9 +349,8 @@ export default function CalendarPage() {
 
       {/* Action mode switch: 新增 / 編輯(含刪除) / 查詢 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
       {/* 方案沒有行事曆功能:只能查看與查詢 */}
-      <ReadOnlyNotice feature="calendar" />
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-        {canCal && <>
+        {<>
         <button
           onClick={() => selectMobile('add')}
           className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && !panel ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
@@ -361,13 +362,13 @@ export default function CalendarPage() {
         </>}
         {[
           { key: 'search', label: t('search_title') },
-          ...(canCal ? [{ key: 'categories', label: t('tx_manage_categories') }] : []),
+          { key: 'categories', label: t('tx_manage_categories') },
         ].map(({ key, label }) => (
           <button
             key={key}
             type="button"
             onClick={() => selectMobile(key)}
-            className={`${canCal ? 'col-span-3' : 'col-span-6'} rounded-md px-2 py-1.5 transition-colors ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+            className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
             {label}
           </button>

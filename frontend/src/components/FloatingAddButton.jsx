@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
+import { askUpgrade } from './PlanNotice';
 import { Plus, X, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -138,8 +139,8 @@ export default function FloatingAddButton() {
           >
             <div className="mb-3 flex items-center gap-2">
               <div className="flex flex-1 rounded-lg border border-border bg-card p-1 shadow-sm">
-                {tabs.includes('tx') && <button type="button" onClick={() => setTab('tx')} className={seg(tab === 'tx')}>{t('qa_tab_tx')}</button>}
-                {tabs.includes('ev') && <button type="button" onClick={() => setTab('ev')} className={seg(tab === 'ev')}>{t('qa_tab_ev')}</button>}
+                <button type="button" onClick={() => (tabs.includes('tx') ? setTab('tx') : askUpgrade('ledger'))} className={seg(tab === 'tx')}>{t('qa_tab_tx')}</button>
+                <button type="button" onClick={() => (tabs.includes('ev') ? setTab('ev') : askUpgrade('calendar'))} className={seg(tab === 'ev')}>{t('qa_tab_ev')}</button>
                 <button type="button" onClick={() => setTab('note')} className={seg(tab === 'note')}>{t('qa_tab_note')}</button>
               </div>
               <button type="button" aria-label="close" onClick={close} className="rounded-md p-2 text-muted-foreground hover:bg-muted"><X className="h-5 w-5" /></button>

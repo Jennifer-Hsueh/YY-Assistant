@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
-import { ReadOnlyNotice } from '../components/PlanNotice';
+import { askUpgrade } from '../components/PlanNotice';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -120,6 +120,7 @@ export default function Community() {
   const draftBoard = tab === 'mine' ? draft.board : tab;
 
   async function publish(e) {
+    if (!member) { e.preventDefault(); askUpgrade('community'); return; }
     e.preventDefault();
     if (!draft.content.trim()) return;
     setPosting(true);
@@ -293,12 +294,11 @@ export default function Community() {
           )}
 
           {/* 手機版:點「寫文章」才展開;桌機版一直顯示 */}
-          {/* 方案沒有社群功能:只能瀏覽 */}
-          <ReadOnlyNotice feature="community" />
-          {member && <>
+          {/* 方案沒有社群功能:只能瀏覽,發文、回應、留言時跳出提示 */}
+          {<>
           <button
             type="button"
-            onClick={() => setComposeOpen((v) => !v)}
+            onClick={() => (member ? setComposeOpen((v) => !v) : askUpgrade('community'))}
             className="mb-3 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium shadow-sm md:hidden"
           >
             ✏️ {draftBoard === 'mood' ? t('cm_compose_mood') : t('cm_compose')}
@@ -354,7 +354,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
     try { await fn(); } catch (err) { console.error(err); onError(); }
   }
 
-  const react = (type) => run(async () => { const { post: p } = await api.reactToPost(post.id, type); onChange(p); });
+  const react = (type) => (!member ? askUpgrade('community') : run(async () => { const { post: p } = await api.reactToPost(post.id, type); onChange(p); }));
   const changeScope = (key) => run(async () => {
     const { post: p } = await api.updatePost(post.id, SCOPES.find((s) => s.key === key).value);
     setScopeOpen(false);
@@ -396,7 +396,6 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
             <button
               key={r.key}
               type="button"
-              disabled={!member}
               onClick={() => react(r.key)}
               className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${post.my_reaction === r.key ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
             >
@@ -406,7 +405,6 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
           {!isPrivate && post.board !== 'mood' && (
             <button
               type="button"
-              disabled={!member}
               onClick={() => react('like')}
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs ${post.my_reaction === 'like' ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
             >
@@ -444,8 +442,8 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
             {(post.is_mine || isAdmin) && (
               <button type="button" onClick={() => setConfirm('delete')} className="underline">{t('cm_delete')}</button>
             )}
-            {!post.is_mine && confirm !== 'reported' && member && (
-              <button type="button" onClick={() => setConfirm('report')} className="underline">{t('cm_report')}</button>
+            {!post.is_mine && confirm !== 'reported' && (
+              <button type="button" onClick={() => (member ? setConfirm('report') : askUpgrade('community'))} className="underline">{t('cm_report')}</button>
             )}
           </span>
         </div>
@@ -494,6 +492,7 @@ function Comments({ post, t, isAdmin, onCountChange, onError }) {
   }, [post.id]);
 
   async function send(e) {
+    if (!member) { e.preventDefault(); askUpgrade('community'); return; }
     e.preventDefault();
     if (!text.trim()) return;
     try {
@@ -545,7 +544,7 @@ function Comments({ post, t, isAdmin, onCountChange, onError }) {
           <p className="whitespace-pre-wrap text-sm">{c.content}</p>
         </div>
       ))}
-      <form onSubmit={send} className={member ? 'flex gap-2' : 'hidden'}>
+      <form onSubmit={send} className="flex gap-2">
         <Input
           value={text}
           maxLength={2000}

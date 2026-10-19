@@ -45,3 +45,34 @@ export function ago(iso) {
   const d = Math.floor(h / 24);
   return d < 60 ? `${d} 天前` : fmtDate(iso);
 }
+
+// 日期輸入:只取數字,自動補上斜線(輸入 20261101 → 2026/11/01)
+export function typeDate(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 4) return d;
+  if (d.length <= 6) return `${d.slice(0, 4)}/${d.slice(4)}`;
+  return `${d.slice(0, 4)}/${d.slice(4, 6)}/${d.slice(6)}`;
+}
+// 時間輸入(24 小時制):輸入 0930 → 09:30
+export function typeTime(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 4);
+  return d.length <= 2 ? d : `${d.slice(0, 2)}:${d.slice(2)}`;
+}
+// ISO → { date: 'yyyy/mm/dd', time: 'HH:MM' }(本機時間)
+export function splitLocal(iso) {
+  if (!iso) return { date: '', time: '' };
+  const d = new Date(iso);
+  return { date: fmtDate(iso).replace(/-/g, '/'), time: `${pad(d.getHours())}:${pad(d.getMinutes())}` };
+}
+// 日期 + 時間 → ISO;日期空白回 null;格式錯誤回 { error }
+export function joinLocal(date, time) {
+  if (!date) return { iso: null };
+  const m = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(date);
+  if (!m) return { error: '日期請輸入 8 碼,例如 20261101' };
+  const t = time ? /^(\d{2}):(\d{2})$/.exec(time) : ['', '00', '00'];
+  if (!t) return { error: '時間請輸入 4 碼,例如 0930' };
+  const [y, mo, d, h, mi] = [+m[1], +m[2], +m[3], +t[1], +t[2]];
+  const dt = new Date(y, mo - 1, d, h, mi);
+  if (dt.getMonth() !== mo - 1 || dt.getDate() !== d || h > 23 || mi > 59) return { error: '日期或時間不正確' };
+  return { iso: dt.toISOString() };
+}

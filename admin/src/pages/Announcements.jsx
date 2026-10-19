@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Plus, Star, User, Globe, X } from 'lucide-react';
 import { api } from '../api';
-import { fmtDateTime, toLocalInput } from '../labels';
+import { fmtDateTime, splitLocal, joinLocal, typeDate, typeTime } from '../labels';
 import { Badge, Button, Card, Field, Notice, PageTitle, inputCls } from '../ui';
 
-const blank = { title: '', content: '', is_important: false, published_at: '', target: null };
+const blank = { title: '', content: '', is_important: false, pub_date: '', pub_time: '', target: null };
 
 // 發放對象:公開或單一使用者(用 Email / 稱呼搜尋)
 function TargetPicker({ target, onChange }) {
@@ -76,7 +76,7 @@ export default function Announcements() {
   }
   function pick(a) {
     setEditingId(a.id);
-    setForm({ title: a.title, content: a.content || '', is_important: !!a.is_important, published_at: toLocalInput(a.published_at), target: a.target_user_id ? { id: a.target_user_id, ...(a.target || {}) } : null });
+    setForm({ title: a.title, content: a.content || '', is_important: !!a.is_important, ...(() => { const { date, time } = splitLocal(a.published_at); return { pub_date: date, pub_time: time }; })(), target: a.target_user_id ? { id: a.target_user_id, ...(a.target || {}) } : null });
     setConfirmDelete(false);
     setMsg(null);
   }
@@ -85,9 +85,11 @@ export default function Announcements() {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    // datetime-local 是本機時間,轉成 ISO 再送出(伺服器在 UTC)
-    const { target, ...rest } = form;
-    const body = { ...rest, target_user_id: target?.id || null, published_at: form.published_at ? new Date(form.published_at).toISOString() : null };
+    // 輸入的是本機時間(24 小時制),轉成 ISO 再送出(伺服器在 UTC)
+    const when = joinLocal(form.pub_date, form.pub_time);
+    if (when.error) { setMsg({ ok: false, text: when.error }); setBusy(false); return; }
+    const { target, pub_date, pub_time, ...rest } = form;
+    const body = { ...rest, target_user_id: target?.id || null, published_at: when.iso };
     try {
       if (editingId) {
         const { announcement } = await api.updateAnnouncement(editingId, body);
@@ -162,9 +164,25 @@ export default function Announcements() {
               <textarea className={`${inputCls} h-48 resize-y py-2`} value={form.content} maxLength={5000} onChange={set('content')} required />
             </Field>
             <TargetPicker target={form.target} onChange={(target) => setForm((f) => ({ ...f, target }))} />
-            <Field label="發布時間(空白 = 立即發布;設定未來時間 = 排程)">
-              <input type="datetime-local" className={inputCls} value={form.published_at} onChange={set('published_at')} />
-            </Field>
+            <div>
+              <span className="mb-1 block text-xs text-muted-foreground">發布時間(空白 = 立即發布;設定未來時間 = 排程)</span>
+              <div className="flex gap-2">
+                <input
+                  className={`${inputCls} num flex-1`}
+                  inputMode="numeric"
+                  placeholder="yyyy/mm/dd"
+                  value={form.pub_date}
+                  onChange={(e) => setForm((f) => ({ ...f, pub_date: typeDate(e.target.value) }))}
+                />
+                <input
+                  className={`${inputCls} num w-24`}
+                  inputMode="numeric"
+                  placeholder="HH:MM"
+                  value={form.pub_time}
+                  onChange={(e) => setForm((f) => ({ ...f, pub_time: typeTime(e.target.value) }))}
+                />
+              </div>
+            </div>
             <label className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
               <input type="checkbox" className="mt-0.5" checked={form.is_important} onChange={set('is_important')} />
               <span>
