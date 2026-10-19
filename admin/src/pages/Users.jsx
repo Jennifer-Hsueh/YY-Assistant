@@ -5,7 +5,7 @@ import {
   ROLE_LABEL, PLAN_LABEL, PLAN_DESC, PAID_PLANS, ADDON_PLANS, CHOICE_LABEL, STATUS_LABEL, STATUS_TONE,
   priceFor, planText, fmtDate, fmtDateTime, ago,
 } from '../labels';
-import { Badge, Button, Card, Field, Notice, PageTitle, inputCls } from '../ui';
+import { Badge, Button, Card, DateInput, Field, Notice, PageTitle, inputCls } from '../ui';
 
 const STATUS_FILTER = {
   trial: '試用中',
@@ -99,7 +99,7 @@ function Payments({ user, onUserChange }) {
       <div className="space-y-3 rounded-lg border border-border p-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="繳費日期">
-            <input type="date" className={inputCls} value={form.paid_at} onChange={set('paid_at')} />
+            <DateInput value={form.paid_at} onChange={(v) => setForm((f) => ({ ...f, paid_at: v }))} />
           </Field>
           <Field label="方案">
             <select className={inputCls} value={form.plan} onChange={set('plan')}>
@@ -243,10 +243,10 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
               </select>
             </Field>
             <Field label="最近付款日">
-              <input type="date" className={inputCls} value={form.last_payment_date} onChange={set('last_payment_date')} />
+              <DateInput value={form.last_payment_date} onChange={(v) => setForm((f) => ({ ...f, last_payment_date: v }))} />
             </Field>
             <Field label="權限截止日">
-              <input type="date" className={inputCls} value={form.plan_expires_at} onChange={set('plan_expires_at')} />
+              <DateInput value={form.plan_expires_at} onChange={(v) => setForm((f) => ({ ...f, plan_expires_at: v }))} />
             </Field>
             <Field label="到期後方案">
               <select className={inputCls} value={form.basic_choice} onChange={set('basic_choice')}>
@@ -255,7 +255,7 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
               </select>
             </Field>
             <Field label="試用結束日">
-              <input type="date" className={inputCls} value={form.trial_ends_at} onChange={set('trial_ends_at')} />
+              <DateInput value={form.trial_ends_at} onChange={(v) => setForm((f) => ({ ...f, trial_ends_at: v }))} />
             </Field>
           </div>
           <label className={`flex items-center gap-2 text-sm ${ADDON_PLANS.includes(form.plan) ? '' : 'text-muted-foreground'}`}>
@@ -356,10 +356,10 @@ export default function UsersPage({ initial, selfId }) {
         </div>
         <div className="flex items-end gap-3">
           <Field label="權限截止日 從" className="w-44">
-            <input type="date" className={inputCls} value={filters.exp_from} onChange={setFilter('exp_from')} />
+            <DateInput value={filters.exp_from} onChange={(v) => { setFilters((f) => ({ ...f, exp_from: v })); setPage(1); }} />
           </Field>
           <Field label="到" className="w-44">
-            <input type="date" className={inputCls} value={filters.exp_to} min={filters.exp_from || undefined} onChange={setFilter('exp_to')} />
+            <DateInput value={filters.exp_to} onChange={(v) => { setFilters((f) => ({ ...f, exp_to: v })); setPage(1); }} />
           </Field>
           <span className="pb-2 text-xs text-muted-foreground">有設定日期時,依截止日由近到遠排序</span>
           {hasFilter && <Button variant="ghost" className="ml-auto" onClick={() => { setFilters(emptyFilters); setPage(1); }}>清除條件</Button>}
