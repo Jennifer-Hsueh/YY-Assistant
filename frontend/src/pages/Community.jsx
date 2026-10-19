@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -73,6 +75,8 @@ export default function Community() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [composeOpen, setComposeOpen] = useState(false);
+  const { can } = usePlan();
+  const member = can('community');
   const [error, setError] = useState('');
   const [posting, setPosting] = useState(false);
 
@@ -289,6 +293,9 @@ export default function Community() {
           )}
 
           {/* 手機版:點「寫文章」才展開;桌機版一直顯示 */}
+          {/* 方案沒有社群功能:只能瀏覽 */}
+          <ReadOnlyNotice feature="community" />
+          {member && <>
           <button
             type="button"
             onClick={() => setComposeOpen((v) => !v)}
@@ -297,6 +304,7 @@ export default function Community() {
             ✏️ {draftBoard === 'mood' ? t('cm_compose_mood') : t('cm_compose')}
           </button>
           <div className={`mb-4 ${composeOpen ? '' : 'hidden'} md:block`}>{composeCard}</div>
+          </>}
         </div>
 
         <div className="md:order-1">
@@ -327,6 +335,7 @@ export default function Community() {
 }
 
 function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
+  const member = usePlan().can('community');
   const [confirm, setConfirm] = useState(null); // 'delete' | 'report' | 'reported'
   const [scopeOpen, setScopeOpen] = useState(false);
   const isPrivate = post.visibility === 'private';
@@ -387,6 +396,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
             <button
               key={r.key}
               type="button"
+              disabled={!member}
               onClick={() => react(r.key)}
               className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${post.my_reaction === r.key ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
             >
@@ -396,6 +406,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
           {!isPrivate && post.board !== 'mood' && (
             <button
               type="button"
+              disabled={!member}
               onClick={() => react('like')}
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs ${post.my_reaction === 'like' ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
             >
@@ -433,7 +444,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
             {(post.is_mine || isAdmin) && (
               <button type="button" onClick={() => setConfirm('delete')} className="underline">{t('cm_delete')}</button>
             )}
-            {!post.is_mine && confirm !== 'reported' && (
+            {!post.is_mine && confirm !== 'reported' && member && (
               <button type="button" onClick={() => setConfirm('report')} className="underline">{t('cm_report')}</button>
             )}
           </span>
@@ -471,6 +482,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
 }
 
 function Comments({ post, t, isAdmin, onCountChange, onError }) {
+  const member = usePlan().can('community');
   const [comments, setComments] = useState(null);
   const [text, setText] = useState('');
   const isPrivate = post.visibility === 'private';
@@ -533,7 +545,7 @@ function Comments({ post, t, isAdmin, onCountChange, onError }) {
           <p className="whitespace-pre-wrap text-sm">{c.content}</p>
         </div>
       ))}
-      <form onSubmit={send} className="flex gap-2">
+      <form onSubmit={send} className={member ? 'flex gap-2' : 'hidden'}>
         <Input
           value={text}
           maxLength={2000}

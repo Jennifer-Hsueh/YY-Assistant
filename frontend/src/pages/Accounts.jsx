@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -67,6 +69,8 @@ export default function Accounts() {
   // 新增/編輯/刪除:點了才出現內容,再點一次收起
   const [mode, setMode] = useState(null);
   const isDesktop = useIsDesktop();
+  const { can } = usePlan();
+  const canLedger = can('ledger');
 
   const [newName, setNewName] = useState('');
   const [newCurrency, setNewCurrency] = useState('TWD');
@@ -194,7 +198,8 @@ export default function Accounts() {
     : null;
 
   // 新增/編輯/刪除功能列:手機版緊接在上方功能列下面,桌機版在右側
-  const actionBar = (
+  // 方案沒有記帳功能時只顯示唯讀提示
+  const actionBar = !canLedger ? <ReadOnlyNotice feature="ledger" /> : (
     <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
       {/* 手機版:刪除改在編輯裡操作 */}
       {(isDesktop ? ['add', 'edit', 'delete'] : ['add', 'edit']).map((m) => (
@@ -211,7 +216,7 @@ export default function Accounts() {
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       {/* 手機版:選了功能時只顯示功能內容,不同時顯示總資產與各帳戶金額 */}
-      <div className={mode && !isDesktop ? 'hidden' : ''}>
+      <div className={mode && canLedger && !isDesktop ? 'hidden' : ''}>
 
       {!loading && accounts.length > 0 && (
         <Card className="mb-4">
@@ -330,7 +335,7 @@ export default function Accounts() {
       <div className="md:sticky md:top-6">
       {isDesktop && actionBar}
 
-      <Card className={mode ? '' : 'hidden'}>
+      <Card className={mode && canLedger ? '' : 'hidden'}>
         <CardContent className="p-4">
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="space-y-3">

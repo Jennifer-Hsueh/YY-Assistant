@@ -1,5 +1,6 @@
 const { getFirebaseApp, admin } = require('../config/firebase');
 const supabase = require('../config/supabase');
+const { computeEntitlements, has } = require('../lib/entitlements');
 
 // Sends a push notification to every device token the user has registered
 // (a user may be logged in on more than one device/browser).
@@ -8,11 +9,15 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
   if (channel === 'ledger' || channel === 'calendar') {
     const { data: prefs } = await supabase
       .from('yy_users')
-      .select('notify_ledger, notify_calendar')
+      .select('*')
       .eq('id', userId)
       .maybeSingle();
     if (prefs && prefs[`notify_${channel}`] === false) {
       return { sent: false, reason: `user turned off ${channel} notifications` };
+    }
+    // 通知屬於進階功能(基本功能沒有通知)
+    if (prefs && !has(computeEntitlements(prefs), 'notifications')) {
+      return { sent: false, reason: 'plan has no notifications' };
     }
   }
 

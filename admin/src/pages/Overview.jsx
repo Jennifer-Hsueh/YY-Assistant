@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw, DatabaseBackup } from 'lucide-react';
 import { api } from '../api';
-import { ROLE_LABEL, PLAN_LABEL, BOARD_LABEL, fmtDateTime } from '../labels';
+import { ROLE_LABEL, PLAN_LABEL, PLAN_DESC, PAID_PLANS, STATUS_LABEL, BOARD_LABEL, fmtDateTime } from '../labels';
 import { Button, Card, PageTitle } from '../ui';
 
 function Stat({ label, value, hint, onClick, tone }) {
@@ -67,23 +67,37 @@ export default function Overview({ go }) {
         <Stat label="已停用帳號" value={u.disabled} tone={u.disabled ? 'red' : undefined} onClick={() => go('users', { status: 'disabled' })} />
       </div>
 
-      <div className="mb-8 grid grid-cols-3 gap-3">
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        <Breakdown
+          title="依方案狀態"
+          total={u.total}
+          rows={['trial', 'active', 'grace', 'basic', 'staff'].map((k) => [k, STATUS_LABEL[k], u.byStatus[k] || 0])}
+          onPick={(status) => go('users', { status })}
+        />
+        <Breakdown
+          title={`付費方案(含寬限期,加購社群 ${u.addonCommunity} 人)`}
+          total={PAID_PLANS.reduce((n, k) => n + (u.byPlan[k] || 0), 0)}
+          rows={PAID_PLANS.map((k) => [k, `${PLAN_LABEL[k]}・${PLAN_DESC[k]}`, u.byPlan[k] || 0])}
+          onPick={(plan) => go('users', { plan, status: 'active' })}
+        />
         <Breakdown
           title="依身份"
           total={u.total}
           rows={Object.keys(ROLE_LABEL).map((k) => [k, ROLE_LABEL[k], u.byRole[k] || 0])}
           onPick={(role) => go('users', { role })}
         />
-        <Breakdown
-          title="依方案"
-          total={u.total}
-          rows={Object.keys(PLAN_LABEL).map((k) => [k, PLAN_LABEL[k], u.byPlan[k] || 0])}
-          onPick={(plan) => go('users', { plan })}
+      </div>
+
+      <div className="mb-8 grid grid-cols-4 gap-3">
+        <Stat label="試用 30 天內結束" value={u.trialEnding} tone={u.trialEnding ? 'amber' : undefined} onClick={() => go('users', { status: 'trial_ending' })} />
+        <Stat label="付費 30 天內到期" value={u.expiring} tone={u.expiring ? 'amber' : undefined} onClick={() => go('users', { status: 'expiring' })} />
+        <Stat label="寬限期中" value={u.grace} tone={u.grace ? 'red' : undefined} hint="到期後 7 天內,功能照常" onClick={() => go('users', { status: 'grace' })} />
+        <Stat
+          label="已過期(改為基本功能)"
+          value={u.expired}
+          hint={`基本功能:記帳 ${u.basicChoice.ledger}・行事曆 ${u.basicChoice.calendar}・未選 ${u.basicChoice.none}`}
+          onClick={() => go('users', { status: 'expired' })}
         />
-        <div className="grid grid-rows-2 gap-3">
-          <Stat label="權限 14 天內到期" value={u.expiring} tone={u.expiring ? 'amber' : undefined} onClick={() => go('users', { status: 'expiring' })} />
-          <Stat label="權限已過期" value={u.expired} tone={u.expired ? 'red' : undefined} onClick={() => go('users', { status: 'expired' })} />
-        </div>
       </div>
 
       <p className="mb-2 text-sm font-medium text-muted-foreground">社群</p>

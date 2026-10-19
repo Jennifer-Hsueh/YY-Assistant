@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,6 +36,8 @@ const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', n
 // 提醒選項(分鐘,存在 remind_before_minutes):有時間的行程 / 全天行程各一組
 export default function CalendarPage() {
   const { t } = useLanguage();
+  const { can } = usePlan();
+  const canCal = can('calendar');
   const [events, setEvents] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -342,7 +346,10 @@ export default function CalendarPage() {
       <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯(含刪除) / 查詢 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
+      {/* 方案沒有行事曆功能:只能查看與查詢 */}
+      <ReadOnlyNotice feature="calendar" />
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+        {canCal && <>
         <button
           onClick={() => selectMobile('add')}
           className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'add' && !panel ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
@@ -351,15 +358,16 @@ export default function CalendarPage() {
           onClick={() => selectMobile('edit')}
           className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${actionMode === 'edit' && !panel ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >{t('mode_edit')}</button>
+        </>}
         {[
           { key: 'search', label: t('search_title') },
-          { key: 'categories', label: t('tx_manage_categories') },
+          ...(canCal ? [{ key: 'categories', label: t('tx_manage_categories') }] : []),
         ].map(({ key, label }) => (
           <button
             key={key}
             type="button"
             onClick={() => selectMobile(key)}
-            className={`col-span-3 rounded-md px-2 py-1.5 transition-colors ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+            className={`${canCal ? 'col-span-3' : 'col-span-6'} rounded-md px-2 py-1.5 transition-colors ${panel === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
           >
             {label}
           </button>

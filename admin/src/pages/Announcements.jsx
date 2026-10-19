@@ -1,10 +1,61 @@
 import { useEffect, useState } from 'react';
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, User, Globe, X } from 'lucide-react';
 import { api } from '../api';
 import { fmtDateTime, toLocalInput } from '../labels';
 import { Badge, Button, Card, Field, Notice, PageTitle, inputCls } from '../ui';
 
-const blank = { title: '', content: '', is_important: false, published_at: '' };
+const blank = { title: '', content: '', is_important: false, published_at: '', target: null };
+
+// 發放對象:公開或單一使用者(用 Email / 稱呼搜尋)
+function TargetPicker({ target, onChange }) {
+  const [mode, setMode] = useState(target ? 'user' : 'public');
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState([]);
+
+  useEffect(() => { setMode(target ? 'user' : 'public'); }, [target]);
+  useEffect(() => {
+    if (mode !== 'user' || !q.trim()) { setResults([]); return undefined; }
+    const timer = setTimeout(() => {
+      api.users({ q: q.trim() }).then(({ users }) => setResults(users.slice(0, 6))).catch(() => setResults([]));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [q, mode]);
+
+  const pickMode = (m) => { setMode(m); if (m === 'public') onChange(null); };
+  const btn = (on) => `flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm ${on ? 'bg-ink text-white' : 'text-muted-foreground hover:text-foreground'}`;
+
+  return (
+    <div>
+      <span className="mb-1 block text-xs text-muted-foreground">發放對象</span>
+      <div className="mb-2 flex rounded-lg border border-border p-1">
+        <button type="button" className={btn(mode === 'public')} onClick={() => pickMode('public')}><Globe className="h-3.5 w-3.5" />公開</button>
+        <button type="button" className={btn(mode === 'user')} onClick={() => pickMode('user')}><User className="h-3.5 w-3.5" />單一使用者</button>
+      </div>
+      {mode === 'user' && (target ? (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm">
+          <User className="h-4 w-4 text-ink" />
+          <span className="min-w-0 flex-1 truncate">{target.username || '(未設定稱呼)'} <span className="text-muted-foreground">· {target.email}</span></span>
+          <button type="button" title="重新選擇" onClick={() => onChange(null)} className="text-muted-foreground hover:text-danger"><X className="h-4 w-4" /></button>
+        </div>
+      ) : (
+        <div className="relative">
+          <input className={inputCls} placeholder="輸入 Email 或稱呼搜尋" value={q} onChange={(e) => setQ(e.target.value)} />
+          {results.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+              {results.map((u) => (
+                <li key={u.id}>
+                  <button type="button" onClick={() => { onChange({ id: u.id, email: u.email, username: u.username }); setQ(''); }} className="w-full px-3 py-2 text-left text-sm hover:bg-muted">
+                    {u.username || '(未設定稱呼)'} <span className="text-muted-foreground">· {u.email}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Announcements() {
   const [list, setList] = useState(null);
@@ -25,7 +76,7 @@ export default function Announcements() {
   }
   function pick(a) {
     setEditingId(a.id);
-    setForm({ title: a.title, content: a.content || '', is_important: !!a.is_important, published_at: toLocalInput(a.published_at) });
+    setForm({ title: a.title, content: a.content || '', is_important: !!a.is_important, published_at: toLocalInput(a.published_at), target: a.target_user_id ? { id: a.target_user_id, ...(a.target || {}) } : null });
     setConfirmDelete(false);
     setMsg(null);
   }
@@ -35,7 +86,8 @@ export default function Announcements() {
     setBusy(true);
     setMsg(null);
     // datetime-local 是本機時間,轉成 ISO 再送出(伺服器在 UTC)
-    const body = { ...form, published_at: form.published_at ? new Date(form.published_at).toISOString() : null };
+    const { target, ...rest } = form;
+    const body = { ...rest, target_user_id: target?.id || null, published_at: form.published_at ? new Date(form.published_at).toISOString() : null };
     try {
       if (editingId) {
         const { announcement } = await api.updateAnnouncement(editingId, body);
@@ -87,6 +139,7 @@ export default function Announcements() {
                   <button type="button" onClick={() => pick(a)} className={`w-full px-5 py-3.5 text-left transition-colors ${editingId === a.id ? 'bg-muted' : 'hover:bg-muted/40'}`}>
                     <div className="mb-1 flex items-center gap-2">
                       {a.is_important && <Star className="h-4 w-4 shrink-0 fill-warn text-warn" />}
+                      {a.target_user_id && <Badge tone="ink">給 {a.target?.username || a.target?.email || '使用者'}</Badge>}
                       <p className="truncate font-medium">{a.title}</p>
                       <span className="ml-auto shrink-0">{a.published_at > now ? <Badge tone="amber">排程中</Badge> : <Badge tone="green">已發布</Badge>}</span>
                     </div>
@@ -108,6 +161,7 @@ export default function Announcements() {
             <Field label="內容">
               <textarea className={`${inputCls} h-48 resize-y py-2`} value={form.content} maxLength={5000} onChange={set('content')} required />
             </Field>
+            <TargetPicker target={form.target} onChange={(target) => setForm((f) => ({ ...f, target }))} />
             <Field label="發布時間(空白 = 立即發布;設定未來時間 = 排程)">
               <input type="datetime-local" className={inputCls} value={form.published_at} onChange={set('published_at')} />
             </Field>
@@ -115,7 +169,7 @@ export default function Announcements() {
               <input type="checkbox" className="mt-0.5" checked={form.is_important} onChange={set('is_important')} />
               <span>
                 重要公告
-                <span className="block text-xs text-muted-foreground">會在使用者首頁顯示橫幅,直到他看過或關閉</span>
+                <span className="block text-xs text-muted-foreground">會在首頁顯示橫幅,直到看過或關閉{form.target ? '(只有這位使用者看得到)' : ''}</span>
               </span>
             </label>
             {confirmDelete ? (

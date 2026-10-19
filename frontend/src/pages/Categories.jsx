@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,6 +12,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 // embedded:嵌在記帳/行事曆頁面裡顯示(不含頁面標題與外框);onChanged:分類變動後通知外層重新載入
 export default function Categories({ scope = 'ledger', embedded = false, onChanged }) {
   const isCalendar = scope === 'calendar';
+  const { can } = usePlan();
+  const canEdit = can(isCalendar ? 'calendar' : 'ledger');
   const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -223,7 +227,7 @@ export default function Categories({ scope = 'ledger', embedded = false, onChang
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
       <div className="md:sticky md:top-6 md:order-2">
-      {formCard}
+      {canEdit ? formCard : <ReadOnlyNotice feature={isCalendar ? 'calendar' : 'ledger'} />}
       </div>
 
       <div className="md:order-1">

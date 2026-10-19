@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import RecurrenceFields from '../components/RecurrenceFields';
 import { emptyRecurrence, recurrenceFromItem, recurrencePayload, reactivationPayload, describeRecurrence } from '../lib/recurrence';
 import { api } from '../lib/api';
@@ -27,6 +29,8 @@ function isExpired(item, today) {
 
 export default function RecurringMoney() {
   const { t } = useLanguage();
+  const { can } = usePlan();
+  const canRec = can('ledger_recurring');
   const [items, setItems] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -149,7 +153,7 @@ export default function RecurringMoney() {
   const relevantCategories = categories.filter((c) => c.type === form.kind || c.type === 'general');
 
   const rank = (item) => (isExpired(item, today) ? 2 : item.is_active ? 0 : 1);
-  const onlyActive = mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
+  const onlyActive = canRec && mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
   const visibleItems = items
     .filter((item) => {
       const on = item.is_active && !isExpired(item, today);
@@ -185,6 +189,8 @@ export default function RecurringMoney() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-transactions)', '--ring': 'var(--module-transactions)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring')}</h1>
       <LedgerSubNav />
+      {/* 方案沒有循環功能:只能查看 */}
+      <ReadOnlyNotice feature="ledger_recurring" />
 
       {/* 手機版:篩選與新增/編輯(含刪除)放在同一個區塊,一次只選一個 */}
       <div className="mb-3 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
@@ -198,8 +204,8 @@ export default function RecurringMoney() {
             >{t(k)}</button>
           ))}
         </div>
-        <div className="my-1 border-t border-border" />
-        <div className="flex">
+        {canRec && <div className="my-1 border-t border-border" />}
+        <div className={canRec ? 'flex' : 'hidden'}>
           {[['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
             <button
               key={m}
@@ -252,7 +258,7 @@ export default function RecurringMoney() {
                     </p>
                     <p className="truncate text-xs text-muted-foreground">{details}</p>
                   </div>
-                  {!selectable && reactivateId !== item.id && (
+                  {!selectable && reactivateId !== item.id && canRec && (
                     <Button size="sm" className="shrink-0" variant={item.is_active && !expired ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
                       {expired ? t('rec_ended') : item.is_active ? t('rec_active') : t('rec_inactive')}
                     </Button>
@@ -276,7 +282,7 @@ export default function RecurringMoney() {
       )}
       </div>
 
-      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`}>
+      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`} style={canRec ? undefined : { display: 'none' }}>
       <div className="mb-3 hidden rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:flex">
         <button onClick={() => switchActionMode('add')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'add' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_add')}</button>
         <button onClick={() => switchActionMode('edit')} className={`flex-1 rounded-md px-3 py-1.5 transition-colors ${actionMode === 'edit' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t('mode_edit')}</button>

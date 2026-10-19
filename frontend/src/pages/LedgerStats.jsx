@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -51,6 +53,7 @@ export default function LedgerStats() {
   const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
   // 每月預算
+  const { can } = usePlan();
   const [budgets, setBudgets] = useState([]);
   const [budgetCategory, setBudgetCategory] = useState('');
   const [budgetAmount, setBudgetAmount] = useState('');
@@ -214,6 +217,7 @@ export default function LedgerStats() {
                     </div>
                   )}
                 </div>
+                {!can('ledger') ? <ReadOnlyNotice feature="ledger" className="" /> : (
                 <div className="space-y-2">
                   <form onSubmit={saveBudget} className="flex gap-2">
                     <Select value={budgetCategory || 'total'} onValueChange={(v) => setBudgetCategory(v === 'total' ? '' : v)}>
@@ -239,6 +243,7 @@ export default function LedgerStats() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </CardContent>
           </Card>

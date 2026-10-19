@@ -1,13 +1,15 @@
 const supabase = require('../config/supabase');
 
-// Read-only for regular users. Announcements are inserted directly in
-// Supabase for now — no admin UI yet since this is a solo-dev app.
+// 使用者只看得到「公開」與「發給自己」的公告(公告由管理後台發布)
+const audience = (userId) => `target_user_id.is.null,target_user_id.eq.${userId}`;
+
 async function listAnnouncements(req, res) {
   try {
     const { data, error } = await supabase
       .from('yy_announcements')
       .select('*')
       .lte('published_at', new Date().toISOString())
+      .or(audience(req.user.id))
       .order('published_at', { ascending: false })
       .limit(50);
     if (error) throw error;
@@ -37,7 +39,8 @@ async function getStatus(req, res) {
     let unreadQuery = supabase
       .from('yy_announcements')
       .select('id', { count: 'exact', head: true })
-      .lte('published_at', now);
+      .lte('published_at', now)
+      .or(audience(req.user.id));
     if (seenAt) unreadQuery = unreadQuery.gt('published_at', seenAt);
     const { count, error: countErr } = await unreadQuery;
     if (countErr) throw countErr;
@@ -48,6 +51,7 @@ async function getStatus(req, res) {
       .select('id, title, published_at')
       .eq('is_important', true)
       .lte('published_at', now)
+      .or(audience(req.user.id))
       .order('published_at', { ascending: false })
       .limit(1);
     if (bannerAfter) bannerQuery = bannerQuery.gt('published_at', bannerAfter);

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { PlanProvider } from './context/PlanContext';
 import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
@@ -49,6 +50,7 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
+        <PlanProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -77,6 +79,7 @@ export default function App() {
             <Route path="/calendar-categories" element={<ProtectedLayout><Categories scope="calendar" /></ProtectedLayout>} />
           </Routes>
         </BrowserRouter>
+        </PlanProvider>
       </AuthProvider>
     </LanguageProvider>
   );

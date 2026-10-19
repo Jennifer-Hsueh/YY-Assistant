@@ -8,6 +8,8 @@ import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
 import { useAnnStatus, dismissAnnBanner } from '../lib/annStatus';
 import { moodEmoji } from '../lib/moods';
+import { usePlan } from '../context/PlanContext';
+import { PlanBanner } from '../components/PlanNotice';
 import HomeNotesCard from '../components/HomeNotesCard';
 
 // 首頁卡片的淡色漸層底(依模組顏色)
@@ -32,6 +34,7 @@ export default function Home() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profile, setProfile] = useState(null);
   const { banner } = useAnnStatus();
+  const { can } = usePlan();
   const [overview, setOverview] = useState(null); // { events, totals, budgets }
   const [mood, setMood] = useState(null);
   const todayKey = ymd(new Date());
@@ -113,6 +116,9 @@ export default function Home() {
         </div>
       )}
 
+      {/* 方案提醒:試用快結束、快到期、寬限期、需要選擇基本功能 */}
+      <div className="mt-2"><PlanBanner /></div>
+
       {/* 角色放大,下緣約 2/5 壓在「今日行程」卡片上(負 margin = 40% 圖高 + 原本的間距) */}
       <div className="mb-3 flex items-end gap-[64px] md:mb-5 md:gap-[92px]">
         <div className="min-w-0 pb-1">
@@ -126,7 +132,7 @@ export default function Home() {
         {profile?.home_image && (
           <div className="pointer-events-none relative z-20 -mb-[63px] shrink-0 md:-mb-[84px]">
             <img src={profile.home_image} alt="" className="h-32 w-auto md:h-40" style={{ maxWidth: 'none' }} />
-            {mood && (
+            {mood && can('mood') && (
               <span className="absolute -left-2 top-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-base shadow-sm">
                 {moodEmoji(mood)}
               </span>

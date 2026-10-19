@@ -1,6 +1,15 @@
 const supabase = require('../config/supabase');
+const { computeEntitlements, has } = require('../lib/entitlements');
+const { forgetUserStatus, planRequired } = require('../middleware/auth');
 
-const PROFILE_COLUMNS = 'id, email, username, role, plan, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country';
+const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country';
+
+// 回傳給前端:附上目前的方案權限;沒有「首頁圖片」功能時顯示預設圖片(原本的選擇保留)
+function withEnt(row) {
+  const ent = computeEntitlements(row);
+  const { basic_choice_changed_at, ...profile } = row;
+  return { ...profile, home_image: has(ent, 'home_image') ? row.home_image : null, ent };
+}
 // 國別(決定社群顯示哪一國的安心專線);只開放已查證有專線的國家
 const COUNTRIES = ['TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'];
 
@@ -12,7 +21,7 @@ async function getProfile(req, res) {
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
-    return res.json({ profile: data });
+    return res.json({ profile: withEnt(data) });
   } catch (err) {
     console.error('[profileController.getProfile]', err);
     return res.status(500).json({ error: 'Failed to fetch profile' });
@@ -29,6 +38,7 @@ async function updateProfile(req, res) {
     const updates = {};
     if (username !== undefined) updates.username = username;
     if (home_image !== undefined) {
+      if (req.ent && !has(req.ent, 'home_image')) return planRequired(res, 'home_image');
       const valid = home_image === null || (typeof home_image === 'string' && /^\/home-images\/yy-([1-9]|1[0-2])\.png$/.test(home_image));
       if (!valid) return res.status(400).json({ error: 'Invalid image' });
       updates.home_image = home_image;
@@ -54,11 +64,37 @@ async function updateProfile(req, res) {
       .select(PROFILE_COLUMNS)
       .single();
     if (error) throw error;
-    return res.json({ profile: data });
+    return res.json({ profile: withEnt(data) });
   } catch (err) {
     console.error('[profileController.updateProfile]', err);
     return res.status(500).json({ error: 'Failed to update profile' });
   }
 }
 
-module.exports = { getProfile, updateProfile };
+// 基本功能:記帳或行事曆二擇一,每個月可換一次
+async function setBasicChoice(req, res) {
+  try {
+    const { choice } = req.body || {};
+    if (!['ledger', 'calendar'].includes(choice)) return res.status(400).json({ error: 'Invalid choice' });
+    const { data: row, error: rErr } = await supabase.from('yy_users').select(PROFILE_COLUMNS).eq('id', req.user.id).single();
+    if (rErr) throw rErr;
+    if (row.basic_choice === choice) return res.json({ profile: withEnt(row) });
+    if (!computeEntitlements(row).can_change_choice) {
+      return res.status(400).json({ error: '這個月已經換過了，下個月才能再換', code: 'CHOICE_LOCKED' });
+    }
+    const { data, error } = await supabase
+      .from('yy_users')
+      .update({ basic_choice: choice, basic_choice_changed_at: new Date().toISOString() })
+      .eq('id', req.user.id)
+      .select(PROFILE_COLUMNS)
+      .single();
+    if (error) throw error;
+    forgetUserStatus(req.user.id);
+    return res.json({ profile: withEnt(data) });
+  } catch (err) {
+    console.error('[profileController.setBasicChoice]', err);
+    return res.status(500).json({ error: 'Failed to update choice' });
+  }
+}
+
+module.exports = { getProfile, updateProfile, setBasicChoice };

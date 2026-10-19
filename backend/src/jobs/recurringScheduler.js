@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const supabase = require('../config/supabase');
 const { sendPushToUser } = require('../services/fcmService');
+const { computeEntitlements, has } = require('../lib/entitlements');
 
 const TZ = 'Asia/Taipei';
 const MAX_CATCH_UP = 60; // safety cap on periods processed per item per run
@@ -79,18 +80,35 @@ async function runDailyRecurringScan() {
       return { error: true };
     }
 
+    // 方案沒有循環功能的使用者:到期的期數只往後推,不記帳也不通知(升級後不會一次補記一大堆)
+    const userIds = [...new Set(dueItems.map((i) => i.user_id))];
+    const ents = {};
+    if (userIds.length) {
+      const { data: users, error: uErr } = await supabase.from('yy_users').select('*').in('id', userIds);
+      if (uErr) console.error('[recurringScheduler] failed to load users', uErr);
+      for (const u of users || []) ents[u.id] = computeEntitlements(u, today);
+    }
+    const allowed = (item) => {
+      const ent = ents[item.user_id];
+      if (!ent) return true;
+      return has(ent, item.kind === 'event' ? 'calendar_recurring' : 'ledger_recurring');
+    };
+
     let periods = 0;
     let recorded = 0;
+    let paused = 0;
     for (const item of dueItems) {
       try {
         const isLedger = item.kind === 'expense' || item.kind === 'income';
+        const active = allowed(item);
+        if (!active) paused += 1;
         let date = item.next_trigger_date;
         let count = 0;
 
         // Catch up every missed period up to today (and not past the end date).
         while (date <= today && count < MAX_CATCH_UP) {
           if (item.end_date && date > item.end_date) break;
-          if (isLedger && (await recordTransaction(item, date))) recorded += 1;
+          if (active && isLedger && (await recordTransaction(item, date))) recorded += 1;
           count += 1;
           date = addPeriod(item, date);
           // Advance after each period so a crash mid-way never records a period twice.
@@ -102,7 +120,7 @@ async function runDailyRecurringScan() {
         }
         periods += count;
 
-        if (count > 0 && (item.reminder_method === 'push' || item.reminder_method === 'both')) {
+        if (active && count > 0 && (item.reminder_method === 'push' || item.reminder_method === 'both')) {
           let body;
           if (isLedger && item.amount) body = count > 1 ? `${item.title} 已自動記帳 ${count} 期` : `${item.title} 已自動記帳`;
           else if (isLedger) body = `${item.title} 到期提醒`;
@@ -119,8 +137,8 @@ async function runDailyRecurringScan() {
       }
     }
 
-    console.log(`[recurringScheduler] ${today}: ${dueItems.length} item(s), ${periods} period(s), ${recorded} transaction(s) recorded`);
-    return { date: today, items: dueItems.length, periods, recorded };
+    console.log(`[recurringScheduler] ${today}: ${dueItems.length} item(s), ${periods} period(s), ${recorded} transaction(s) recorded, ${paused} paused by plan`);
+    return { date: today, items: dueItems.length, periods, recorded, paused };
   } finally {
     running = false;
   }

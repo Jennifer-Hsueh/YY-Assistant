@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import RecurrenceFields from '../components/RecurrenceFields';
 import { emptyRecurrence, recurrenceFromItem, recurrencePayload, reactivationPayload, describeRecurrence } from '../lib/recurrence';
 import { api } from '../lib/api';
@@ -30,6 +32,8 @@ const SEG_BAR = 'flex rounded-lg border border-border bg-card p-1 text-sm shadow
 
 export default function RecurringEvents() {
   const { t } = useLanguage();
+  const { can } = usePlan();
+  const canRec = can('calendar_recurring');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -134,7 +138,7 @@ export default function RecurringEvents() {
   const pickingMode = actionMode === 'edit' && !activeId;
 
   const rank = (item) => (isExpired(item, today) ? 2 : item.is_active ? 0 : 1);
-  const onlyActive = mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
+  const onlyActive = canRec && mobileView === 'mode' && (actionMode === 'add' || actionMode === 'edit');
   const visibleItems = items
     .filter((item) => {
       const on = item.is_active && !isExpired(item, today);
@@ -156,6 +160,8 @@ export default function RecurringEvents() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('sub_recurring_events')}</h1>
       <CalendarSubNav />
+      {/* 方案沒有循環功能:只能查看 */}
+      <ReadOnlyNotice feature="calendar_recurring" />
 
       {/* 手機版:篩選與新增/編輯/刪除放在同一個區塊,一次只選一個 */}
       <div className="mb-3 rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
@@ -169,8 +175,8 @@ export default function RecurringEvents() {
             >{t(k)}</button>
           ))}
         </div>
-        <div className="my-1 border-t border-border" />
-        <div className="flex">
+        {canRec && <div className="my-1 border-t border-border" />}
+        <div className={canRec ? 'flex' : 'hidden'}>
           {[['add', 'mode_add'], ['edit', 'mode_edit']].map(([m, k]) => (
             <button
               key={m}
@@ -211,7 +217,7 @@ export default function RecurringEvents() {
                     <p className="font-medium">{item.title}</p>
                     <p className="truncate text-xs text-muted-foreground">{details}</p>
                   </div>
-                  {!selectable && reactivateId !== item.id && (
+                  {!selectable && reactivateId !== item.id && canRec && (
                     <Button size="sm" className="shrink-0" variant={item.is_active && !expired ? 'default' : 'secondary'} onClick={() => toggleActive(item)}>
                       {expired ? t('rec_ended') : item.is_active ? t('rec_active') : t('rec_inactive')}
                     </Button>
@@ -235,7 +241,7 @@ export default function RecurringEvents() {
       )}
       </div>
 
-      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`}>
+      <div className={`order-1 mb-4 md:order-none md:mb-0 md:block md:sticky md:top-6 ${mobileView === 'filter' ? 'hidden' : ''}`} style={canRec ? undefined : { display: 'none' }}>
       <div className={`mb-3 hidden md:flex ${SEG_BAR}`}>{modeButtons}</div>
 
       {pickingMode && (

@@ -6,11 +6,14 @@ import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { downloadBackup, downloadLedgerExcel } from '../lib/dataTransfer';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from './PlanNotice';
 
 const emptyFilters = { from: '', to: '', type: 'all', account: '', category: '' };
 
 // 設定 → 資料匯出 / 備份
 export default function DataTransferCard({ t }) {
+  const { can } = usePlan();
   const [busy, setBusy] = useState(null); // 'excel' | 'backup' | 'restore'
   const [message, setMessage] = useState(null); // { ok, text }
   const [restoreFile, setRestoreFile] = useState(null);
@@ -66,6 +69,18 @@ export default function DataTransferCard({ t }) {
   });
 
   const label = 'mb-1 block text-xs text-muted-foreground';
+
+  // 資料匯出與備份屬於進階功能
+  if (!can('export')) {
+    return (
+      <Card className="mb-3">
+        <CardContent className="space-y-3 p-4">
+          <p className="text-sm font-medium">{t('data_title')}</p>
+          <ReadOnlyNotice feature="export" locked className="" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="mb-3">

@@ -272,3 +272,57 @@ alter table yy_users add column if not exists plan_expires_at date;
 alter table yy_users add column if not exists is_disabled boolean not null default false;
 alter table yy_users add column if not exists disabled_reason text;
 alter table yy_users add column if not exists disabled_at timestamptz;
+
+-- 2026-10-17 方案與付費:試用三個月 → 基本功能(記帳/行事曆二擇一)或付費方案
+-- 方案:basic(基本)、adv_a(記帳+行事曆)、adv_b(記帳進階)、adv_c(行事曆進階)、full(完整版)
+-- 先拿掉舊的方案檢查(名稱不確定,找出所有跟 plan 有關的檢查一併移除)
+do $$
+declare r record;
+begin
+  for r in select conname from pg_constraint
+           where conrelid = 'yy_users'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%plan%'
+  loop
+    execute format('alter table yy_users drop constraint %I', r.conname);
+  end loop;
+end $$;
+update yy_users set plan = case when plan = 'full' then 'full' else 'basic' end
+  where plan is null or plan not in ('basic', 'adv_a', 'adv_b', 'adv_c', 'full');
+alter table yy_users alter column plan set default 'basic';
+alter table yy_users add constraint yy_users_plan_check check (plan in ('basic', 'adv_a', 'adv_b', 'adv_c', 'full'));
+alter table yy_users add column if not exists addon_community boolean not null default false;
+alter table yy_users add column if not exists basic_choice text check (basic_choice in ('ledger', 'calendar'));
+alter table yy_users add column if not exists basic_choice_changed_at timestamptz;
+alter table yy_users add column if not exists trial_ends_at date; -- 空白 = 註冊日 + 3 個月
+
+-- 繳費紀錄(管理後台登記)
+create table if not exists yy_payments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  paid_at date not null,
+  plan text not null,
+  addon_community boolean not null default false,
+  months int not null,
+  amount numeric not null default 0,
+  period_start date,
+  period_end date,
+  note text,
+  created_by uuid references yy_users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists yy_payments_user_idx on yy_payments (user_id, paid_at desc);
+alter table yy_payments enable row level security;
+
+-- 方案到期通知的寄送紀錄(避免重複寄)
+create table if not exists yy_plan_notices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  kind text not null,
+  ref_date date not null,
+  threshold int not null,
+  sent_at timestamptz not null default now(),
+  unique (user_id, kind, ref_date, threshold)
+);
+alter table yy_plan_notices enable row level security;
+
+-- 公告發放對象:null = 公開,否則只給那位使用者
+alter table yy_announcements add column if not exists target_user_id uuid references yy_users(id) on delete cascade;

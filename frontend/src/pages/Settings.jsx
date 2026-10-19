@@ -14,6 +14,8 @@ import MoodCard from '../components/MoodCard';
 import { useIsDesktop } from '../lib/useIsDesktop';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { COUNTRY_CODES, countryName } from '../lib/helplines';
+import { usePlan } from '../context/PlanContext';
+import { PlanCard, ReadOnlyNotice } from '../components/PlanNotice';
 
 
 const HOME_IMAGES = [
@@ -38,6 +40,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const isDesktop = useIsDesktop();
+  const { can } = usePlan();
   const [pushStatus, setPushStatus] = useState('idle');
   // 通知偏好存在伺服器(換手機或重新安裝也會保留)
   const [ledgerPref, setLedgerPref] = useState(false);
@@ -193,7 +196,6 @@ export default function Settings() {
   }
 
   const roleLabel = { user: t('settings_role_user'), admin: t('settings_role_admin'), tester: t('settings_role_tester') };
-  const planLabel = { free: t('settings_plan_free'), ledger: t('settings_plan_ledger'), calendar: t('settings_plan_calendar'), full: t('settings_plan_full') };
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10">
@@ -281,23 +283,15 @@ export default function Settings() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('settings_plan')}</span>
-                <span>{planLabel[profile?.plan] || profile?.plan}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('settings_last_payment')}</span>
                 <span>{profile?.last_payment_date || '—'}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('settings_plan_expires')}</span>
-                <span>{profile?.plan_expires_at || '—'}</span>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <PlanCard />
 
       <Card className="mb-3">
         <CardContent className="p-4">
@@ -305,14 +299,15 @@ export default function Settings() {
             <ImageIcon className="h-4 w-4" />
             {t('settings_home_image')}
           </p>
-          <div className="grid grid-cols-4 gap-2">
+          <ReadOnlyNotice feature="home_image" locked />
+          <div className={`grid grid-cols-4 gap-2 ${can('home_image') ? '' : 'pointer-events-none opacity-50'}`}>
             {HOME_IMAGES.map((src) => {
               const selected = (profile?.home_image || null) === src;
               return (
                 <button
                   key={src || 'default'}
                   type="button"
-                  disabled={imageStatus === 'saving'}
+                  disabled={imageStatus === 'saving' || !can('home_image')}
                   onClick={() => setPreviewSrc(src)}
                   className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-1 transition-colors ${selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:bg-muted'}`}
                 >
@@ -325,7 +320,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {!isDesktop && <MoodCard t={t} />}
+      {!isDesktop && (can('mood') ? <MoodCard t={t} /> : <ReadOnlyNotice feature="mood" locked />)}
 
       {/* 點縮圖跳出完整圖案預覽,確認後才選用 */}
       {previewSrc !== undefined && (
@@ -354,13 +349,14 @@ export default function Settings() {
       <Card className="mb-3">
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-medium">{t('settings_notifications')}</p>
+          <ReadOnlyNotice feature="notifications" locked className="" />
 
           <div className="flex items-center justify-between rounded-md border border-border p-3">
             <div className="flex items-center gap-2">
               <Wallet className="h-4 w-4" style={{ color: 'var(--module-transactions)' }} />
               <span className="text-sm">{t('settings_push_ledger')}</span>
             </div>
-            <Button size="sm" variant={ledgerPref ? 'default' : 'outline'} onClick={toggleLedgerPref} disabled={pushStatus === 'enabling'}>
+            <Button size="sm" variant={ledgerPref ? 'default' : 'outline'} onClick={toggleLedgerPref} disabled={pushStatus === 'enabling' || !can('notifications')}>
               {ledgerPref ? t('rec_active') : t('rec_inactive')}
             </Button>
           </div>
@@ -370,7 +366,7 @@ export default function Settings() {
               <Calendar className="h-4 w-4" style={{ color: 'var(--module-calendar)' }} />
               <span className="text-sm">{t('settings_push_calendar')}</span>
             </div>
-            <Button size="sm" variant={calendarPref ? 'default' : 'outline'} onClick={toggleCalendarPref} disabled={pushStatus === 'enabling'}>
+            <Button size="sm" variant={calendarPref ? 'default' : 'outline'} onClick={toggleCalendarPref} disabled={pushStatus === 'enabling' || !can('notifications')}>
               {calendarPref ? t('rec_active') : t('rec_inactive')}
             </Button>
           </div>
@@ -450,7 +446,7 @@ export default function Settings() {
       {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
       {isDesktop && (
         <div className="mt-3">
-          <MoodCard t={t} />
+          {can('mood') ? <MoodCard t={t} /> : <ReadOnlyNotice feature="mood" locked />}
         </div>
       )}
 

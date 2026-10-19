@@ -50,6 +50,9 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   if (!res.ok) {
     const err = new Error(data.error || `Request failed (${res.status})`);
     err.status = res.status; // 429 = 嘗試次數過多
+    err.code = data.code;
+    // 方案不允許(例如到期後):重新讀取方案,畫面上的按鈕會跟著更新
+    if (data.code === 'PLAN_REQUIRED') window.dispatchEvent(new Event('yy:plan-changed'));
     throw err;
   }
   return data;
@@ -102,6 +105,7 @@ markAnnouncementsSeen: () => request('/announcements/seen', { method: 'POST' }),
 dismissAnnouncementBanner: () => request('/announcements/banner-dismiss', { method: 'POST' }),
 getProfile: () => request('/profile'),
 updateProfile: (payload) => request('/profile', { method: 'PUT', body: payload }),
+setBasicChoice: (choice) => request('/profile/basic-choice', { method: 'PUT', body: { choice } }),
 submitBugReport: (payload) => request('/bug-reports', { method: 'POST', body: payload }),
 getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
 

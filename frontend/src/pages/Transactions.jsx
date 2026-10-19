@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
+import { ReadOnlyNotice } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -52,6 +54,8 @@ export default function Transactions() {
   // 桌機版左側顯示內容:記帳明細 / 查詢 / 管理分類
   const [panel, setPanel] = useState('list');
   const isDesktop = useIsDesktop();
+  const { can } = usePlan();
+  const canLedger = can('ledger');
   // 日曆檢視:點選的日期(下方列出當天紀錄,可直接點選編輯/刪除)
   const [selectedDay, setSelectedDay] = useState(null);
 
@@ -325,15 +329,21 @@ export default function Transactions() {
       <div className="md:sticky md:top-6 md:order-2">
 
       {/* 新增/編輯/轉帳 + 查詢/管理分類 同一個功能列,一次只能選一個(再點一次取消) */}
+      {/* 方案沒有記帳功能時:只能查看與查詢 */}
+      <ReadOnlyNotice feature="ledger" />
       <div className="mb-3 grid grid-cols-6 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-        <button onClick={() => selectMobile('add')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'add' && panel === 'list')}`}>{t('mode_add')}</button>
-        <button onClick={() => selectMobile('edit')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'edit' && panel === 'list')}`}>{t('mode_edit')}</button>
-        <button onClick={() => selectMobile('transfer')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && panel === 'list')}`}>{t('mode_transfer')}</button>
+        {canLedger && (
+          <>
+            <button onClick={() => selectMobile('add')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'add' && panel === 'list')}`}>{t('mode_add')}</button>
+            <button onClick={() => selectMobile('edit')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'edit' && panel === 'list')}`}>{t('mode_edit')}</button>
+            <button onClick={() => selectMobile('transfer')} className={`col-span-2 px-2 py-1.5 ${segBtn(actionMode === 'transfer' && panel === 'list')}`}>{t('mode_transfer')}</button>
+          </>
+        )}
         {[
           { key: 'search', label: t('search_title') },
-          { key: 'categories', label: t('tx_manage_categories') },
+          ...(canLedger ? [{ key: 'categories', label: t('tx_manage_categories') }] : []),
         ].map(({ key, label }) => (
-          <button key={key} type="button" onClick={() => selectMobile(key)} className={`col-span-3 px-2 py-1.5 ${segBtn(panel === key)}`}>
+          <button key={key} type="button" onClick={() => selectMobile(key)} className={`${canLedger ? 'col-span-3' : 'col-span-6'} px-2 py-1.5 ${segBtn(panel === key)}`}>
             {label}
           </button>
         ))}
@@ -342,12 +352,12 @@ export default function Transactions() {
       {/* 網頁版:查詢條件放在右側功能列下方,左側顯示查詢結果 */}
       {panel === 'search' && isDesktop && <div className="mb-3">{searchBlock}</div>}
 
-      {pickingMode && (
+      {pickingMode && canLedger && (
         <p className="mb-3 px-1 text-sm text-muted-foreground">{t('tx_pick_edit')}</p>
       )}
 
       {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
-      <Card className={`mb-3 ${pickingMode || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>
+      <Card className={`mb-3 ${!canLedger || pickingMode || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">

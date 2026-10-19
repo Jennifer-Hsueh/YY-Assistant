@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePlan } from '../context/PlanContext';
 import { Plus, X, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,6 +18,9 @@ export default function FloatingAddButton() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('tx');
+  // 依方案只顯示能用的分頁(待辦記事一律可用)
+  const { can } = usePlan();
+  const tabs = [can('ledger') && 'tx', can('calendar') && 'ev', 'note'].filter(Boolean);
   const [tx, setTx] = useState(emptyTx);
   const [ev, setEv] = useState(emptyEv);
   const [noteText, setNoteText] = useState('');
@@ -114,7 +118,7 @@ export default function FloatingAddButton() {
       <button
         type="button"
         aria-label={t('qa_open')}
-        onClick={() => setOpen(true)}
+        onClick={() => { if (!tabs.includes(tab)) setTab(tabs[0]); setOpen(true); }}
         className="fixed right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] z-40 flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform active:scale-95 md:right-8 md:bottom-8 md:h-14 md:w-14"
       >
         <Plus className="h-6 w-6" />
@@ -134,8 +138,8 @@ export default function FloatingAddButton() {
           >
             <div className="mb-3 flex items-center gap-2">
               <div className="flex flex-1 rounded-lg border border-border bg-card p-1 shadow-sm">
-                <button type="button" onClick={() => setTab('tx')} className={seg(tab === 'tx')}>{t('qa_tab_tx')}</button>
-                <button type="button" onClick={() => setTab('ev')} className={seg(tab === 'ev')}>{t('qa_tab_ev')}</button>
+                {tabs.includes('tx') && <button type="button" onClick={() => setTab('tx')} className={seg(tab === 'tx')}>{t('qa_tab_tx')}</button>}
+                {tabs.includes('ev') && <button type="button" onClick={() => setTab('ev')} className={seg(tab === 'ev')}>{t('qa_tab_ev')}</button>}
                 <button type="button" onClick={() => setTab('note')} className={seg(tab === 'note')}>{t('qa_tab_note')}</button>
               </div>
               <button type="button" aria-label="close" onClick={close} className="rounded-md p-2 text-muted-foreground hover:bg-muted"><X className="h-5 w-5" /></button>

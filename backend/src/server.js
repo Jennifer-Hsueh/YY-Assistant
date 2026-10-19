@@ -23,6 +23,7 @@ const dataRoutes = require('./routes/dataRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const { runBackup, notify } = require('./services/backupService');
+const { runPlanNotices } = require('./services/planNoticeService');
 // Render 前面有一層代理,讓 req.ip 取得使用者真正的 IP(次數限制會用到)
 app.set('trust proxy', 1);
 app.use(cors());
@@ -40,7 +41,15 @@ app.get('/cron/recurring', async (req, res) => {
   }
   try {
     const result = await runDailyRecurringScan();
-    return res.json({ status: 'ok', ...result });
+    // 方案到期通知也在這裡每天跑一次(失敗不影響循環記帳的結果)
+    let notices;
+    try {
+      notices = await runPlanNotices();
+    } catch (err) {
+      console.error('[cron/planNotices]', err);
+      notices = { error: true };
+    }
+    return res.json({ status: 'ok', ...result, notices });
   } catch (err) {
     console.error('[cron/recurring]', err);
     return res.status(500).json({ error: 'Scan failed' });
