@@ -242,7 +242,13 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
                 {Object.entries(PLAN_LABEL).map(([k, v]) => <option key={k} value={k}>{v}・{PLAN_DESC[k]}</option>)}
               </select>
             </Field>
-            <Field label="基本功能選擇">
+            <Field label="最近付款日">
+              <input type="date" className={inputCls} value={form.last_payment_date} onChange={set('last_payment_date')} />
+            </Field>
+            <Field label="權限截止日">
+              <input type="date" className={inputCls} value={form.plan_expires_at} onChange={set('plan_expires_at')} />
+            </Field>
+            <Field label="到期後方案">
               <select className={inputCls} value={form.basic_choice} onChange={set('basic_choice')}>
                 <option value="">未選擇</option>
                 {Object.entries(CHOICE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -250,12 +256,6 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
             </Field>
             <Field label="試用結束日">
               <input type="date" className={inputCls} value={form.trial_ends_at} onChange={set('trial_ends_at')} />
-            </Field>
-            <Field label="最近付款日">
-              <input type="date" className={inputCls} value={form.last_payment_date} onChange={set('last_payment_date')} />
-            </Field>
-            <Field label="權限截止日">
-              <input type="date" className={inputCls} value={form.plan_expires_at} onChange={set('plan_expires_at')} />
             </Field>
           </div>
           <label className={`flex items-center gap-2 text-sm ${ADDON_PLANS.includes(form.plan) ? '' : 'text-muted-foreground'}`}>
