@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { planText } from '../lib/planText';
 import { FEATURE_KEYS } from '../lib/plans';
 import { Card, CardContent } from './ui/card';
+import { hidePricing } from '../lib/platform';
 
 const fmt = (ymd) => (ymd ? `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}` : '');
 
@@ -178,7 +179,7 @@ export function PlanCard() {
           </div>
         )}
 
-        {ent.status !== 'staff' && (
+        {ent.status !== 'staff' && !hidePricing && (
           <div className="space-y-1.5 rounded-md bg-muted/50 p-3">
             <p className="text-xs font-medium">{T.prices}</p>
             {T.priceRows.map(([label, m]) => (

@@ -32,7 +32,9 @@ create table if not exists yy_users (
   addon_community boolean not null default false,
   basic_choice text check (basic_choice in ('ledger', 'calendar')),
   basic_choice_changed_at timestamptz,
-  trial_ends_at date -- 空白 = 註冊日 + 3 個月
+  trial_ends_at date, -- 空白 = 註冊日 + 3 個月
+  terms_version text, -- 同意的使用條款版本(日期)
+  terms_accepted_at timestamptz
 );
 
 create table if not exists yy_password_reset_tokens (
@@ -43,6 +45,9 @@ create table if not exists yy_password_reset_tokens (
   used_at timestamptz,
   created_at timestamptz not null default now()
 );
+alter table yy_users add column if not exists terms_version text;
+alter table yy_users add column if not exists terms_accepted_at timestamptz;
+
 create index if not exists idx_password_reset_token_hash on yy_password_reset_tokens (token_hash);
 create index if not exists idx_password_reset_user on yy_password_reset_tokens (user_id);
 

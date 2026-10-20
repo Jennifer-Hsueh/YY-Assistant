@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { PlanProvider } from './context/PlanContext';
@@ -7,6 +8,9 @@ import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
+import TermsConsentModal from './components/TermsConsentModal';
+import Legal from './pages/Legal';
+import { initNativeApp } from './lib/nativeApp';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -44,8 +48,16 @@ function ProtectedLayout({ children }) {
       <BottomNav />
       <FloatingAddButton />
       <PlanLockModal />
+      <TermsConsentModal />
     </div>
   );
+}
+
+// APP 版:狀態列、返回鍵、點推播開啟頁面(網頁版不做任何事)
+function NativeBridge() {
+  const navigate = useNavigate();
+  useEffect(() => { initNativeApp(navigate); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
 }
 
 export default function App() {
@@ -54,7 +66,10 @@ export default function App() {
       <AuthProvider>
         <PlanProvider>
         <BrowserRouter>
+          <NativeBridge />
           <Routes>
+            <Route path="/terms" element={<Legal doc="terms" />} />
+            <Route path="/privacy" element={<Legal doc="privacy" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, isSupported } from 'firebase/messaging';
+import { isNative } from './platform';
+import { requestNativePushToken, nativePushGranted } from './nativePush';
 
 // These Firebase web config values are NOT secret — they're meant to be
 // public (they identify the project to Google's servers; access control
@@ -32,6 +34,7 @@ async function getMessagingIfSupported() {
 // Requests notification permission (if not already granted/denied) and
 // returns an FCM device token, or null if unsupported/denied/unconfigured.
 export async function requestPushToken() {
+  if (isNative) return requestNativePushToken();
   if (!firebaseConfig.apiKey) {
     console.warn('[firebase] VITE_FIREBASE_* env vars not set — push notifications disabled.');
     return null;
@@ -55,4 +58,10 @@ export async function requestPushToken() {
     console.error('[firebase] Failed to get push token', err);
     return null;
   }
+}
+
+// 這台裝置是否已允許通知(網頁看瀏覽器權限,APP 看系統權限)
+export async function pushPermissionGranted() {
+  if (isNative) return nativePushGranted();
+  return typeof Notification !== 'undefined' && Notification.permission === 'granted';
 }

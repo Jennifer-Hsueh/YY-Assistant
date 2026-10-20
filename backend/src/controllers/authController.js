@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const supabase = require('../config/supabase');
+const { TERMS_VERSION } = require('../lib/terms');
 const { sendPasswordResetEmail, sendEmail } = require('../services/emailService');
 const { forgetUserStatus } = require('../middleware/auth');
 const { removeUserFolder } = require('../services/communityImages');
@@ -19,9 +20,12 @@ function signToken(user) {
 
 async function register(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, password, accept_terms } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'email and password are required' });
+    }
+    if (accept_terms !== true) {
+      return res.status(400).json({ error: '請先閱讀並同意使用條款與隱私權政策' });
     }
     if (password.length < 8) {
       return res.status(400).json({ error: 'password must be at least 8 characters' });
@@ -41,7 +45,7 @@ async function register(req, res) {
 
     const { data: user, error } = await supabase
       .from('yy_users')
-      .insert({ email, password_hash })
+      .insert({ email, password_hash, terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() })
       .select('id, email, created_at')
       .single();
 

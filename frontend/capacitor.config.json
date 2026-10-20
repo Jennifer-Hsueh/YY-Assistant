@@ -1,0 +1,32 @@
+{
+  "appId": "com.yyassistant.app",
+  "appName": "YY手帳",
+  "webDir": "dist",
+  "backgroundColor": "#f5efe3",
+  "plugins": {
+    "FirebaseMessaging": {
+      "presentationOptions": [
+        "alert",
+        "badge",
+        "sound"
+      ]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "backgroundColor": "#f5efe3",
+      "showSpinner": false
+    }
+  },
+  "experimental": {
+    "ios": {
+      "spm": {
+        "packageOptions": {
+          "@capacitor-firebase/messaging": {
+            "symlink": true
+          }
+        }
+      }
+    }
+  }
+}

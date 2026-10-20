@@ -221,3 +221,8 @@ input[type="time"] {
     font-weight: 600;
   }
 }
+
+/* APP 版:狀態列高度(iOS 用 env;Android 由 Capacitor 提供 --safe-area-inset-top) */
+.native-app {
+  --sat: max(env(safe-area-inset-top), var(--safe-area-inset-top, 0px));
+}

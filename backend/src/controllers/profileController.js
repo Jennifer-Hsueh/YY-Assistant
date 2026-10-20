@@ -1,14 +1,16 @@
 const supabase = require('../config/supabase');
 const { computeEntitlements, has } = require('../lib/entitlements');
 const { forgetUserStatus, planRequired } = require('../middleware/auth');
+const { TERMS_VERSION } = require('../lib/terms');
 
-const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country';
+const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country, terms_version';
 
 // 回傳給前端:附上目前的方案權限;沒有「首頁圖片」功能時顯示預設圖片(原本的選擇保留)
 function withEnt(row) {
   const ent = computeEntitlements(row);
   const { basic_choice_changed_at, ...profile } = row;
-  return { ...profile, home_image: has(ent, 'home_image') ? row.home_image : null, ent };
+  // terms_ok:已同意目前版本的使用條款(沒同意前 App 會跳出同意視窗)
+  return { ...profile, home_image: has(ent, 'home_image') ? row.home_image : null, ent, terms_ok: row.terms_version === TERMS_VERSION };
 }
 // 國別(決定社群顯示哪一國的安心專線);只開放已查證有專線的國家
 const COUNTRIES = ['TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'];
@@ -97,4 +99,21 @@ async function setBasicChoice(req, res) {
   }
 }
 
-module.exports = { getProfile, updateProfile, setBasicChoice };
+// 同意目前版本的使用條款與隱私權政策
+async function acceptTerms(req, res) {
+  try {
+    const { data, error } = await supabase
+      .from('yy_users')
+      .update({ terms_version: TERMS_VERSION, terms_accepted_at: new Date().toISOString() })
+      .eq('id', req.user.id)
+      .select(PROFILE_COLUMNS)
+      .single();
+    if (error) throw error;
+    return res.json({ profile: withEnt(data) });
+  } catch (err) {
+    console.error('[profileController.acceptTerms]', err);
+    return res.status(500).json({ error: 'Failed to accept terms' });
+  }
+}
+
+module.exports = { getProfile, updateProfile, setBasicChoice, acceptTerms };

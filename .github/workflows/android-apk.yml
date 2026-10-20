@@ -1,0 +1,65 @@
+# Android 測試版 APK:改到 frontend 時自動建置,也可以在 GitHub 的 Actions 頁面按 Run workflow 手動執行
+# 完成後在該次執行頁面最下方 Artifacts 下載 yy-android-apk(zip 裡是 APK)
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/android-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      # 推播:在 GitHub repo 的 Settings → Secrets and variables → Actions 新增 GOOGLE_SERVICES_JSON
+      # (內容貼上 Firebase 下載的 google-services.json 全文)。沒有設定時照樣建置,只是沒有推播。
+      - name: Firebase 設定檔
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "VITE_NATIVE_PUSH=1" >> "$GITHUB_ENV"
+            echo "已加入 google-services.json(推播開啟)"
+          else
+            echo "沒有 GOOGLE_SERVICES_JSON,這次建置沒有推播"
+          fi
+
+      - run: npm run build:native
+
+      - name: 建置 APK
+        working-directory: frontend/android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.0.${{ github.run_number }}
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: 重新命名
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/YY手帳-1.0.${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yy-android-apk
+          path: frontend/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30

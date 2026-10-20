@@ -5,6 +5,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { ConsentCheck } from '../components/TermsConsentModal';
+import { LegalOverlay } from './Legal';
 
 export default function Register() {
   const { register } = useAuth();
@@ -13,9 +15,12 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [doc, setDoc] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!agreed) return;
     setError('');
     setLoading(true);
     try {
@@ -45,7 +50,8 @@ export default function Register() {
               <Label htmlFor="password">密碼(至少 8 碼)</Label>
               <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" disabled={loading} className="w-full">
+            <ConsentCheck checked={agreed} onChange={setAgreed} onOpen={setDoc} />
+            <Button type="submit" disabled={loading || !agreed} className="w-full">
               {loading ? '建立中…' : '註冊'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
@@ -55,6 +61,7 @@ export default function Register() {
           </form>
         </CardContent>
       </Card>
+      <LegalOverlay doc={doc} onClose={() => setDoc(null)} />
     </div>
   );
 }

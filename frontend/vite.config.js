@@ -4,11 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
+    // APP 版(--mode native)不需要 PWA 的 service worker
+    mode !== 'native' && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
@@ -44,4 +45,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

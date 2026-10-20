@@ -8,7 +8,7 @@ export default function TopBar() {
   const { language, toggleLanguage, t } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden">
+    <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden" style={{ paddingTop: 'var(--sat, 0px)' }}>
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 pt-2 pb-4">
         <div className="flex items-end gap-4">
           <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.6, marginBottom: '-14px' }} />

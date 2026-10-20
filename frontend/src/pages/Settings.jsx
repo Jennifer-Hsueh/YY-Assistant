@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { requestPushToken } from '../lib/firebase';
+import { requestPushToken, pushPermissionGranted } from '../lib/firebase';
 import { api } from '../lib/api';
 import { applyTheme, getStoredTheme } from '../lib/theme';
 import { Button } from '../components/ui/button';
@@ -121,7 +122,7 @@ export default function Settings() {
         setProfile(profile);
         setUsernameDraft(profile.username || '');
         // 開關顯示「伺服器設定 且 這台裝置已註冊推播」;這台還沒授權通知時顯示關閉
-        const granted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+        const granted = await pushPermissionGranted().catch(() => false);
         setLedgerPref(granted && profile.notify_ledger !== false);
         setCalendarPref(granted && profile.notify_calendar !== false);
       } catch (err) {
@@ -443,6 +444,11 @@ export default function Settings() {
       </Card>
 
       <DeleteAccountCard t={t} />
+
+      <p className="mt-3 flex justify-center gap-4 text-xs text-muted-foreground">
+        <Link to="/terms" className="underline">使用條款</Link>
+        <Link to="/privacy" className="underline">隱私權政策</Link>
+      </p>
 
       {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
       {isDesktop && (

@@ -1,0 +1,46 @@
+# iOS 建置(Codemagic,不需要 Mac)。Apple 開發者帳號下來後才能使用,設定步驟見進度文件。
+# Codemagic 需要事先設定:
+#   1. Teams → Integrations → App Store Connect:新增 API 金鑰,名稱填 yy-asc
+#   2. 本 App → Environment variables:群組 firebase,變數 GOOGLE_SERVICE_INFO_PLIST
+#      (值 = GoogleService-Info.plist 用 base64 編碼後的文字,勾 Secure)
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: yy-asc
+    environment:
+      groups:
+        - firebase
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.yyassistant.app
+      node: 22
+      xcode: latest
+      vars:
+        VITE_NATIVE_PUSH: "1"
+    triggering:
+      events: []   # 只手動啟動(Start new build)
+    scripts:
+      - name: 安裝套件
+        script: cd frontend && npm ci
+      - name: Firebase 設定檔
+        script: |
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then echo "缺少 GOOGLE_SERVICE_INFO_PLIST"; exit 1; fi
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > frontend/ios/App/App/GoogleService-Info.plist
+      - name: 建置網頁並同步到 iOS
+        script: cd frontend && npm run build:native
+      - name: 版本號
+        script: |
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/" frontend/ios/App/App.xcodeproj/project.pbxproj
+      - name: 簽章
+        script: xcode-project use-profiles
+      - name: 建置 IPA
+        script: xcode-project build-ipa --project frontend/ios/App/App.xcodeproj --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
