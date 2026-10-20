@@ -30,13 +30,18 @@ function Block({ b }) {
 }
 
 // 只有內容(註冊頁、同意視窗裡用)
-export function LegalContent({ doc }) {
+export function LegalContent({ doc, onDone }) {
   const d = DOCS[doc];
   return (
     <article className="space-y-3 text-sm leading-relaxed">
       <h1 className="text-lg font-semibold">{d.title}</h1>
       <p className="text-xs text-muted-foreground">最後更新：{UPDATED.replace(/-/g, '/')}</p>
       {d.blocks.filter(show).map((b, i) => <Block key={i} b={b} />)}
+      {onDone && (
+        <div className="pt-4">
+          <button type="button" onClick={onDone} className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground">已閱讀完成</button>
+        </div>
+      )}
     </article>
   );
 }
@@ -50,7 +55,7 @@ export function LegalOverlay({ doc, onClose }) {
         <button type="button" onClick={onClose} className="text-sm text-muted-foreground">關閉</button>
       </div>
       <div className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-2xl"><LegalContent doc={doc} /></div>
+        <div className="mx-auto max-w-2xl"><LegalContent doc={doc} onDone={onClose} /></div>
       </div>
     </div>
   );
@@ -67,7 +72,7 @@ export default function Legal({ doc }) {
         <button type="button" onClick={back} className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />返回
         </button>
-        <div className="rounded-xl border border-border bg-card p-5"><LegalContent doc={doc} /></div>
+        <div className="rounded-xl border border-border bg-card p-5"><LegalContent doc={doc} onDone={back} /></div>
       </div>
     </div>
   );

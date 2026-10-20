@@ -215,6 +215,10 @@ export default function Settings() {
             <Mail className="h-4 w-4" />
             {user?.email}
           </p>
+          <p className="mt-2 flex gap-4 pl-6 text-xs text-muted-foreground">
+            <Link to="/terms" className="underline">使用條款</Link>
+            <Link to="/privacy" className="underline">隱私權政策</Link>
+          </p>
         </CardContent>
       </Card>
 
@@ -444,11 +448,6 @@ export default function Settings() {
       </Card>
 
       <DeleteAccountCard t={t} />
-
-      <p className="mt-3 flex justify-center gap-4 text-xs text-muted-foreground">
-        <Link to="/terms" className="underline">使用條款</Link>
-        <Link to="/privacy" className="underline">隱私權政策</Link>
-      </p>
 
       {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
       {isDesktop && (
