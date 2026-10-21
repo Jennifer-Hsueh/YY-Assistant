@@ -22,13 +22,13 @@ async function register(req, res) {
   try {
     const { email, password, accept_terms } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required' });
+      return res.status(400).json({ error: '請輸入 Email 和密碼' });
     }
     if (accept_terms !== true) {
       return res.status(400).json({ error: '請先閱讀並同意使用條款與隱私權政策' });
     }
     if (password.length < 8) {
-      return res.status(400).json({ error: 'password must be at least 8 characters' });
+      return res.status(400).json({ error: '密碼至少需要 8 碼' });
     }
 
     const { data: existing } = await supabase
@@ -38,7 +38,7 @@ async function register(req, res) {
       .maybeSingle();
 
     if (existing) {
-      return res.status(409).json({ error: 'An account with this email already exists' });
+      return res.status(409).json({ error: '這個 Email 已經註冊過了' });
     }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -55,7 +55,7 @@ async function register(req, res) {
     return res.status(201).json({ user, token });
   } catch (err) {
     console.error('[authController.register]', err);
-    return res.status(500).json({ error: 'Failed to register' });
+    return res.status(500).json({ error: '註冊失敗，請稍後再試' });
   }
 }
 
@@ -63,7 +63,7 @@ async function login(req, res) {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required' });
+      return res.status(400).json({ error: '請輸入 Email 和密碼' });
     }
 
     const { data: user, error } = await supabase
@@ -74,12 +74,12 @@ async function login(req, res) {
 
     if (error) throw error;
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Email 或密碼不正確' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Email 或密碼不正確' });
     }
 
     // 被管理員停用:密碼正確才告知,避免透露帳號狀態
@@ -99,7 +99,7 @@ async function login(req, res) {
     });
   } catch (err) {
     console.error('[authController.login]', err);
-    return res.status(500).json({ error: 'Failed to log in' });
+    return res.status(500).json({ error: '登入失敗，請稍後再試' });
   }
 }
 
@@ -111,7 +111,7 @@ async function requestPasswordReset(req, res) {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ error: 'email is required' });
+      return res.status(400).json({ error: '請輸入 Email' });
     }
 
     const { data: user, error } = await supabase
@@ -134,14 +134,19 @@ async function requestPasswordReset(req, res) {
       const appUrl = process.env.APP_URL || 'http://localhost:5173';
       const resetUrl = `${appUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
 
-      await sendPasswordResetEmail(user.email, resetUrl);
+      try {
+        await sendPasswordResetEmail(user.email, resetUrl);
+      } catch (mailErr) {
+        console.error('[authController.requestPasswordReset] email failed', mailErr);
+        return res.status(502).json({ error: '寄信失敗，請稍後再試', code: 'EMAIL_FAILED' });
+      }
     }
 
     // Same response whether or not the account exists.
     return res.json({ message: '如果這個 Email 有對應的帳號,重設密碼信已經寄出' });
   } catch (err) {
     console.error('[authController.requestPasswordReset]', err);
-    return res.status(500).json({ error: 'Failed to process password reset request' });
+    return res.status(500).json({ error: '處理失敗，請稍後再試' });
   }
 }
 
@@ -150,10 +155,10 @@ async function resetPassword(req, res) {
   try {
     const { email, token, newPassword } = req.body;
     if (!email || !token || !newPassword) {
-      return res.status(400).json({ error: 'email, token and newPassword are required' });
+      return res.status(400).json({ error: '重設連結不完整，請重新申請' });
     }
     if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'newPassword must be at least 8 characters' });
+      return res.status(400).json({ error: '新密碼至少需要 8 碼' });
     }
 
     const { data: user, error: userErr } = await supabase
@@ -163,7 +168,7 @@ async function resetPassword(req, res) {
       .maybeSingle();
     if (userErr) throw userErr;
     if (!user) {
-      return res.status(400).json({ error: 'Invalid or expired reset link' });
+      return res.status(400).json({ error: '重設連結無效或已過期，請重新申請' });
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -177,7 +182,7 @@ async function resetPassword(req, res) {
       .maybeSingle();
     if (tokenErr) throw tokenErr;
     if (!resetRow) {
-      return res.status(400).json({ error: 'Invalid or expired reset link' });
+      return res.status(400).json({ error: '重設連結無效或已過期，請重新申請' });
     }
 
     const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
@@ -196,7 +201,7 @@ async function resetPassword(req, res) {
     return res.json({ message: '密碼已重設,請用新密碼登入' });
   } catch (err) {
     console.error('[authController.resetPassword]', err);
-    return res.status(500).json({ error: 'Failed to reset password' });
+    return res.status(500).json({ error: '重設密碼失敗，請稍後再試' });
   }
 }
 
@@ -205,10 +210,10 @@ async function changePassword(req, res) {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+      return res.status(400).json({ error: '請輸入目前密碼和新密碼' });
     }
     if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'password must be at least 8 characters' });
+      return res.status(400).json({ error: '密碼至少需要 8 碼' });
     }
     const { data: user, error } = await supabase
       .from('yy_users')
@@ -217,7 +222,7 @@ async function changePassword(req, res) {
       .maybeSingle();
     if (error) throw error;
     if (!user || !(await bcrypt.compare(currentPassword, user.password_hash))) {
-      return res.status(400).json({ error: 'Current password is incorrect', code: 'wrong_password' });
+      return res.status(400).json({ error: '目前密碼不正確', code: 'wrong_password' });
     }
     const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     const { error: upErr } = await supabase.from('yy_users').update({ password_hash }).eq('id', req.user.id);
@@ -225,7 +230,7 @@ async function changePassword(req, res) {
     return res.json({ message: 'Password changed' });
   } catch (err) {
     console.error('[authController.changePassword]', err);
-    return res.status(500).json({ error: 'Failed to change password' });
+    return res.status(500).json({ error: '修改密碼失敗，請稍後再試' });
   }
 }
 
@@ -234,7 +239,7 @@ async function changePassword(req, res) {
 async function deleteAccount(req, res) {
   try {
     const { password } = req.body || {};
-    if (!password) return res.status(400).json({ error: 'password is required' });
+    if (!password) return res.status(400).json({ error: '請輸入密碼' });
     const { data: user, error } = await supabase
       .from('yy_users')
       .select('id, email, role, password_hash')
@@ -242,7 +247,7 @@ async function deleteAccount(req, res) {
       .maybeSingle();
     if (error) throw error;
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(400).json({ error: 'Current password is incorrect', code: 'wrong_password' });
+      return res.status(400).json({ error: '目前密碼不正確', code: 'wrong_password' });
     }
     if (user.role === 'admin') {
       return res.status(400).json({ error: '管理員帳號不能從 App 刪除,請先在後台改為一般使用者', code: 'admin_account' });
@@ -265,7 +270,7 @@ async function deleteAccount(req, res) {
     return res.json({ message: 'Account deleted' });
   } catch (err) {
     console.error('[authController.deleteAccount]', err);
-    return res.status(500).json({ error: 'Failed to delete account' });
+    return res.status(500).json({ error: '刪除帳號失敗，請稍後再試' });
   }
 }
 

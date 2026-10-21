@@ -158,6 +158,37 @@ function Payments({ user, onUserChange }) {
   );
 }
 
+// 客服:產生重設密碼連結(24 小時有效),複製後用 LINE 等方式交給使用者
+function ResetLink({ user }) {
+  const [link, setLink] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState('');
+  async function create() {
+    setBusy(true); setErr(''); setCopied(false);
+    try { setLink(await api.resetLink(user.id)); } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+  function copy() {
+    navigator.clipboard?.writeText(link.url);
+    setCopied(true);
+  }
+  return (
+    <div className="mt-8 border-t border-border pt-5">
+      <p className="mb-2 text-sm font-medium">重設密碼連結</p>
+      {link ? (
+        <div className="space-y-2">
+          <div className="break-all rounded-lg bg-muted p-2 font-mono text-xs">{link.url}</div>
+          <p className="text-xs text-muted-foreground">有效到 {fmtDateTime(link.expires_at)}，只能使用一次</p>
+          <Button variant="outline" className="w-full" onClick={copy}>{copied ? '已複製' : '複製連結'}</Button>
+        </div>
+      ) : (
+        <Button variant="outline" className="w-full" disabled={busy} onClick={create}>產生重設連結</Button>
+      )}
+      {err && <p className="mt-2 text-xs text-danger">{err}</p>}
+    </div>
+  );
+}
+
 function EditPanel({ user, selfId, onClose, onSaved }) {
   const [form, setForm] = useState({
     role: user.role || 'user',
@@ -269,6 +300,8 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
         </div>
 
         <Payments key={user.id} user={user} onUserChange={syncFrom} />
+
+        <ResetLink key={`r-${user.id}`} user={user} />
 
         <div className="mt-8 border-t border-border pt-5">
           <p className="mb-2 text-sm font-medium">帳號狀態</p>

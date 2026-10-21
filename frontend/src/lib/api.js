@@ -32,11 +32,19 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // 網路斷線或伺服器還在啟動(Render 免費方案閒置後要約 1 分鐘)
+    const err = new Error('無法連線到伺服器，請稍後再試');
+    err.code = 'NETWORK';
+    throw err;
+  }
 
   if (res.status === 204) return null;
 
@@ -48,7 +56,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     clearSession({ expired: data.code !== 'ACCOUNT_DISABLED' });
   }
   if (!res.ok) {
-    const err = new Error(data.error || `Request failed (${res.status})`);
+    const err = new Error(data.error || (res.status >= 500 ? '伺服器發生錯誤，請稍後再試' : `操作失敗（${res.status}）`));
     err.status = res.status; // 429 = 嘗試次數過多
     err.code = data.code;
     // 方案不允許(例如到期後):重新讀取方案,畫面上的按鈕會跟著更新

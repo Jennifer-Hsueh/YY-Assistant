@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Languages, ChevronDown, Bell } from 'lucide-react';
+import { LogOut, Languages, ChevronDown, Bell, HelpCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { navTabs, isTabActive } from './navTabs';
@@ -113,6 +113,20 @@ export default function Sidebar() {
               <Bell className="h-5 w-5" />
               <span className="flex-1">{t('nav_announcements')}</span>
               <UnreadBadge count={unread} />
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/help"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+              style={({ isActive }) => ({
+                color: isActive ? 'var(--ink)' : 'var(--muted-foreground)',
+                fontWeight: isActive ? 500 : 400,
+                backgroundColor: isActive ? 'var(--muted)' : undefined,
+              })}
+            >
+              <HelpCircle className="h-5 w-5" />
+              {t('nav_help')}
             </NavLink>
           </li>
         </ul>

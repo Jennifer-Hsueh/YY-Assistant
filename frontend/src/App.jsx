@@ -10,6 +10,8 @@ import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
 import TermsConsentModal from './components/TermsConsentModal';
 import Legal from './pages/Legal';
+import Help from './pages/Help';
+import ProfileErrorBanner from './components/ProfileErrorBanner';
 import { initNativeApp } from './lib/nativeApp';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -43,6 +45,7 @@ function ProtectedLayout({ children }) {
       {/* 手機版:多留出 iPhone 底部安全區域的高度,內容不會被底部導覽列蓋住 */}
       <div className="pb-[env(safe-area-inset-bottom)] md:pb-0 md:pl-56">
         <TopBar />
+        <ProfileErrorBanner />
         {children}
       </div>
       <BottomNav />
@@ -91,6 +94,7 @@ export default function App() {
             <Route path="/community/:board" element={<ProtectedLayout><Community /></ProtectedLayout>} />
             <Route path="/notes" element={<ProtectedLayout><Notes /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
+            <Route path="/help" element={<ProtectedLayout><Help /></ProtectedLayout>} />
 
             <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />
             <Route path="/calendar-categories" element={<ProtectedLayout><Categories scope="calendar" /></ProtectedLayout>} />

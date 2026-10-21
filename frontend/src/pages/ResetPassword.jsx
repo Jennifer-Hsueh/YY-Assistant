@@ -53,7 +53,7 @@ export default function ResetPassword() {
             {done && <p className="text-sm text-green-600">密碼已重設,正在前往登入頁…</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
-              <Label htmlFor="newPassword">新密碼(至少 8 碼)</Label>
+              <Label htmlFor="newPassword">新密碼 New password（至少 8 碼）</Label>
               <Input id="newPassword" type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <Button type="submit" disabled={loading || done} className="w-full">

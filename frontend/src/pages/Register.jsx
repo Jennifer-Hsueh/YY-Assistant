@@ -47,7 +47,7 @@ export default function Register() {
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">密碼(至少 8 碼)</Label>
+              <Label htmlFor="password">密碼 Password（至少 8 碼）</Label>
               <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <ConsentCheck checked={agreed} onChange={setAgreed} onOpen={setDoc} />

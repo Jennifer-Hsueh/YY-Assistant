@@ -14,7 +14,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     window.dispatchEvent(new Event('yy-admin:logout'));
   }
   if (!res.ok) {
-    const err = new Error(data.error || `Request failed (${res.status})`);
+    const err = new Error(data.error || `操作失敗（${res.status}）`);
     err.status = res.status;
     throw err;
   }
@@ -33,6 +33,7 @@ export const api = {
   overview: () => request('/admin/overview'),
   users: (params) => request(`/admin/users${qs(params)}`),
   updateUser: (id, body) => request(`/admin/users/${id}`, { method: 'PUT', body }),
+  resetLink: (id) => request(`/admin/users/${id}/reset-link`, { method: 'POST' }),
   payments: (id) => request(`/admin/users/${id}/payments`),
   addPayment: (id, body) => request(`/admin/users/${id}/payments`, { method: 'POST', body }),
   deletePayment: (id, pid) => request(`/admin/users/${id}/payments/${pid}`, { method: 'DELETE' }),

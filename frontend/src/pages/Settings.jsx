@@ -216,6 +216,7 @@ export default function Settings() {
             {user?.email}
           </p>
           <p className="mt-2 flex gap-4 pl-6 text-xs text-muted-foreground">
+            <Link to="/help" className="underline">{t('nav_help')}</Link>
             <Link to="/terms" className="underline">使用條款</Link>
             <Link to="/privacy" className="underline">隱私權政策</Link>
           </p>

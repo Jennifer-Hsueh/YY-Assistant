@@ -7,7 +7,29 @@
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
+// 測試階段暫時方案:透過 Google Apps Script 用 Gmail 寄信(Render 免費方案擋 SMTP,這個走 HTTPS)
+// Render 後端設定 EMAIL_RELAY_URL、EMAIL_RELAY_KEY 就會改走這裡;兩個都刪掉就回到 Resend。
+// Apps Script 程式在 backend/scripts/email-relay.gs
+async function sendViaRelay({ to, subject, html }) {
+  const res = await fetch(process.env.EMAIL_RELAY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: process.env.EMAIL_RELAY_KEY, to, subject, html, name: process.env.EMAIL_FROM_NAME || 'YY手帳' }),
+    redirect: 'follow',
+  });
+  const text = await res.text().catch(() => '');
+  let data = null;
+  try { data = JSON.parse(text); } catch { /* 不是 JSON */ }
+  if (!res.ok || !data?.ok) {
+    throw new Error(`Email relay error (${res.status}): ${data?.error || text.slice(0, 200)}`);
+  }
+  return { sent: true, via: 'relay' };
+}
+
 async function sendEmail({ to, subject, html }) {
+  if (process.env.EMAIL_RELAY_URL && process.env.EMAIL_RELAY_KEY) {
+    return sendViaRelay({ to, subject, html });
+  }
   if (!process.env.RESEND_API_KEY) {
     console.warn('[emailService] RESEND_API_KEY not set — logging email instead of sending.');
     console.log(`[emailService] would send to ${to}: ${subject}\n${html}`);

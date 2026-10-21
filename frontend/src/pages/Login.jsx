@@ -69,7 +69,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">密碼</Label>
+              <Label htmlFor="password">密碼 Password</Label>
               <Input
                 id="password"
                 type="password"

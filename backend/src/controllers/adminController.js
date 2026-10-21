@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const supabase = require('../config/supabase');
 const { forgetUserStatus } = require('../middleware/auth');
 const { BUCKET } = require('../services/backupService');
@@ -199,6 +200,27 @@ async function updateUser(req, res) {
     return res.json({ user: publicUser(data, taipeiToday()) });
   } catch (err) {
     return fail(res, 'updateUser', err, 'Failed to update user');
+  }
+}
+
+// ---------- 客服:產生重設密碼連結(不寄信,由管理員用 LINE 等方式交給使用者) ----------
+const ADMIN_RESET_HOURS = 24;
+async function createResetLink(req, res) {
+  try {
+    const { data: user, error } = await supabase.from('yy_users').select('id, email').eq('id', req.params.id).maybeSingle();
+    if (error) throw error;
+    if (!user) return res.status(404).json({ error: '找不到這位使用者' });
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + ADMIN_RESET_HOURS * 60 * 60 * 1000).toISOString();
+    const { error: insErr } = await supabase.from('yy_password_reset_tokens').insert({ user_id: user.id, token_hash: tokenHash, expires_at: expiresAt });
+    if (insErr) throw insErr;
+    const appUrl = process.env.APP_URL || 'http://localhost:5173';
+    const url = `${appUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+    console.log(`[adminController.createResetLink] admin ${req.user.id} created reset link for ${user.id}`);
+    return res.json({ url, expires_at: expiresAt });
+  } catch (err) {
+    return fail(res, 'createResetLink', err, '產生連結失敗');
   }
 }
 
@@ -563,7 +585,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  me, overview, listUsers, updateUser, listPayments, createPayment, deletePayment,
+  me, overview, listUsers, updateUser, createResetLink, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
@@ -84,6 +84,14 @@ export default function Home() {
       .finally(() => setProfileLoaded(true));
   }, []);
 
+  const HELP_KEY = 'yy_help_card_closed';
+  const [helpClosed, setHelpClosed] = useState(() => { try { return localStorage.getItem(HELP_KEY) === '1'; } catch { return false; } });
+  const showHelpCard = !helpClosed && profile?.created_at && Date.now() - new Date(profile.created_at).getTime() < 14 * 24 * 60 * 60 * 1000;
+  function closeHelpCard() {
+    setHelpClosed(true);
+    try { localStorage.setItem(HELP_KEY, '1'); } catch { /* ignore */ }
+  }
+
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
   return (
@@ -118,6 +126,17 @@ export default function Home() {
 
       {/* 方案提醒:試用快結束、快到期、寬限期、需要選擇基本功能 */}
       <div className="mt-2"><PlanBanner /></div>
+
+      {/* 新使用者(註冊 14 天內)才顯示,按 ✕ 後不再出現 */}
+      {showHelpCard && (
+        <div className="relative z-30 mt-2 flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm shadow-sm">
+          <HelpCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Link to="/help" className="min-w-0 flex-1 truncate underline-offset-2 hover:underline">{t('help_card')}</Link>
+          <button type="button" aria-label={t('ann_close')} onClick={closeHelpCard} className="shrink-0 text-muted-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* 角色放大,下緣約 2/5 壓在「今日行程」卡片上(負 margin = 40% 圖高 + 原本的間距) */}
       <div className="mb-3 flex items-end gap-[64px] md:mb-5 md:gap-[92px]">
