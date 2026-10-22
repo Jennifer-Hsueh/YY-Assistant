@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
@@ -59,6 +60,86 @@ function Phone({ src, alt, className = '' }) {
   );
 }
 
+// 功能介紹:左右滑動(手機用手指滑,電腦用上方分頁或左右箭頭)
+function FeatureSlider() {
+  const track = useRef(null);
+  const [active, setActive] = useState(0);
+
+  // 滑動時依位置更新目前是第幾張
+  function onScroll() {
+    const el = track.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== active) setActive(i);
+  }
+  function go(i) {
+    const el = track.current;
+    if (!el) return;
+    const n = Math.max(0, Math.min(FEATURES.length - 1, i));
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollTo({ left: n * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+    setActive(n);
+  }
+  function onKey(e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(active + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(active - 1); }
+  }
+
+  return (
+    <section className="border-t border-dashed py-12 md:py-16" style={{ borderColor: 'rgba(51,65,92,.18)' }} aria-label="功能介紹">
+      <div className="mx-auto max-w-5xl px-5 md:px-8">
+        <div className="flex items-center justify-between gap-3">
+          <div role="tablist" aria-label="功能" className="flex gap-1 overflow-x-auto">
+            {FEATURES.map((f, i) => (
+              <button
+                key={f.key}
+                type="button"
+                role="tab"
+                aria-selected={active === i}
+                onClick={() => go(i)}
+                className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[15px] transition-colors"
+                style={active === i ? { background: 'var(--ink)', color: '#fff' } : { color: 'var(--ink)' }}
+              >
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: active === i ? '#fff' : f.color }} />
+                {f.name}
+              </button>
+            ))}
+          </div>
+          <div className="hidden gap-2 md:flex">
+            <button type="button" aria-label="上一個" onClick={() => go(active - 1)} disabled={active === 0} className="landing-arrow"><ChevronLeft className="h-5 w-5" /></button>
+            <button type="button" aria-label="下一個" onClick={() => go(active + 1)} disabled={active === FEATURES.length - 1} className="landing-arrow"><ChevronRight className="h-5 w-5" /></button>
+          </div>
+        </div>
+      </div>
+
+      <div ref={track} onScroll={onScroll} onKeyDown={onKey} tabIndex={0} className="landing-track mt-8" aria-roledescription="carousel">
+        {FEATURES.map((f, i) => (
+          <article key={f.key} className="landing-slide" aria-roledescription="slide" aria-label={`${i + 1} / ${FEATURES.length}：${f.name}`}>
+            <div className="mx-auto grid max-w-5xl items-center gap-8 px-5 md:grid-cols-2 md:gap-16 md:px-8">
+              <div className="order-2 md:order-1">
+                <h2 className="landing-serif text-[26px] leading-snug md:text-[32px]" style={{ color: 'var(--ink)' }}>{f.title}</h2>
+                <p className="mt-4 max-w-md text-[16px] leading-[1.85] text-foreground/80">{f.text}</p>
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {f.points.map((pt) => (
+                    <li key={pt} className="rounded-full border px-3 py-1 text-sm text-foreground/75" style={{ borderColor: 'rgba(51,65,92,.2)', background: 'rgba(255,255,255,.55)' }}>{pt}</li>
+                  ))}
+                </ul>
+              </div>
+              <Phone src={f.shot} alt={`YY手帳 ${f.name}畫面`} className="order-1 mx-auto w-[min(62vw,260px)] md:order-2 md:w-[280px]" />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-8 flex justify-center gap-2" aria-hidden="true">
+        {FEATURES.map((f, i) => (
+          <span key={f.key} className="h-1.5 rounded-full transition-all" style={{ width: active === i ? 22 : 6, background: active === i ? 'var(--ink)' : 'rgba(51,65,92,.25)' }} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   useEffect(() => {
     // 標題字型只在入口頁載入
@@ -109,26 +190,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-5xl px-5 md:px-8">
-          {FEATURES.map((f, i) => (
-            <section key={f.key} className={`grid items-center gap-8 border-t border-dashed py-14 md:grid-cols-2 md:gap-16 md:py-20 ${i % 2 ? 'md:[&>*:first-child]:order-2' : ''}`} style={{ borderColor: 'rgba(51,65,92,.18)' }}>
-              <div>
-                <p className="mb-3 flex items-center gap-2 text-sm font-medium" style={{ color: f.color }}>
-                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: f.color }} />
-                  {f.name}
-                </p>
-                <h2 className="landing-serif text-[26px] leading-snug md:text-[30px]" style={{ color: 'var(--ink)' }}>{f.title}</h2>
-                <p className="mt-4 max-w-md text-[16px] leading-[1.85] text-foreground/80">{f.text}</p>
-                <ul className="mt-5 flex flex-wrap gap-2">
-                  {f.points.map((pt) => (
-                    <li key={pt} className="rounded-full border px-3 py-1 text-sm text-foreground/75" style={{ borderColor: 'rgba(51,65,92,.2)', background: 'rgba(255,255,255,.55)' }}>{pt}</li>
-                  ))}
-                </ul>
-              </div>
-              <Phone src={f.shot} alt={`YY手帳 ${f.name}畫面`} className="mx-auto w-[min(70vw,270px)]" />
-            </section>
-          ))}
-        </div>
+        <FeatureSlider />
 
         <section className="border-y border-dashed" style={{ borderColor: 'rgba(51,65,92,.18)', background: 'rgba(255,255,255,.45)' }}>
           <div className="mx-auto max-w-5xl px-5 py-14 md:px-8 md:py-20">

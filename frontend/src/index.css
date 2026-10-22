@@ -241,3 +241,12 @@ input[type="time"] {
   opacity: 0.88;
   clip-path: polygon(0 10%, 3% 0, 97% 6%, 100% 0, 98% 50%, 100% 100%, 97% 92%, 3% 100%, 0 90%, 2% 50%);
 }
+/* 入口頁功能介紹:左右滑動 */
+.landing-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; outline: none; }
+.landing-track::-webkit-scrollbar { display: none; }
+.landing-track:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
+.landing-slide { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; }
+.landing-arrow { display: inline-flex; height: 40px; width: 40px; align-items: center; justify-content: center; border-radius: 9999px; border: 1px solid rgba(51, 65, 92, 0.25); color: var(--ink); background: rgba(255, 255, 255, 0.6); }
+.landing-arrow:hover:not(:disabled) { background: #fff; }
+.landing-arrow:disabled { opacity: 0.35; }
+.landing-arrow:focus-visible, .landing [role="tab"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
