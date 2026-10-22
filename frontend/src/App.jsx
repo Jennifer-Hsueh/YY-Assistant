@@ -11,6 +11,8 @@ import { PlanLockModal } from './components/PlanNotice';
 import TermsConsentModal from './components/TermsConsentModal';
 import Legal from './pages/Legal';
 import Help from './pages/Help';
+import Landing from './pages/Landing';
+import { isNative } from './lib/platform';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
 import { initNativeApp } from './lib/nativeApp';
 import Login from './pages/Login';
@@ -56,6 +58,14 @@ function ProtectedLayout({ children }) {
   );
 }
 
+// 首頁:已登入 → 手帳首頁;未登入 → 網頁版顯示入口頁、APP 版到登入頁
+function RootRoute() {
+  const { user } = useAuth();
+  if (user) return <ProtectedLayout><Home /></ProtectedLayout>;
+  if (isNative) return <Navigate to="/login" replace />;
+  return <Landing />;
+}
+
 // APP 版:狀態列、返回鍵、點推播開啟頁面(網頁版不做任何事)
 function NativeBridge() {
   const navigate = useNavigate();
@@ -78,7 +88,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route path="/" element={<ProtectedLayout><Home /></ProtectedLayout>} />
+            <Route path="/" element={<RootRoute />} />
 
             <Route path="/transactions" element={<ProtectedLayout><Transactions /></ProtectedLayout>} />
             <Route path="/accounts" element={<ProtectedLayout><Accounts /></ProtectedLayout>} />

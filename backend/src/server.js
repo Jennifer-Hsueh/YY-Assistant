@@ -24,6 +24,7 @@ const noteRoutes = require('./routes/noteRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const { runBackup, notify } = require('./services/backupService');
 const { runPlanNotices } = require('./services/planNoticeService');
+const { checkSchema, schemaStatus } = require('./lib/schemaCheck');
 // Render 前面有一層代理,讓 req.ip 取得使用者真正的 IP(次數限制會用到)
 app.set('trust proxy', 1);
 app.use(cors());
@@ -33,7 +34,11 @@ app.use('/api/data', express.json({ limit: '15mb' }));
 app.use('/api/community', express.json({ limit: '4mb' }));
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.get('/health', (req, res) => {
+  const sc = schemaStatus();
+  // schema: ok / missing(缺欄位,詳細看 Logs)/ checking
+  res.json({ status: 'ok', time: new Date().toISOString(), schema: sc.ok === null ? 'checking' : sc.ok ? 'ok' : 'missing' });
+});
 
 // Called daily by cron-job.org so recurring items run even if the 08:00 tick
 // was missed while the instance was asleep. Protected by CRON_SECRET.
@@ -120,6 +125,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend listening on port ${PORT}`);
+  checkSchema().catch((err) => console.error('[schemaCheck] failed', err));
   startRecurringScheduler();
   startEventReminders();
 });

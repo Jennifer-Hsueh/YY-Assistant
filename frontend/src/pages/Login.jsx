@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { isNative } from '../lib/platform';
 
 export default function Login() {
   const { login } = useAuth();
@@ -47,7 +48,14 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
+      {/* 網頁版:LOGO 連回入口頁 */}
+      {!isNative && (
+        <Link to="/" className="mb-5 flex items-center gap-2" aria-label="YY手帳 首頁">
+          <img src="/round-logo.png" alt="" className="h-12 w-12" />
+          <span className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>YY手帳</span>
+        </Link>
+      )}
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">登入</CardTitle>

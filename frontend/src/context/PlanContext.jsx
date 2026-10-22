@@ -14,14 +14,19 @@ export function PlanProvider({ children }) {
 
   const refresh = useCallback(() => {
     if (!user) { setEnt(null); setTermsOk(true); setLoadError(false); return; }
-    api.getProfile().then(({ profile }) => {
+    // 失敗時先在背景重試(3 秒、10 秒後),都失敗才顯示提示(避免伺服器重新部署時誤報)
+    const RETRY = [3000, 10000];
+    const load = (attempt) => api.getProfile().then(({ profile }) => {
       setEnt(profile?.ent || null);
       setTermsOk(profile?.terms_ok !== false);
       setLoadError(false);
     }).catch((err) => {
       // 登入過期(401)會自動導回登入頁,不必提示
-      if (err?.status !== 401) setLoadError(true);
+      if (err?.status === 401) return;
+      if (attempt < RETRY.length) setTimeout(() => load(attempt + 1), RETRY[attempt]);
+      else setLoadError(true);
     });
+    load(0);
   }, [user]);
 
   useEffect(() => {

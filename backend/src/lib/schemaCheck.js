@@ -1,0 +1,40 @@
+const supabase = require('../config/supabase');
+
+// 啟動時檢查資料庫有沒有程式需要的欄位。
+// 缺少時代表 SQL 沒有在 yy-assistant 專案執行(曾經跑到舊專案 line-life-app),Logs 會清楚提示。
+// 結果也會顯示在 /health 的 schema 欄位。
+const REQUIRED = {
+  yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until',
+  yy_posts: 'id, images, edited_at',
+  yy_announcements: 'id, target_user_id',
+  yy_payments: 'id, user_email',
+  yy_plan_notices: 'id',
+  yy_bug_reports: 'id',
+  yy_moderation_actions: 'id',
+  yy_password_reset_tokens: 'id',
+};
+
+let status = { ok: null, missing: [] };
+
+async function checkSchema() {
+  const missing = [];
+  for (const [table, cols] of Object.entries(REQUIRED)) {
+    try {
+      const { error } = await supabase.from(table).select(cols).limit(1);
+      if (error) missing.push(`${table}: ${error.message}`);
+    } catch (err) {
+      missing.push(`${table}: ${err.message}`);
+    }
+  }
+  status = { ok: missing.length === 0, missing };
+  if (missing.length) {
+    console.error('[schemaCheck] ✗ 資料庫缺少程式需要的表或欄位:');
+    for (const m of missing) console.error(`[schemaCheck]   - ${m}`);
+    console.error('[schemaCheck] 請到 Supabase「yy-assistant」專案(左上角確認專案名稱)的 SQL Editor 執行缺少的 SQL;backend/supabase_schema.sql 可以整份重跑。執行後再加一行 notify pgrst, \'reload schema\';');
+  } else {
+    console.log('[schemaCheck] ✓ 資料庫欄位齊全');
+  }
+  return status;
+}
+
+module.exports = { checkSchema, schemaStatus: () => status };
