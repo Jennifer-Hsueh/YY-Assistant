@@ -246,7 +246,39 @@ input[type="time"] {
 .landing-track::-webkit-scrollbar { display: none; }
 .landing-track:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
 .landing-slide { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; }
+/* 入口頁整頁左右滑動 */
+.landing-page { flex: 0 0 100%; height: 100%; overflow-y: auto; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
+.landing-inner { margin: auto; width: 100%; max-width: 64rem; display: grid; align-items: center; gap: 1.5rem; padding: 1rem 1.25rem 1.5rem; }
+.landing-inner-text { display: block; max-width: 48rem; }
+.landing-deck-phone { height: min(42svh, 360px); width: auto; }
+.landing-hero-title { font-size: clamp(30px, 7vw, 54px); }
+@media (min-width: 768px) {
+  .landing-inner { gap: 4rem; padding: 1.5rem 2rem; }
+  .landing-deck-phone { height: min(calc(100svh - 230px), 600px); }
+}
 .landing-arrow { display: inline-flex; height: 40px; width: 40px; align-items: center; justify-content: center; border-radius: 9999px; border: 1px solid rgba(51, 65, 92, 0.25); color: var(--ink); background: rgba(255, 255, 255, 0.6); }
 .landing-arrow:hover:not(:disabled) { background: #fff; }
 .landing-arrow:disabled { opacity: 0.35; }
 .landing-arrow:focus-visible, .landing [role="tab"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* 登入／註冊頁 LOGO:進場跳一下＋對話泡泡 */
+.brand-hop { animation: brand-hop 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) both; transform-origin: 50% 90%; }
+@keyframes brand-hop {
+  0% { opacity: 0; transform: translateY(18px) scale(0.85) rotate(-6deg); }
+  55% { opacity: 1; transform: translateY(-8px) scale(1.04) rotate(3deg); }
+  100% { transform: none; }
+}
+.brand-bubble {
+  position: absolute; left: 78%; top: 4px; white-space: nowrap;
+  background: #fff; color: var(--ink); font-size: 14px; font-weight: 600;
+  padding: 6px 12px; border-radius: 14px; border: 1.5px solid var(--ink);
+  box-shadow: 2px 3px 0 rgba(51, 65, 92, 0.18);
+  animation: bubble-pop 0.4s 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+.brand-bubble::after {
+  content: ""; position: absolute; left: 10px; bottom: -7px; width: 12px; height: 12px;
+  background: #fff; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  transform: rotate(45deg) skew(10deg, 10deg);
+}
+@keyframes bubble-pop { 0% { opacity: 0; transform: scale(0.6) translateY(6px); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .brand-hop, .brand-bubble { animation: none; } }

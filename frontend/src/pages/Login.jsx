@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { isNative } from '../lib/platform';
+import { HelloBrand } from '../components/BrandMark';
 
 export default function Login() {
   const { login } = useAuth();
@@ -49,13 +50,10 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
-      {/* 網頁版:LOGO 連回入口頁 */}
-      {!isNative && (
-        <Link to="/" className="mb-5 flex items-center gap-2" aria-label="YY手帳 首頁">
-          <img src="/round-logo.png" alt="" className="h-12 w-12" />
-          <span className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>YY手帳</span>
-        </Link>
-      )}
+      {/* LOGO(網頁版點了回入口頁) */}
+      <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
+        <HelloBrand greeting="歡迎回來！" />
+      </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">登入</CardTitle>

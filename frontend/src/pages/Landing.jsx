@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import BrandMark from '../components/BrandMark';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
+// 整頁是左右滑動的幾頁:免費開始 → 四個功能 → 方案 → 在手機上使用
 // 截圖在 public/landing/,用示範資料產生
 
 const FEATURES = [
@@ -45,6 +47,7 @@ const FEATURES = [
 ];
 
 const PLANS = [
+  ['基本功能', '記帳或行事曆二選一，每個月可以換一次', null, null],
   ['進階 A', '記帳＋行事曆的基本功能', 59, 608],
   ['進階 B', '記帳＋循環記帳、通知、首頁圖片、本日心情、資料匯出與備份', 59, 608],
   ['進階 C', '行事曆＋循環行程、通知、首頁圖片、本日心情、資料匯出與備份', 59, 608],
@@ -52,95 +55,29 @@ const PLANS = [
   ['完整版', '全部功能，包含社群', 99, 1088],
 ];
 
-function Phone({ src, alt, className = '' }) {
+// 每一頁的名稱(底部導覽與螢幕閱讀器用)
+const PAGES = ['免費開始', ...FEATURES.map((f) => f.name), '方案', '在手機上使用'];
+
+function Phone({ src, alt, className = '', eager = false }) {
   return (
     <div className={`landing-phone ${className}`}>
-      <img src={src} alt={alt} width="390" height="844" loading="lazy" decoding="async" />
+      <img src={src} alt={alt} width="390" height="844" loading={eager ? 'eager' : 'lazy'} decoding="async" />
     </div>
   );
 }
 
-// 功能介紹:左右滑動(手機用手指滑,電腦用上方分頁或左右箭頭)
-function FeatureSlider() {
-  const track = useRef(null);
-  const [active, setActive] = useState(0);
-
-  // 滑動時依位置更新目前是第幾張
-  function onScroll() {
-    const el = track.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (i !== active) setActive(i);
-  }
-  function go(i) {
-    const el = track.current;
-    if (!el) return;
-    const n = Math.max(0, Math.min(FEATURES.length - 1, i));
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el.scrollTo({ left: n * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
-    setActive(n);
-  }
-  function onKey(e) {
-    if (e.key === 'ArrowRight') { e.preventDefault(); go(active + 1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); go(active - 1); }
-  }
-
+function CTA({ className = '' }) {
   return (
-    <section className="border-t border-dashed py-12 md:py-16" style={{ borderColor: 'rgba(51,65,92,.18)' }} aria-label="功能介紹">
-      <div className="mx-auto max-w-5xl px-5 md:px-8">
-        <div className="flex items-center justify-between gap-3">
-          <div role="tablist" aria-label="功能" className="flex gap-1 overflow-x-auto">
-            {FEATURES.map((f, i) => (
-              <button
-                key={f.key}
-                type="button"
-                role="tab"
-                aria-selected={active === i}
-                onClick={() => go(i)}
-                className="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[15px] transition-colors"
-                style={active === i ? { background: 'var(--ink)', color: '#fff' } : { color: 'var(--ink)' }}
-              >
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: active === i ? '#fff' : f.color }} />
-                {f.name}
-              </button>
-            ))}
-          </div>
-          <div className="hidden gap-2 md:flex">
-            <button type="button" aria-label="上一個" onClick={() => go(active - 1)} disabled={active === 0} className="landing-arrow"><ChevronLeft className="h-5 w-5" /></button>
-            <button type="button" aria-label="下一個" onClick={() => go(active + 1)} disabled={active === FEATURES.length - 1} className="landing-arrow"><ChevronRight className="h-5 w-5" /></button>
-          </div>
-        </div>
-      </div>
-
-      <div ref={track} onScroll={onScroll} onKeyDown={onKey} tabIndex={0} className="landing-track mt-8" aria-roledescription="carousel">
-        {FEATURES.map((f, i) => (
-          <article key={f.key} className="landing-slide" aria-roledescription="slide" aria-label={`${i + 1} / ${FEATURES.length}：${f.name}`}>
-            <div className="mx-auto grid max-w-5xl items-center gap-8 px-5 md:grid-cols-2 md:gap-16 md:px-8">
-              <div className="order-2 md:order-1">
-                <h2 className="landing-serif text-[26px] leading-snug md:text-[32px]" style={{ color: 'var(--ink)' }}>{f.title}</h2>
-                <p className="mt-4 max-w-md text-[16px] leading-[1.85] text-foreground/80">{f.text}</p>
-                <ul className="mt-5 flex flex-wrap gap-2">
-                  {f.points.map((pt) => (
-                    <li key={pt} className="rounded-full border px-3 py-1 text-sm text-foreground/75" style={{ borderColor: 'rgba(51,65,92,.2)', background: 'rgba(255,255,255,.55)' }}>{pt}</li>
-                  ))}
-                </ul>
-              </div>
-              <Phone src={f.shot} alt={`YY手帳 ${f.name}畫面`} className="order-1 mx-auto w-[min(62vw,260px)] md:order-2 md:w-[280px]" />
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="mt-8 flex justify-center gap-2" aria-hidden="true">
-        {FEATURES.map((f, i) => (
-          <span key={f.key} className="h-1.5 rounded-full transition-all" style={{ width: active === i ? 22 : 6, background: active === i ? 'var(--ink)' : 'rgba(51,65,92,.25)' }} />
-        ))}
-      </div>
-    </section>
+    <Link to="/register" className={`inline-block rounded-lg px-5 py-3 text-[15px] font-medium shadow-sm ${className}`} style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}>
+      免費開始使用
+    </Link>
   );
 }
 
 export default function Landing() {
+  const deck = useRef(null);
+  const [active, setActive] = useState(0);
+
   useEffect(() => {
     // 標題字型只在入口頁載入
     const id = 'landing-font';
@@ -151,113 +88,154 @@ export default function Landing() {
       l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap';
       document.head.appendChild(l);
     }
-    document.title = 'YY手帳 — 把每天的小事，好好收進手帳';
+    document.title = 'YY手帳 Assistant｜把每天的小事，好好收進手帳';
     return () => { document.title = 'YY手帳'; };
   }, []);
 
+  function onScroll() {
+    const el = deck.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== active) setActive(i);
+  }
+  function go(i) {
+    const el = deck.current;
+    if (!el) return;
+    const n = Math.max(0, Math.min(PAGES.length - 1, i));
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollTo({ left: n * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+    setActive(n);
+  }
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.closest?.('input, textarea')) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(active + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(active - 1); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const last = PAGES.length - 1;
+
   return (
-    <div className="landing min-h-screen" style={{ color: 'var(--foreground)' }}>
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src="/round-logo.png" alt="" className="h-11 w-11" />
-          <span className="landing-serif text-lg" style={{ color: 'var(--ink)' }}>YY手帳</span>
-        </Link>
-        <Link to="/login" className="rounded-md px-3 py-2 text-sm font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>登入</Link>
+    <div className="landing flex h-[100svh] flex-col overflow-hidden" style={{ color: 'var(--foreground)' }}>
+      <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center justify-between px-5 py-3 md:px-8">
+        <button type="button" onClick={() => go(0)} aria-label="回到第一頁"><BrandMark /></button>
+        <Link to="/login" className="rounded-lg border px-4 py-2 text-base font-medium hover:bg-white/70" style={{ color: 'var(--ink)', borderColor: 'rgba(51,65,92,.25)' }}>登入</Link>
       </header>
 
-      <main>
-        <section className="mx-auto grid max-w-5xl items-center gap-10 px-5 pt-8 pb-16 md:grid-cols-[1.15fr_1fr] md:gap-6 md:px-8 md:pt-16 md:pb-24">
-          <div>
-            <h1 className="landing-serif landing-hero-title" style={{ color: 'var(--ink)' }}>
-              把每天的小事，<br />好好收進手帳
-            </h1>
-            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-foreground/80">
-              記帳、行事曆、待辦記事和一個可以聊心情的社群，放在同一本手帳裡。手機和電腦都能用，資料隨時同步。
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link to="/register" className="rounded-lg px-5 py-3 text-[15px] font-medium shadow-sm" style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}>
-                免費開始使用
-              </Link>
-              <Link to="/login" className="rounded-lg px-4 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
-                我已經有帳號
-              </Link>
+      <main ref={deck} onScroll={onScroll} className="landing-track min-h-0 flex-1" aria-roledescription="carousel" aria-label="YY手帳 介紹">
+        {/* 1. 免費開始 */}
+        <section className="landing-page" aria-roledescription="slide" aria-label={`1 / ${PAGES.length}：${PAGES[0]}`}>
+          <div className="landing-inner md:grid-cols-[1.15fr_1fr]">
+            <div className="order-2 md:order-1">
+              <h1 className="landing-serif landing-hero-title" style={{ color: 'var(--ink)' }}>
+                把每天的小事，<br />好好收進手帳
+              </h1>
+              <p className="mt-4 max-w-md text-[16px] leading-relaxed text-foreground/80 md:mt-5 md:text-[17px]">
+                記帳、行事曆、待辦記事和一個可以聊心情的社群，放在同一本手帳裡。註冊後三個月免費使用全部功能，不需要信用卡。
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <CTA />
+                <button type="button" onClick={() => go(1)} className="flex items-center gap-1 rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
+                  看看能做什麼<ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">註冊後三個月免費使用全部功能，不需要信用卡。</p>
-          </div>
-          <div className="relative mx-auto w-[min(78vw,300px)] md:w-[320px]">
-            <span className="landing-tape" aria-hidden="true" />
-            <Phone src="/landing/home.webp" alt="YY手帳 首頁畫面：今日行程、本月累積消費、預算使用與待辦記事" className="landing-hero-phone" />
+            <div className="relative order-1 mx-auto md:order-2">
+              <span className="landing-tape" aria-hidden="true" />
+              <Phone src="/landing/home.webp" alt="YY手帳 首頁畫面：今日行程、本月累積消費、預算使用與待辦記事" className="landing-deck-phone landing-hero-phone" eager />
+            </div>
           </div>
         </section>
 
-        <FeatureSlider />
-
-        <section className="border-y border-dashed" style={{ borderColor: 'rgba(51,65,92,.18)', background: 'rgba(255,255,255,.45)' }}>
-          <div className="mx-auto max-w-5xl px-5 py-14 md:px-8 md:py-20">
-            <h2 className="landing-serif text-[26px] md:text-[30px]" style={{ color: 'var(--ink)' }}>先免費用三個月</h2>
-            <p className="mt-3 max-w-xl text-[16px] leading-[1.85] text-foreground/80">
-              試用期間可以使用全部功能。試用結束後，可以繼續免費使用基本功能（記帳或行事曆二選一），或選一個適合你的方案。不會自動扣款。
-            </p>
-            <div className="mt-8 overflow-x-auto">
-              <table className="w-full min-w-[560px] border-collapse text-left text-[15px]">
-                <thead>
-                  <tr className="border-b-2 text-sm text-muted-foreground" style={{ borderColor: 'var(--ink)' }}>
-                    <th className="py-2.5 pr-4 font-medium">方案</th>
-                    <th className="py-2.5 pr-4 font-medium">內容</th>
-                    <th className="py-2.5 pr-4 text-right font-medium">月繳</th>
-                    <th className="py-2.5 text-right font-medium">年繳</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
-                    <td className="py-3 pr-4 font-medium" style={{ color: 'var(--ink)' }}>基本功能</td>
-                    <td className="py-3 pr-4 text-foreground/80">記帳或行事曆二選一，每個月可以換一次</td>
-                    <td className="py-3 pr-4 text-right" colSpan={2}>免費</td>
-                  </tr>
-                  {PLANS.map(([name, desc, m, y]) => (
-                    <tr key={name} className="border-b" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
-                      <td className="whitespace-nowrap py-3 pr-4 font-medium" style={{ color: 'var(--ink)' }}>{name}</td>
-                      <td className="py-3 pr-4 text-foreground/80">{desc}</td>
-                      <td className="whitespace-nowrap py-3 pr-4 text-right tabular-nums">{m} 元</td>
-                      <td className="whitespace-nowrap py-3 text-right tabular-nums">{y.toLocaleString()} 元</td>
-                    </tr>
+        {/* 2–5. 功能 */}
+        {FEATURES.map((f, i) => (
+          <section key={f.key} className="landing-page" aria-roledescription="slide" aria-label={`${i + 2} / ${PAGES.length}：${f.name}`}>
+            <div className="landing-inner md:grid-cols-2">
+              <div className="order-2 md:order-1">
+                <p className="mb-2 flex items-center gap-2 text-sm font-medium md:mb-3" style={{ color: f.color }}>
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: f.color }} />
+                  {f.name}
+                </p>
+                <h2 className="landing-serif text-[24px] leading-snug md:text-[32px]" style={{ color: 'var(--ink)' }}>{f.title}</h2>
+                <p className="mt-3 max-w-md text-[15px] leading-[1.8] text-foreground/80 md:mt-4 md:text-[16px]">{f.text}</p>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {f.points.map((pt) => (
+                    <li key={pt} className="rounded-full border px-3 py-1 text-sm text-foreground/75" style={{ borderColor: 'rgba(51,65,92,.2)', background: 'rgba(255,255,255,.55)' }}>{pt}</li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+              </div>
+              <Phone src={f.shot} alt={`YY手帳 ${f.name}畫面`} className="landing-deck-phone order-1 mx-auto md:order-2" />
             </div>
+          </section>
+        ))}
+
+        {/* 6. 方案 */}
+        <section className="landing-page" aria-roledescription="slide" aria-label={`${PAGES.length - 1} / ${PAGES.length}：方案`}>
+          <div className="landing-inner landing-inner-text">
+            <h2 className="landing-serif text-[24px] md:text-[32px]" style={{ color: 'var(--ink)' }}>先免費用三個月</h2>
+            <p className="mt-3 max-w-xl text-[15px] leading-[1.8] text-foreground/80 md:text-[16px]">
+              試用期間可以使用全部功能。試用結束後，可以繼續免費使用基本功能，或選一個適合你的方案。不會自動扣款。
+            </p>
+            <ul className="mt-5 border-t-2" style={{ borderColor: 'var(--ink)' }}>
+              {PLANS.map(([name, desc, m, y]) => (
+                <li key={name} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 border-b py-3 md:grid-cols-[180px_1fr_auto]" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>{name}</span>
+                  <span className="col-start-1 row-start-2 text-sm text-foreground/75 md:col-start-2 md:row-start-1 md:text-[15px]">{desc}</span>
+                  <span className="row-span-2 self-center text-right tabular-nums md:row-span-1 md:col-start-3">
+                    {m ? (<><span className="block">{m} 元／月</span><span className="block text-xs text-muted-foreground">年繳 {y.toLocaleString()} 元</span></>) : '免費'}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-5 py-14 md:px-8 md:py-20">
-          <h2 className="landing-serif text-[26px] md:text-[30px]" style={{ color: 'var(--ink)' }}>在手機上使用</h2>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {['App Store', 'Google Play'].map((s) => (
-              <span key={s} className="flex flex-col rounded-lg border px-4 py-2" style={{ borderColor: 'rgba(51,65,92,.25)' }}>
-                <span className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{s}</span>
-                <span className="text-xs text-muted-foreground">即將推出</span>
-              </span>
-            ))}
+        {/* 7. 在手機上使用 */}
+        <section className="landing-page" aria-roledescription="slide" aria-label={`${PAGES.length} / ${PAGES.length}：在手機上使用`}>
+          <div className="landing-inner landing-inner-text">
+            <h2 className="landing-serif text-[24px] md:text-[32px]" style={{ color: 'var(--ink)' }}>在手機上使用</h2>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {['App Store', 'Google Play'].map((s) => (
+                <span key={s} className="flex flex-col rounded-lg border px-4 py-2" style={{ borderColor: 'rgba(51,65,92,.25)' }}>
+                  <span className="text-[15px] font-medium" style={{ color: 'var(--ink)' }}>{s}</span>
+                  <span className="text-xs text-muted-foreground">即將推出</span>
+                </span>
+              ))}
+            </div>
+            <ul className="mt-5 max-w-xl space-y-2 text-[15px] leading-[1.8] text-foreground/80 md:text-[16px]">
+              <li>iPhone：用 Safari 開啟這個網站，點「分享」→「加入主畫面」。</li>
+              <li>Android：用 Chrome 開啟這個網站，點右上角選單 →「安裝應用程式」。</li>
+            </ul>
+            <CTA className="mt-7" />
+            <nav className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <Link to="/terms" className="hover:underline">使用條款</Link>
+              <Link to="/privacy" className="hover:underline">隱私權政策</Link>
+              <a href="mailto:happybusybeaver@gmail.com" className="hover:underline">聯絡我們</a>
+              <span>© 2026 YY手帳</span>
+            </nav>
           </div>
-          <ul className="mt-6 max-w-xl space-y-2 text-[16px] leading-[1.8] text-foreground/80">
-            <li>iPhone：用 Safari 開啟這個網站，點「分享」→「加入主畫面」。</li>
-            <li>Android：用 Chrome 開啟這個網站，點右上角選單 →「安裝應用程式」。</li>
-          </ul>
-          <Link to="/register" className="mt-8 inline-block rounded-lg px-5 py-3 text-[15px] font-medium shadow-sm" style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}>
-            免費開始使用
-          </Link>
         </section>
       </main>
 
-      <footer className="border-t" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between md:px-8">
-          <p>© 2026 YY手帳</p>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link to="/terms" className="hover:underline">使用條款</Link>
-            <Link to="/privacy" className="hover:underline">隱私權政策</Link>
-            <a href="mailto:happybusybeaver@gmail.com" className="hover:underline">聯絡我們</a>
-          </nav>
+      {/* 底部導覽:上一頁/下一頁、目前頁名、頁數點 */}
+      <nav className="shrink-0 border-t border-dashed" style={{ borderColor: 'rgba(51,65,92,.18)' }} aria-label="切換頁面">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3 md:px-8">
+          <button type="button" aria-label="上一頁" onClick={() => go(active - 1)} disabled={active === 0} className="landing-arrow"><ChevronLeft className="h-5 w-5" /></button>
+          <div className="flex min-w-0 flex-col items-center gap-1.5">
+            <span className="text-sm font-medium" style={{ color: 'var(--ink)' }} aria-live="polite">{PAGES[active]}</span>
+            <div className="flex gap-1.5">
+              {PAGES.map((name, i) => (
+                <button key={name} type="button" aria-label={name} aria-current={active === i ? 'true' : undefined} onClick={() => go(i)}
+                  className="h-1.5 rounded-full transition-all" style={{ width: active === i ? 20 : 6, background: active === i ? 'var(--ink)' : 'rgba(51,65,92,.25)' }} />
+              ))}
+            </div>
+          </div>
+          <button type="button" aria-label="下一頁" onClick={() => go(active + 1)} disabled={active === last} className="landing-arrow"><ChevronRight className="h-5 w-5" /></button>
         </div>
-      </footer>
+      </nav>
     </div>
   );
 }
