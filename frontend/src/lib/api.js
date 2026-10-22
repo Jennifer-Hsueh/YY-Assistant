@@ -71,6 +71,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
 export const api = {
   register: (email, password) => request('/auth/register', { method: 'POST', body: { email, password, accept_terms: true }, auth: false }),
+  getBeta: () => request('/public/beta', { auth: false }),
   acceptTerms: () => request('/profile/accept-terms', { method: 'PUT' }),
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password }, auth: false }),
   requestPasswordReset: (email) => request('/auth/forgot-password', { method: 'POST', body: { email }, auth: false }),

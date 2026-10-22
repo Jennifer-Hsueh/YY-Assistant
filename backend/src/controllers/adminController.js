@@ -7,6 +7,7 @@ const communityImages = require('../services/communityImages');
 const E = require('../lib/entitlements');
 const M = require('../services/moderation');
 const { sendEmail } = require('../services/emailService');
+const beta = require('../lib/beta');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
 const ROLES = ['user', 'tester', 'admin'];
@@ -217,6 +218,30 @@ async function updateUser(req, res) {
     return res.json({ user: publicUser(data, taipeiToday()) });
   } catch (err) {
     return fail(res, 'updateUser', err, 'Failed to update user');
+  }
+}
+
+// ---------- 測試版名額 ----------
+async function getBetaSettings(req, res) {
+  try {
+    return res.json({ beta: await beta.betaStatus() });
+  } catch (err) {
+    return fail(res, 'getBetaSettings', err, '讀取測試名額失敗');
+  }
+}
+async function updateBetaSettings(req, res) {
+  try {
+    const b = req.body || {};
+    const updates = {};
+    if (b.limit !== undefined) {
+      const n = Number(b.limit);
+      if (!Number.isInteger(n) || n < 1 || n > 100000) return res.status(400).json({ error: '名額請輸入 1 以上的整數' });
+      updates.limit = n;
+    }
+    if (b.open !== undefined) updates.open = !!b.open;
+    return res.json({ beta: await beta.setBeta(updates) });
+  } catch (err) {
+    return fail(res, 'updateBetaSettings', err, '更新測試名額失敗');
   }
 }
 
@@ -672,6 +697,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
+  getBetaSettings, updateBetaSettings,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,

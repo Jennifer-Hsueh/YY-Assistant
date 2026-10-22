@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const supabase = require('../config/supabase');
 const { TERMS_VERSION } = require('../lib/terms');
+const { betaStatus } = require('../lib/beta');
 const { sendPasswordResetEmail, sendEmail } = require('../services/emailService');
 const { forgetUserStatus } = require('../middleware/auth');
 const { removeUserFolder } = require('../services/communityImages');
@@ -39,6 +40,11 @@ async function register(req, res) {
 
     if (existing) {
       return res.status(409).json({ error: '這個 Email 已經註冊過了' });
+    }
+    // 測試版名額已滿(或暫停開放註冊)
+    const beta = await betaStatus();
+    if (beta.full) {
+      return res.status(403).json({ error: '目前測試名額已滿，謝謝你的關注', code: 'BETA_FULL' });
     }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);

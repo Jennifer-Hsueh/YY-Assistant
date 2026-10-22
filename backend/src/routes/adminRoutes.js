@@ -8,6 +8,8 @@ router.use(requireAuth, requireAdmin);
 
 router.get('/me', c.me);
 router.get('/overview', c.overview);
+router.get('/settings/beta', c.getBetaSettings);
+router.put('/settings/beta', c.updateBetaSettings);
 router.get('/users', c.listUsers);
 router.put('/users/:id', c.updateUser);
 router.post('/users/:id/reset-link', c.createResetLink);

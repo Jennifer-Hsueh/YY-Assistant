@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import BrandMark from '../components/BrandMark';
+import BrandMark, { BetaTag } from '../components/BrandMark';
+import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
@@ -17,6 +18,9 @@ const COPY = {
     heroTitle: ['把每天的小事，', '好好收進手帳'],
     heroText: '記帳、行事曆、待辦記事和一個可以聊心情的社群，放在同一本手帳裡。註冊後三個月免費使用全部功能，不需要信用卡。',
     cta: '免費開始使用',
+    ctaFull: '測試名額已滿',
+    betaLine: (limit, remaining) => `目前開放 ${limit} 位測試者，還有 ${remaining} 個名額`,
+    betaFullLine: (limit) => `${limit} 位測試名額已滿，謝謝你的關注`,
     peek: '看看能做什麼',
     homeAlt: 'YY手帳 首頁畫面：今日行程、本月累積消費、預算使用與待辦記事',
     shotAlt: (name) => `YY手帳 ${name}畫面`,
@@ -60,6 +64,9 @@ const COPY = {
     heroTitle: ['Every little thing,', 'neatly in one notebook'],
     heroText: 'Budget, calendar, to-dos, and a friendly community, all in one notebook. Every feature is free for your first three months. No credit card needed.',
     cta: 'Start free',
+    ctaFull: 'Beta is full',
+    betaLine: (limit, remaining) => `Open to ${limit} beta testers, ${remaining} spots left`,
+    betaFullLine: (limit) => `All ${limit} beta spots are taken. Thanks for your interest`,
     peek: 'See what it does',
     homeAlt: 'YY Assistant home screen: today’s events, monthly spending, budget, and to-dos',
     shotAlt: (name) => `YY Assistant ${name} screen`,
@@ -104,7 +111,7 @@ const FEATURE_META = [
   { key: 'notes', color: 'var(--module-notes, #8B5E3C)', shot: '/landing/notes.webp' },
   { key: 'community', color: 'var(--income)', shot: '/landing/community.webp' },
 ];
-const PRICES = [[null, null], [59, 608], [59, 608], [59, 608], [69, 728], [99, 1088]];
+const PRICES = [[null, null], [69, 728], [69, 728], [69, 728], [79, 848], [109, 1208]];
 
 function Phone({ src, alt, className = '', eager = false }) {
   return (
@@ -114,7 +121,10 @@ function Phone({ src, alt, className = '', eager = false }) {
   );
 }
 
-function CTA({ className = '', label }) {
+function CTA({ className = '', label, full = false, fullLabel }) {
+  if (full) {
+    return <span className={`inline-block rounded-lg border px-5 py-3 text-[15px] font-medium text-muted-foreground ${className}`} style={{ borderColor: 'rgba(51,65,92,.25)' }}>{fullLabel}</span>;
+  }
   return (
     <Link to="/register" className={`inline-block rounded-lg px-5 py-3 text-[15px] font-medium shadow-sm ${className}`} style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}>
       {label}
@@ -126,6 +136,9 @@ export default function Landing() {
   const deck = useRef(null);
   const [active, setActive] = useState(0);
   const { language, toggleLanguage } = useLanguage();
+  const [beta, setBeta] = useState(null);
+  useEffect(() => { api.getBeta().then(({ beta: b }) => setBeta(b)).catch(() => {}); }, []);
+  const full = !!beta?.full;
   const T = COPY[language] || COPY.zh;
   const PAGES = T.pages;
   // 截圖跟著語言切換(英文版在 public/landing/en/)
@@ -190,6 +203,10 @@ export default function Landing() {
         <section className="landing-page" aria-roledescription="slide" aria-label={`1 / ${PAGES.length}：${PAGES[0]}`}>
           <div className="landing-inner md:grid-cols-[1.15fr_1fr]">
             <div className="order-2 md:order-1">
+              <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-foreground/75">
+                <BetaTag lang={language} />
+                {beta && (full ? T.betaFullLine(beta.limit) : T.betaLine(beta.limit, beta.remaining))}
+              </p>
               <h1 className={`landing-serif landing-hero-title ${language === 'en' ? 'landing-hero-title-en' : ''}`} style={{ color: 'var(--ink)' }}>
                 {T.heroTitle[0]}<br />{T.heroTitle[1]}
               </h1>
@@ -197,7 +214,7 @@ export default function Landing() {
                 {T.heroText}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <CTA label={T.cta} />
+                <CTA label={T.cta} full={full} fullLabel={T.ctaFull} />
                 <button type="button" onClick={() => go(1)} className="flex items-center gap-1 rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
                   {T.peek}<ChevronRight className="h-4 w-4" />
                 </button>
@@ -269,7 +286,7 @@ export default function Landing() {
               <li>{T.iphone}</li>
               <li>{T.android}</li>
             </ul>
-            <CTA className="mt-7" label={T.cta} />
+            <CTA className="mt-7" label={T.cta} full={full} fullLabel={T.ctaFull} />
             <nav className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <Link to="/terms" className="hover:underline">{T.terms}</Link>
               <Link to="/privacy" className="hover:underline">{T.privacy}</Link>

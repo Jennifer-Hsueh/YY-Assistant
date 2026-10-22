@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { RefreshCw, DatabaseBackup } from 'lucide-react';
 import { api } from '../api';
 import { ROLE_LABEL, PLAN_LABEL, PLAN_DESC, PAID_PLANS, STATUS_LABEL, BOARD_LABEL, fmtDateTime } from '../labels';
-import { Button, Card, PageTitle } from '../ui';
+import { Button, Card, Notice, PageTitle, inputCls } from '../ui';
 
 function Stat({ label, value, hint, onClick, tone }) {
   const color = tone === 'red' ? 'text-danger' : tone === 'amber' ? 'text-warn' : 'text-ink';
@@ -13,6 +13,46 @@ function Stat({ label, value, hint, onClick, tone }) {
       <p className={`num mt-1 text-2xl font-semibold ${color}`}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
     </Tag>
+  );
+}
+
+// 測試版名額:目前人數 / 上限、修改上限、暫停或開放註冊(不含管理員)
+function BetaCard() {
+  const [b, setB] = useState(null);
+  const [limit, setLimit] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const load = () => api.beta().then(({ beta }) => { setB(beta); setLimit(String(beta.limit)); }).catch((e) => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, []);
+  async function save(body, okText) {
+    setBusy(true); setMsg(null);
+    try { const { beta } = await api.setBeta(body); setB(beta); setLimit(String(beta.limit)); setMsg({ ok: true, text: okText }); }
+    catch (e) { setMsg({ ok: false, text: e.message }); }
+    finally { setBusy(false); }
+  }
+  if (!b) return null;
+  const pct = Math.min(100, Math.round((b.used / b.limit) * 100));
+  return (
+    <Card className="mb-6 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-56">
+          <p className="text-sm font-medium">測試版名額</p>
+          <p className="num mt-1 text-2xl font-semibold text-ink">{b.used} / {b.limit} 人</p>
+          <div className="mt-2 h-1.5 w-56 rounded-full bg-muted"><div className="h-1.5 rounded-full bg-ink" style={{ width: `${pct}%` }} /></div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {!b.open ? '已暫停開放註冊' : b.remaining === 0 ? '名額已滿，新使用者無法註冊' : `還有 ${b.remaining} 個名額`}（不含管理員）
+          </p>
+        </div>
+        <div className="flex items-end gap-2">
+          <label className="text-xs text-muted-foreground">名額上限
+            <div className="mt-1 w-28"><input className={inputCls} inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ''))} /></div>
+          </label>
+          <Button variant="outline" disabled={busy || !limit || Number(limit) === b.limit} onClick={() => save({ limit: Number(limit) }, '已更新名額')}>儲存</Button>
+          <Button variant="outline" disabled={busy} onClick={() => save({ open: !b.open }, b.open ? '已暫停註冊' : '已開放註冊')}>{b.open ? '暫停註冊' : '開放註冊'}</Button>
+        </div>
+      </div>
+      <Notice msg={msg} />
+    </Card>
   );
 }
 
@@ -58,6 +98,8 @@ export default function Overview({ go }) {
   return (
     <>
       <PageTitle right={<Button variant="outline" onClick={load}><RefreshCw className="h-4 w-4" />重新整理</Button>}>總覽</PageTitle>
+
+      <BetaCard />
 
       <p className="mb-2 text-sm font-medium text-muted-foreground">使用者</p>
       <div className="mb-4 grid grid-cols-4 gap-3">

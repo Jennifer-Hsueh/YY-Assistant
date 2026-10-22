@@ -12,6 +12,7 @@ const REQUIRED = {
   yy_bug_reports: 'id',
   yy_moderation_actions: 'id',
   yy_password_reset_tokens: 'id',
+  yy_settings: 'key, value',
 };
 
 let status = { ok: null, missing: [] };

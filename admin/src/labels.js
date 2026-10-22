@@ -7,7 +7,7 @@ export const CHOICE_LABEL = { ledger: '記帳', calendar: '行事曆' };
 export const STATUS_LABEL = { trial: '試用中', basic: '基本功能', active: '付費中', grace: '寬限期', staff: '不受限制' };
 export const STATUS_TONE = { trial: 'ink', basic: 'gray', active: 'green', grace: 'amber', staff: 'ink' };
 // 月費;年繳 = 月費 × 12 − 100
-export const MONTHLY = { adv_a: 59, adv_b: 59, adv_c: 59, full: 99 };
+export const MONTHLY = { adv_a: 69, adv_b: 69, adv_c: 69, full: 109 };
 export function priceFor(plan, addon, months) {
   const m = (MONTHLY[plan] || 0) + (addon && ADDON_PLANS.includes(plan) ? 10 : 0);
   return Math.floor(months / 12) * (m * 12 - 100) + (months % 12) * m;

@@ -280,6 +280,14 @@ create table if not exists yy_moderation_actions (
 );
 create index if not exists idx_moderation_user on yy_moderation_actions (user_id, created_at desc);
 
+-- 系統設定(例如測試版名額 beta = { limit, open })
+create table if not exists yy_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default now()
+);
+insert into yy_settings (key, value) values ('beta', '{"limit": 50, "open": true}') on conflict (key) do nothing;
+
 do $$
 declare t record;
 begin

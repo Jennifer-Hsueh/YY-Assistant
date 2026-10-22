@@ -52,7 +52,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
-        <HelloBrand greeting="歡迎回來！" />
+        <HelloBrand greeting="歡迎回來！" beta />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>

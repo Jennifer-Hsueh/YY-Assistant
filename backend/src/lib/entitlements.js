@@ -20,7 +20,7 @@ const PLAN_FEATURES = {
 };
 
 // 月費(元);年繳 = 月費 × 12 − 100
-const MONTHLY_PRICE = { adv_a: 59, adv_b: 59, adv_c: 59, full: 99 };
+const MONTHLY_PRICE = { adv_a: 69, adv_b: 69, adv_c: 69, full: 109 };
 const COMMUNITY_ADDON = 10;
 const YEARLY_DISCOUNT = 100;
 

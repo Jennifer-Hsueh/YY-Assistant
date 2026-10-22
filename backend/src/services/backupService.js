@@ -12,10 +12,10 @@ const TABLES = [
   'yy_users', 'yy_accounts', 'yy_categories', 'yy_transactions', 'yy_recurring_items',
   'yy_events', 'yy_budgets', 'yy_moods', 'yy_notes', 'yy_announcements',
   'yy_posts', 'yy_post_comments', 'yy_post_reactions', 'yy_post_reports',
-  'yy_payments', 'yy_plan_notices', 'yy_bug_reports', 'yy_moderation_actions',
+  'yy_payments', 'yy_plan_notices', 'yy_bug_reports', 'yy_moderation_actions', 'yy_settings',
 ];
 // 後來才新增的表:資料庫還沒建立時略過,不讓整份備份失敗
-const OPTIONAL = new Set(['yy_payments', 'yy_plan_notices', 'yy_bug_reports', 'yy_moderation_actions']);
+const OPTIONAL = new Set(['yy_payments', 'yy_plan_notices', 'yy_bug_reports', 'yy_moderation_actions', 'yy_settings']);
 const PAGE = 1000;
 
 async function dumpTable(table) {

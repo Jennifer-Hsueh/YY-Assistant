@@ -20,7 +20,7 @@ const TEXT = {
     chooseLocked: '這個月已經換過了，下個月才能再換',
     choice: { ledger: '記帳', calendar: '行事曆' },
     prices: '方案價格',
-    priceRows: [['進階 A／B／C', 59], ['進階 A／B／C＋社群', 69], ['完整版', 99]],
+    priceRows: [['進階 A／B／C', 69], ['進階 A／B／C＋社群', 79], ['完整版', 109]],
     perMonth: '元／月',
     perYear: (y) => `年繳 ${y} 元`,
     planDesc: {
@@ -61,7 +61,7 @@ const TEXT = {
     chooseLocked: 'Already switched this month — try again next month',
     choice: { ledger: 'Ledger', calendar: 'Calendar' },
     prices: 'Pricing',
-    priceRows: [['Plus A / B / C', 59], ['Plus A / B / C + Community', 69], ['Complete', 99]],
+    priceRows: [['Plus A / B / C', 69], ['Plus A / B / C + Community', 79], ['Complete', 109]],
     perMonth: 'TWD / month',
     perYear: (y) => `${y} TWD / year`,
     planDesc: {

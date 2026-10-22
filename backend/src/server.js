@@ -94,6 +94,16 @@ app.get('/cron/backup', async (req, res) => {
   }
 });
 
+// 公開:測試名額(入口頁、註冊頁顯示)
+app.get('/api/public/beta', async (req, res) => {
+  try {
+    const { limit, used, remaining, full } = await require('./lib/beta').betaStatus();
+    res.json({ beta: { limit, used, remaining, full } });
+  } catch (err) {
+    console.error('[public.beta]', err);
+    res.status(500).json({ error: 'Failed to load beta status' });
+  }
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/accounts', accountRoutes);
