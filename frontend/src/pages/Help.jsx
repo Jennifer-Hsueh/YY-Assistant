@@ -2,9 +2,16 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { isNative } from '../lib/platform';
+import { useBeta } from '../lib/useBeta';
 
 // 使用說明(內容只有中文;要修改直接改下面的 SECTIONS)
 const SECTIONS = [
+  { title: '測試版', beta: true, items: [
+    '目前是測試版，開放有限名額的測試者使用，測試期間可以使用全部功能。',
+    '目前暫不限定測試結束日期；決定後會提前兩週以公告通知。',
+    '測試結束後，測試期間輸入的資料會清除，請在結束前到「設定 → 資料匯出／備份」下載備份檔。',
+    '使用上遇到問題或有建議，歡迎用「設定 → 故障通報」告訴我們。',
+  ] },
   { title: '開始使用', web: true, items: [
     'iPhone：用 Safari 開啟網站 → 點下方「分享」→「加入主畫面」，之後從主畫面的 YY手帳 圖示開啟。要收到通知，一定要從主畫面開啟。',
     'Android：用 Chrome 開啟網站 → 右上角選單 →「安裝應用程式」或「加到主畫面」。',
@@ -61,7 +68,8 @@ const SECTIONS = [
 
 export default function Help() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
-  const sections = SECTIONS.filter((s) => !(s.web && isNative));
+  const beta = useBeta();
+  const sections = SECTIONS.filter((s) => !(s.web && isNative) && !(s.beta && !beta?.active));
 
   return (
     <div className="mx-auto max-w-xl px-4 pt-4 pb-40 md:max-w-3xl md:px-8 md:py-10">

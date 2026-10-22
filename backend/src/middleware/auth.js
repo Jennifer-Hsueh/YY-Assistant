@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 const { computeEntitlements, has } = require('../lib/entitlements');
+const { withBeta, getBeta } = require('../lib/beta');
 
 // 帳號狀態快取:每位使用者最多 60 秒查一次資料庫(停用 / 最後上線時間)
 const STATUS_TTL_MS = 60 * 1000;
@@ -63,7 +64,8 @@ async function requireAuth(req, res, next) {
     const status = await loadStatus(decoded.id);
     if (!status.exists) return res.status(401).json({ error: 'Invalid or expired token' });
     if (status.disabled) return res.status(401).json({ error: '帳號已停用', code: 'ACCOUNT_DISABLED' });
-    if (status.row) req.ent = computeEntitlements(status.row);
+    if (status.row) req.ent = withBeta(computeEntitlements(status.row));
+    getBeta().catch(() => {}); // 背景更新測試版設定(有快取)
   } catch (err) {
     // 查不到狀態時不擋住使用者(資料庫短暫異常)
     console.error('[auth.status]', err.message);

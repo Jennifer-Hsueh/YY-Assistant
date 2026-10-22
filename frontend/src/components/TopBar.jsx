@@ -2,10 +2,13 @@ import { LogOut, Languages } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import AnnouncementBell from './AnnouncementBell';
+import { BetaTag } from './BrandMark';
+import { useBeta } from '../lib/useBeta';
 
 export default function TopBar() {
   const { logout } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
+  const beta = useBeta();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden" style={{ paddingTop: 'var(--sat, 0px)' }}>
@@ -16,6 +19,7 @@ export default function TopBar() {
             <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', display: 'inline-block' }}>YY手帳</span>
             <span className="text-muted-foreground" style={{ fontSize: '12px', display: 'inline-block' }}>Assistant</span>
           </div>
+          {beta?.active && <span className="mb-1"><BetaTag lang={language} /></span>}
         </div>
         <div className="flex items-center gap-3">
           <AnnouncementBell />

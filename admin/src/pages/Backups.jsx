@@ -184,7 +184,7 @@ export default function Backups() {
             ) : list.map((b) => (
               <tr key={b.path} className={selected === b.path ? 'bg-muted/60' : ''}>
                 <td className="num px-4 py-2.5">{b.name}</td>
-                <td className="px-3 py-2.5">{b.folder === 'weekly' ? <Badge tone="ink">每週備份</Badge> : <Badge tone="amber">還原前備份</Badge>}</td>
+                <td className="px-3 py-2.5">{b.folder === 'weekly' ? <Badge tone="ink">每週備份</Badge> : b.folder === 'beta-end' ? <Badge tone="green">測試結束備份</Badge> : <Badge tone="amber">還原前備份</Badge>}</td>
                 <td className="num px-3 py-2.5 text-muted-foreground">{fmtDateTime(b.created_at)}</td>
                 <td className="num px-3 py-2.5 text-muted-foreground">{kb(b.size)}</td>
                 <td className="px-4 py-2.5 text-right">

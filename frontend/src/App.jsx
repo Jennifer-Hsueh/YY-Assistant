@@ -14,6 +14,7 @@ import Help from './pages/Help';
 import Landing from './pages/Landing';
 import { isNative } from './lib/platform';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
+import BetaEndBanner from './components/BetaEndBanner';
 import { initNativeApp } from './lib/nativeApp';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -48,6 +49,7 @@ function ProtectedLayout({ children }) {
       <div className="pb-[env(safe-area-inset-bottom)] md:pb-0 md:pl-56">
         <TopBar />
         <ProfileErrorBanner />
+        <BetaEndBanner />
         {children}
       </div>
       <BottomNav />

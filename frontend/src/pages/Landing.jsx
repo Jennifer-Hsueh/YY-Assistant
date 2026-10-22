@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BrandMark, { BetaTag } from '../components/BrandMark';
-import { api } from '../lib/api';
+import { useBeta } from '../lib/useBeta';
 import { useLanguage } from '../context/LanguageContext';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
@@ -136,8 +136,7 @@ export default function Landing() {
   const deck = useRef(null);
   const [active, setActive] = useState(0);
   const { language, toggleLanguage } = useLanguage();
-  const [beta, setBeta] = useState(null);
-  useEffect(() => { api.getBeta().then(({ beta: b }) => setBeta(b)).catch(() => {}); }, []);
+  const beta = useBeta();
   const full = !!beta?.full;
   const T = COPY[language] || COPY.zh;
   const PAGES = T.pages;
@@ -203,10 +202,12 @@ export default function Landing() {
         <section className="landing-page" aria-roledescription="slide" aria-label={`1 / ${PAGES.length}：${PAGES[0]}`}>
           <div className="landing-inner md:grid-cols-[1.15fr_1fr]">
             <div className="order-2 md:order-1">
-              <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-foreground/75">
-                <BetaTag lang={language} />
-                {beta && (full ? T.betaFullLine(beta.limit) : T.betaLine(beta.limit, beta.remaining))}
-              </p>
+              {beta?.active && (
+                <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-foreground/75">
+                  <BetaTag lang={language} />
+                  {full ? T.betaFullLine(beta.limit) : T.betaLine(beta.limit, beta.remaining)}
+                </p>
+              )}
               <h1 className={`landing-serif landing-hero-title ${language === 'en' ? 'landing-hero-title-en' : ''}`} style={{ color: 'var(--ink)' }}>
                 {T.heroTitle[0]}<br />{T.heroTitle[1]}
               </h1>

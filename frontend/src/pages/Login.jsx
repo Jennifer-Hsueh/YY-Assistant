@@ -7,8 +7,10 @@ import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { isNative } from '../lib/platform';
 import { HelloBrand } from '../components/BrandMark';
+import { useBeta } from '../lib/useBeta';
 
 export default function Login() {
+  const beta = useBeta();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,7 +54,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
-        <HelloBrand greeting="歡迎回來！" beta />
+        <HelloBrand greeting="歡迎回來！" beta={!!beta?.active} />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>

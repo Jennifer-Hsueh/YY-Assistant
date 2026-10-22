@@ -6,6 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { navTabs, isTabActive } from './navTabs';
 import { UnreadBadge } from './AnnouncementBell';
 import { useAnnStatus } from '../lib/annStatus';
+import { BetaTag } from './BrandMark';
+import { useBeta } from '../lib/useBeta';
 
 export default function Sidebar() {
   const { logout } = useAuth();
@@ -13,6 +15,7 @@ export default function Sidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { unread } = useAnnStatus();
+  const beta = useBeta();
   const groupOf = (path) => navTabs.find((tb) => tb.children && isTabActive(tb, path))?.to || null;
   const [openGroup, setOpenGroup] = useState(() => groupOf(pathname));
 
@@ -37,6 +40,7 @@ export default function Sidebar() {
         <div className="flex flex-col items-center gap-1 leading-none">
           <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', display: 'inline-block' }}>YY手帳</span>
           <span className="text-muted-foreground" style={{ fontSize: '12px', display: 'inline-block' }}>Assistant</span>
+          {beta?.active && <span className="mt-1"><BetaTag lang={language} /></span>}
         </div>
       </div>
 

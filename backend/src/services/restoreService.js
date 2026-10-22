@@ -5,7 +5,7 @@ const { buildSnapshot, ensureBucket, TABLES, BUCKET } = require('./backupService
 // 從每週備份還原(管理後台使用)
 // - 全站還原:先自動把「目前的資料」存成還原前備份,再清空所有資料表、依序寫回備份內容
 // - 單一使用者還原:只換掉那位使用者的記帳、行事曆、記事、心情與社群資料
-const FOLDERS = ['weekly', 'pre-restore'];
+const FOLDERS = ['weekly', 'pre-restore', 'beta-end'];
 const PRE_KEEP = 5;
 const CHUNK = 500;
 // 刪除全部資料時要用一個一定有值的欄位當條件
@@ -17,7 +17,7 @@ const USER_TABLES = [
 ];
 const POST_CHILDREN = ['yy_post_comments', 'yy_post_reactions', 'yy_post_reports'];
 
-const validPath = (p) => typeof p === 'string' && /^(weekly|pre-restore)\/[A-Za-z0-9._-]+\.json\.gz$/.test(p);
+const validPath = (p) => typeof p === 'string' && /^(weekly|pre-restore|beta-end)\/[A-Za-z0-9._-]+\.json\.gz$/.test(p);
 
 async function listBackups() {
   const out = [];
@@ -171,4 +171,4 @@ async function restoreUser(backup, userId) {
   }
 }
 
-module.exports = { listBackups, readBackup, downloadRaw, summarize, userCounts, restoreAll, restoreUser, validPath };
+module.exports = { USER_TABLES, listBackups, readBackup, downloadRaw, summarize, userCounts, restoreAll, restoreUser, validPath };

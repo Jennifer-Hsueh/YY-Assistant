@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { useState } from 'react';
+import { useBeta } from '../lib/useBeta';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -20,8 +20,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [doc, setDoc] = useState(null);
-  const [beta, setBeta] = useState(null);
-  useEffect(() => { api.getBeta().then(({ beta: b }) => setBeta(b)).catch(() => {}); }, []);
+  const beta = useBeta();
   const full = !!beta?.full;
 
   async function handleSubmit(e) {
@@ -43,7 +42,7 @@ export default function Register() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
-        <HelloBrand greeting="一起來記錄吧！" beta />
+        <HelloBrand greeting="一起來記錄吧！" beta={!!beta?.active} />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
@@ -52,7 +51,11 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {full && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">目前 {beta.limit} 位測試名額已滿，謝謝你的關注</p>}
-            {!full && beta && <p className="text-xs text-muted-foreground">測試版開放 {beta.limit} 位測試者，還有 {beta.remaining} 個名額</p>}
+            {!full && beta?.active && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                測試版開放 {beta.limit} 位測試者，還有 {beta.remaining} 個名額。目前暫不限定測試結束日期，決定後會提前兩週通知，屆時請自行備份資料。
+              </p>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

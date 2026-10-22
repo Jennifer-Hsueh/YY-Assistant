@@ -430,13 +430,32 @@ export default function UsersPage({ initial, selfId }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
+  // 勾選刪除(管理員不能勾)
+  const [picked, setPicked] = useState(() => new Set());
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [delText, setDelText] = useState('');
+  const [delBusy, setDelBusy] = useState(false);
+  const [delMsg, setDelMsg] = useState(null);
+  const [reload, setReload] = useState(0);
+  const togglePick = (id) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const pickable = (data?.users || []).filter((u) => u.role !== 'admin' && u.id !== selfId);
+  const allPicked = pickable.length > 0 && pickable.every((u) => picked.has(u.id));
+  async function deletePicked() {
+    setDelBusy(true); setDelMsg(null);
+    try {
+      const r = await api.bulkDeleteUsers([...picked], delText);
+      setDelMsg({ ok: true, text: `已刪除 ${r.deleted} 位使用者${r.skipped ? `（略過 ${r.skipped} 位管理員）` : ''}` });
+      setPicked(new Set()); setConfirmDel(false); setDelText(''); setReload((x) => x + 1);
+    } catch (e) { setDelMsg({ ok: false, text: e.message }); }
+    finally { setDelBusy(false); }
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
       api.users({ ...filters, page }).then((d) => { setData(d); setError(''); }).catch((e) => setError(e.message));
     }, filters.q ? 300 : 0);
     return () => clearTimeout(timer);
-  }, [filters, page]);
+  }, [filters, page, reload]);
 
   const setFilter = (k) => (e) => { setFilters((f) => ({ ...f, [k]: e.target.value })); setPage(1); };
   const hasFilter = Object.keys(emptyFilters).some((k) => filters[k]);
@@ -492,10 +511,34 @@ export default function UsersPage({ initial, selfId }) {
 
       {error && <p className="mb-3 text-sm text-danger">{error}</p>}
 
+      {picked.size > 0 && (
+        <Card className="mb-3 p-3">
+          {confirmDel ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm">刪除 {picked.size} 位使用者的帳號與所有資料（含社群照片），無法復原。確認請輸入「刪除」</p>
+              <div className="w-28"><input className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} /></div>
+              <Button variant="danger" disabled={delBusy || delText !== '刪除'} onClick={deletePicked}>確認刪除</Button>
+              <Button variant="outline" onClick={() => { setConfirmDel(false); setDelText(''); }}>取消</Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-sm">已勾選 {picked.size} 位</span>
+              <Button variant="outline" className="text-danger" onClick={() => setConfirmDel(true)}><Trash2 className="h-4 w-4" />刪除勾選的使用者</Button>
+              <Button variant="ghost" onClick={() => setPicked(new Set())}>取消勾選</Button>
+            </div>
+          )}
+        </Card>
+      )}
+      <Notice msg={delMsg} />
+
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
             <tr>
+              <th className="w-10 pl-4 py-2.5">
+                <input type="checkbox" aria-label="全選這一頁" checked={allPicked} disabled={pickable.length === 0}
+                  onChange={() => setPicked((s) => { const n = new Set(s); pickable.forEach((u) => (allPicked ? n.delete(u.id) : n.add(u.id))); return n; })} />
+              </th>
               <th className="px-4 py-2.5 font-medium">使用者 ID</th>
               <th className="px-3 py-2.5 font-medium">稱呼 / Email</th>
               <th className="px-3 py-2.5 font-medium">身份</th>
@@ -509,11 +552,16 @@ export default function UsersPage({ initial, selfId }) {
           </thead>
           <tbody className="divide-y divide-border">
             {!data ? (
-              <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">載入中…</td></tr>
+              <tr><td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">載入中…</td></tr>
             ) : data.users.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">沒有符合的使用者</td></tr>
+              <tr><td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">沒有符合的使用者</td></tr>
             ) : data.users.map((u) => (
               <tr key={u.id} onClick={() => setEditing(u)} className="cursor-pointer hover:bg-muted/40">
+                <td className="w-10 pl-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                  {u.role !== 'admin' && u.id !== selfId && (
+                    <input type="checkbox" aria-label={`勾選 ${u.email}`} checked={picked.has(u.id)} onChange={() => togglePick(u.id)} />
+                  )}
+                </td>
                 <td className="px-4 py-2.5"><CopyId id={u.id} /></td>
                 <td className="max-w-56 px-3 py-2.5">
                   <p className="truncate">{u.username || <span className="text-muted-foreground">(未設定)</span>}</p>

@@ -10,6 +10,8 @@ router.get('/me', c.me);
 router.get('/overview', c.overview);
 router.get('/settings/beta', c.getBetaSettings);
 router.put('/settings/beta', c.updateBetaSettings);
+router.post('/beta/clear-data', c.clearBetaData);
+router.post('/users/bulk-delete', c.bulkDeleteUsers);
 router.get('/users', c.listUsers);
 router.put('/users/:id', c.updateUser);
 router.post('/users/:id/reset-link', c.createResetLink);

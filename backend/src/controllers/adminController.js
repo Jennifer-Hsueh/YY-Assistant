@@ -8,6 +8,9 @@ const E = require('../lib/entitlements');
 const M = require('../services/moderation');
 const { sendEmail } = require('../services/emailService');
 const beta = require('../lib/beta');
+const zlib = require('zlib');
+const { buildSnapshot, ensureBucket } = require('../services/backupService');
+const { USER_TABLES } = require('../services/restoreService');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
 const ROLES = ['user', 'tester', 'admin'];
@@ -226,7 +229,7 @@ async function getBetaSettings(req, res) {
   try {
     return res.json({ beta: await beta.betaStatus() });
   } catch (err) {
-    return fail(res, 'getBetaSettings', err, '讀取測試名額失敗');
+    return fail(res, 'getBetaSettings', err, '讀取測試設定失敗');
   }
 }
 async function updateBetaSettings(req, res) {
@@ -239,9 +242,86 @@ async function updateBetaSettings(req, res) {
       updates.limit = n;
     }
     if (b.open !== undefined) updates.open = !!b.open;
-    return res.json({ beta: await beta.setBeta(updates) });
+    if (b.active !== undefined) updates.active = !!b.active;
+    if (b.ends_at !== undefined) {
+      if (b.ends_at === null || b.ends_at === '') updates.ends_at = null;
+      else if (beta.DATE_RE.test(b.ends_at)) updates.ends_at = b.ends_at;
+      else return res.status(400).json({ error: '日期格式不正確' });
+    }
+    const { before, status } = await beta.setBeta(updates);
+    // 設定(或修改)測試結束日:自動發一則公開的重要公告
+    if (updates.ends_at && updates.ends_at !== before.ends_at) {
+      const d = updates.ends_at.replace(/-/g, '/');
+      const { error } = await supabase.from('yy_announcements').insert({
+        title: `測試版將於 ${d} 結束`,
+        content: `感謝大家參與 YY手帳 測試！測試版將於 ${d} 結束，結束後測試期間的資料會清除。\n請在結束前到「設定 → 資料匯出／備份」下載備份檔，保留你的記帳與行程資料。`,
+        is_important: true,
+        published_at: new Date().toISOString(),
+      });
+      if (error) console.error('[adminController.updateBetaSettings] announce failed', error);
+    }
+    return res.json({ beta: status });
   } catch (err) {
-    return fail(res, 'updateBetaSettings', err, '更新測試名額失敗');
+    return fail(res, 'updateBetaSettings', err, '更新測試設定失敗');
+  }
+}
+
+// 刪除勾選的使用者(帳號與所有資料、社群照片;管理員與自己不會被刪)
+async function bulkDeleteUsers(req, res) {
+  try {
+    const { ids, confirm } = req.body || {};
+    if (confirm !== '刪除') return res.status(400).json({ error: '請輸入「刪除」確認' });
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '請勾選要刪除的使用者' });
+    if (ids.length > 500) return res.status(400).json({ error: '一次最多刪除 500 位' });
+    const { data: users, error } = await supabase.from('yy_users').select('id, email, role').in('id', ids);
+    if (error) throw error;
+    const targets = (users || []).filter((u) => u.role !== 'admin' && u.id !== req.user.id);
+    for (const u of targets) {
+      await supabase.from('yy_payments').update({ user_email: u.email }).eq('user_id', u.id);
+      const { error: dErr } = await supabase.from('yy_users').delete().eq('id', u.id);
+      if (dErr) throw dErr;
+      forgetUserStatus(u.id);
+      await communityImages.removeUserFolder(u.id);
+    }
+    console.log(`[adminController.bulkDeleteUsers] admin ${req.user.id} deleted ${targets.length} users`);
+    return res.json({ deleted: targets.length, skipped: ids.length - targets.length });
+  } catch (err) {
+    return fail(res, 'bulkDeleteUsers', err, '刪除失敗');
+  }
+}
+
+// 測試結束:先備份全站資料(beta-end/,不會自動刪除),再清空所有非管理員使用者輸入的資料
+// 帳號本身、方案、繳費、公告、故障通報、處置紀錄保留
+async function clearBetaData(req, res) {
+  try {
+    if ((req.body || {}).confirm !== '清空測試資料') return res.status(400).json({ error: '請輸入「清空測試資料」確認' });
+    await ensureBucket();
+    const snap = await buildSnapshot('beta-end');
+    const ts = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+    const path = `beta-end/yy-beta-end-${ts}.json.gz`;
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, zlib.gzipSync(Buffer.from(JSON.stringify(snap))), { contentType: 'application/gzip', upsert: true });
+    if (upErr) throw upErr;
+
+    const users = await fetchAll('yy_users', 'id, role');
+    const ids = users.filter((u) => u.role !== 'admin').map((u) => u.id);
+    const counts = {};
+    // 子資料先刪(回應、留言、檢舉 → 文章 → 其他)
+    const order = ['yy_post_reactions', 'yy_post_comments', 'yy_post_reports', ...USER_TABLES.filter((t) => !['yy_post_reactions', 'yy_post_comments', 'yy_post_reports'].includes(t))];
+    for (const table of order) {
+      counts[table] = 0;
+      for (let i = 0; i < ids.length; i += 200) {
+        const chunk = ids.slice(i, i + 200);
+        const { data, error } = await supabase.from(table).delete().in('user_id', chunk).select('user_id');
+        if (error) throw error;
+        counts[table] += (data || []).length;
+      }
+    }
+    for (const id of ids) await communityImages.removeUserFolder(id);
+    for (const id of ids) forgetUserStatus(id);
+    console.log('[adminController.clearBetaData]', { path, users: ids.length, counts });
+    return res.json({ backup: path, users: ids.length, counts });
+  } catch (err) {
+    return fail(res, 'clearBetaData', err, '清空失敗(已完成的部分不會還原,可用備份還原)');
   }
 }
 
@@ -697,7 +777,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  getBetaSettings, updateBetaSettings,
+  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,
