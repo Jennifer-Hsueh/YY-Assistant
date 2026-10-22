@@ -64,9 +64,9 @@ const COPY = {
     homeAlt: 'YY Assistant home screen: today’s events, monthly spending, budget, and to-dos',
     shotAlt: (name) => `YY Assistant ${name} screen`,
     features: [
-      { name: 'Budget', title: 'Every expense has its place', text: 'Track cash, bank, and credit card accounts with your own color-coded categories. Set rent and subscriptions as recurring, and they are recorded automatically when due.', points: ['List and calendar views', 'Monthly budgets and category stats', 'Multi-currency accounts'] },
+      { name: 'Ledger', title: 'Every expense has its place', text: 'Track cash, bank, and credit card accounts with your own color-coded categories. Set rent and subscriptions as recurring, and they are recorded automatically when due.', points: ['List and calendar views', 'Monthly budgets and category stats', 'Multi-currency accounts'] },
       { name: 'Calendar', title: 'Plan your days and get reminded on time', text: 'See the whole month at a glance, or plan the details week by week. Make weekly classes and monthly bill days recurring instead of adding them one by one.', points: ['Reminder notifications', 'Multi-day events', 'Color categories'] },
-      { name: 'Notes', title: 'Jot it down before you forget', text: 'Groceries, calls to return, a table to book. Write a quick line and check it off when it’s done. Your home page only shows what’s left.', points: ['Add from the home page', 'Check off when done'] },
+      { name: 'Ink Notes', title: 'Jot it down before you forget', text: 'Groceries, calls to return, a table to book. Write a quick line and check it off when it’s done. Your home page only shows what’s left.', points: ['Add from the home page', 'Check off when done'] },
       { name: 'Community', title: 'Chat with other notebook keepers', text: 'Share how your day went, swap money tips, and tell us which features you want next. Post anonymously, or keep a post just for yourself.', points: ['Anonymous or nickname posts', 'Up to 3 photos per post', 'Reporting and moderation'] },
     ],
     plansTitle: 'Free for your first three months',
@@ -89,7 +89,7 @@ const COPY = {
     terms: 'Terms of use',
     privacy: 'Privacy policy',
     contact: 'Contact us',
-    pages: ['Start free', 'Budget', 'Calendar', 'Notes', 'Community', 'Plans', 'On your phone'],
+    pages: ['Start free', 'Ledger', 'Calendar', 'Ink Notes', 'Community', 'Plans', 'On your phone'],
     prev: 'Previous page',
     next: 'Next page',
     toFirst: 'Back to the first page',
@@ -128,7 +128,9 @@ export default function Landing() {
   const { language, toggleLanguage } = useLanguage();
   const T = COPY[language] || COPY.zh;
   const PAGES = T.pages;
-  const FEATURES = FEATURE_META.map((m, i) => ({ ...m, ...T.features[i] }));
+  // 截圖跟著語言切換(英文版在 public/landing/en/)
+  const shot = (path) => (language === 'en' ? path.replace('/landing/', '/landing/en/') : path);
+  const FEATURES = FEATURE_META.map((m, i) => ({ ...m, ...T.features[i], shot: shot(m.shot) }));
 
   useEffect(() => {
     // 標題字型只在入口頁載入
@@ -203,7 +205,7 @@ export default function Landing() {
             </div>
             <div className="relative order-1 mx-auto md:order-2">
               <span className="landing-tape" aria-hidden="true" />
-              <Phone src="/landing/home.webp" alt={T.homeAlt} className="landing-deck-phone landing-hero-phone" eager />
+              <Phone src={shot('/landing/home.webp')} alt={T.homeAlt} className="landing-deck-phone landing-hero-phone" eager />
             </div>
           </div>
         </section>
