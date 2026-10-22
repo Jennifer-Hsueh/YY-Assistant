@@ -34,7 +34,8 @@ create table if not exists yy_users (
   basic_choice_changed_at timestamptz,
   trial_ends_at date, -- 空白 = 註冊日 + 3 個月
   terms_version text, -- 同意的使用條款版本(日期)
-  terms_accepted_at timestamptz
+  terms_accepted_at timestamptz,
+  community_suspended_until timestamptz -- 社群暫停到期時間(違規處理)
 );
 
 create table if not exists yy_password_reset_tokens (
@@ -47,6 +48,7 @@ create table if not exists yy_password_reset_tokens (
 );
 alter table yy_users add column if not exists terms_version text;
 alter table yy_users add column if not exists terms_accepted_at timestamptz;
+alter table yy_users add column if not exists community_suspended_until timestamptz;
 
 create index if not exists idx_password_reset_token_hash on yy_password_reset_tokens (token_hash);
 create index if not exists idx_password_reset_user on yy_password_reset_tokens (user_id);
@@ -263,6 +265,21 @@ create table if not exists yy_bug_reports (
 create index if not exists yy_bug_reports_status_idx on yy_bug_reports (status, created_at desc);
 
 -- ---------- 所有 yy_ 資料表開啟 RLS ----------
+
+-- 違規處理紀錄(使用條款第 12 條)
+create table if not exists yy_moderation_actions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  action text not null check (action in ('hide_post', 'restore_post', 'warn', 'suspend', 'lift', 'disable', 'enable')),
+  post_id uuid,
+  reason text,
+  days integer,
+  until timestamptz,
+  created_by uuid,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_moderation_user on yy_moderation_actions (user_id, created_at desc);
+
 do $$
 declare t record;
 begin

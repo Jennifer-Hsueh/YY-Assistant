@@ -28,8 +28,34 @@ function PostBody({ post }) {
   );
 }
 
+// 隱藏原因(與 App 的檢舉原因相同)
+const HIDE_REASONS = ['廣告／引流', '詐騙或要求轉帳', '騷擾、霸凌或仇恨言論', '色情或暴力內容', '公開他人個人資料', '鼓勵自我傷害或危險行為', '其他'];
+
+function HideForm({ busy, confirmMode, onSubmit, onCancel }) {
+  const [reason, setReason] = useState('');
+  const [detail, setDetail] = useState('');
+  const text = [reason, detail.trim()].filter(Boolean).join('：');
+  const ok = reason && (reason !== '其他' || detail.trim());
+  return (
+    <div className="space-y-2 rounded-lg border border-border p-3">
+      <p className="text-sm">{confirmMode ? '確認違規，選擇原因後會以個人公告通知作者' : '隱藏原因（會以個人公告通知作者）'}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {HIDE_REASONS.map((r) => (
+          <button key={r} type="button" onClick={() => setReason(r)} className={`rounded-full border px-2.5 py-1 text-xs ${reason === r ? 'border-ink bg-ink text-white' : 'border-border'}`}>{r}</button>
+        ))}
+      </div>
+      <input className="w-full rounded-md border border-border px-2 py-1.5 text-sm" placeholder={reason === '其他' ? '請說明原因' : '補充說明（選填）'} value={detail} maxLength={200} onChange={(e) => setDetail(e.target.value)} />
+      <div className="flex gap-2">
+        <Button disabled={busy || !ok} onClick={() => onSubmit(text)}>{confirmMode ? '確認並通知' : '隱藏並通知'}</Button>
+        <Button variant="outline" onClick={onCancel}>取消</Button>
+      </div>
+    </div>
+  );
+}
+
 function ReportCard({ post, onChanged, onRemoved }) {
   const [confirm, setConfirm] = useState(false);
+  const [hideMode, setHideMode] = useState(null); // 'hide' | 'confirm'
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,6 +65,11 @@ function ReportCard({ post, onChanged, onRemoved }) {
     try { await fn(); } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   const toggle = () => run(async () => { const { post: p } = await api.setHidden(post.id, !post.hidden); onChanged({ ...post, ...p, ...(p.hidden ? {} : { report_count: 0, reports: [] }) }); });
+  const hideWith = (reason) => run(async () => {
+    const { post: p } = await api.setHidden(post.id, true, { reason, confirm: hideMode === 'confirm' });
+    onChanged({ ...post, ...p });
+    setHideMode(null);
+  });
   const remove = () => run(async () => { await api.deletePost(post.id); onRemoved(post.id); });
 
   return (
@@ -66,7 +97,9 @@ function ReportCard({ post, onChanged, onRemoved }) {
         </div>
       )}
 
-      {confirm ? (
+      {hideMode ? (
+        <HideForm busy={busy} confirmMode={hideMode === 'confirm'} onSubmit={hideWith} onCancel={() => setHideMode(null)} />
+      ) : confirm ? (
         <div className="flex items-center gap-2 rounded-lg border border-danger/40 p-3">
           <p className="flex-1 text-sm">刪除後無法復原(含留言與回應),確定嗎?</p>
           <Button variant="danger" disabled={busy} onClick={remove}>確認刪除</Button>
@@ -75,9 +108,12 @@ function ReportCard({ post, onChanged, onRemoved }) {
       ) : (
         <div className="flex gap-2">
           {post.hidden ? (
-            <Button variant="outline" disabled={busy} onClick={toggle}><Eye className="h-4 w-4" />恢復顯示(清除檢舉)</Button>
+            <>
+              <Button variant="outline" disabled={busy} onClick={toggle}><Eye className="h-4 w-4" />恢復顯示(清除檢舉)</Button>
+              <Button variant="outline" disabled={busy} onClick={() => setHideMode('confirm')}>確認違規並通知作者</Button>
+            </>
           ) : (
-            <Button variant="outline" disabled={busy} onClick={toggle}><EyeOff className="h-4 w-4" />隱藏</Button>
+            <Button variant="outline" disabled={busy} onClick={() => setHideMode('hide')}><EyeOff className="h-4 w-4" />隱藏</Button>
           )}
           <Button variant="outline" className="text-danger" disabled={busy} onClick={() => setConfirm(true)}><Trash2 className="h-4 w-4" />刪除</Button>
         </div>

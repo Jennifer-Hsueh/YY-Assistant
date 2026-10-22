@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 const images = require('../services/communityImages');
+const moderation = require('../services/moderation');
 
 // 社群:三個板 + 「我的」。
 // 可見性一律由後端判斷 —— 私人文章只回傳給作者本人,
@@ -132,6 +133,11 @@ async function createPost(req, res) {
     if (board === 'mood' && mood != null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
     const keys = images.validKeys(req.user.id, req.body.images);
     if (keys === null) return res.status(400).json({ error: 'Invalid images' });
+    // 社群暫停期間只能發表僅自己可見的文章
+    if (visibility === 'public') {
+      const until = await moderation.suspendedUntil(req.user.id);
+      if (until) return moderation.suspendedError(res, until);
+    }
 
     const { data, error } = await supabase
       .from('yy_posts')
@@ -164,6 +170,10 @@ async function updatePost(req, res) {
     const updates = { updated_at: new Date().toISOString() };
     const { visibility, anonymous, mood, title, content } = req.body;
     if (visibility !== undefined) updates.visibility = visibility === 'public' ? 'public' : 'private';
+    if ((updates.visibility || post.visibility) === 'public') {
+      const until = await moderation.suspendedUntil(req.user.id);
+      if (until) return moderation.suspendedError(res, until);
+    }
     if (anonymous !== undefined) updates.anonymous = !!anonymous;
     if (mood !== undefined && post.board === 'mood') {
       if (mood !== null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
@@ -251,6 +261,10 @@ async function createComment(req, res) {
     const post = await fetchPost(req.params.id);
     if (!post || !canRead(post, req.user.id, false) || post.hidden) return res.status(404).json({ error: 'Post not found' });
     if (!commentsAllowed(post, req.user.id)) return res.status(403).json({ error: 'Comments are not allowed on this post' });
+    if (post.user_id !== req.user.id) {
+      const until = await moderation.suspendedUntil(req.user.id);
+      if (until) return moderation.suspendedError(res, until);
+    }
     const content = clean(req.body.content, MAX_CONTENT);
     if (!content) return res.status(400).json({ error: 'content is required' });
     const { data, error } = await supabase
@@ -299,6 +313,8 @@ async function react(req, res) {
     const { type } = req.body;
     const allowed = post.board === 'mood' ? MOOD_REACTIONS : ['like'];
     if (!allowed.includes(type)) return res.status(400).json({ error: 'Invalid reaction' });
+    const until = await moderation.suspendedUntil(req.user.id);
+    if (until) return moderation.suspendedError(res, until);
 
     const { data: existing } = await supabase
       .from('yy_post_reactions').select('type').eq('post_id', post.id).eq('user_id', req.user.id).maybeSingle();

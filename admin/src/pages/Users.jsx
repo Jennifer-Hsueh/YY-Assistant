@@ -35,6 +35,95 @@ function CopyId({ id }) {
   );
 }
 
+// 帳號欄:使用中/已停用(停用日期、原因)、社群暫停中
+const suspendedTill = (u) => (u.community_suspended_until && new Date(u.community_suspended_until) > new Date() ? u.community_suspended_until : null);
+function AccountState({ u }) {
+  const till = suspendedTill(u);
+  return (
+    <span className="flex flex-col items-start gap-0.5">
+      {u.is_disabled ? <Badge tone="red">已停用</Badge> : <Badge tone="green">使用中</Badge>}
+      {u.is_disabled && (
+        <span className="text-xs text-muted-foreground" title={u.disabled_reason || ''}>
+          {fmtDate(u.disabled_at)}{u.disabled_reason ? ` · ${u.disabled_reason.length > 12 ? `${u.disabled_reason.slice(0, 12)}…` : u.disabled_reason}` : ''}
+        </span>
+      )}
+      {till && <Badge tone="amber">社群暫停至 {fmtDate(till)}</Badge>}
+    </span>
+  );
+}
+
+const ACTION_LABEL = { hide_post: '隱藏文章', restore_post: '恢復文章', warn: '警告', suspend: '暫停社群', lift: '解除暫停', disable: '停用帳號', enable: '恢復使用' };
+
+// 違規處理(條款第 12 條):警告、暫停社群(第一次 7 天、之後 30 天)、解除暫停、處置紀錄
+function Moderation({ user, onUserChange }) {
+  const [data, setData] = useState(null);
+  const [mode, setMode] = useState(null); // 'warn' | 'suspend'
+  const [reason, setReason] = useState('');
+  const [days, setDays] = useState(7);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const load = () => api.moderation(user.id).then((d) => { setData(d); setDays(d.summary.suspend > 0 ? 30 : 7); }).catch((e) => setMsg({ ok: false, text: e.message }));
+  useEffect(() => { load(); }, [user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const till = suspendedTill(user);
+
+  async function submit(body, okText) {
+    setBusy(true); setMsg(null);
+    try {
+      const { user: u } = await api.moderate(user.id, body);
+      onUserChange(u);
+      setMode(null); setReason('');
+      setMsg({ ok: true, text: okText });
+      load();
+    } catch (e) { setMsg({ ok: false, text: e.message }); } finally { setBusy(false); }
+  }
+
+  const sum = data?.summary;
+  return (
+    <div className="mt-8 border-t border-border pt-5">
+      <p className="mb-2 text-sm font-medium">違規處理</p>
+      {sum && <p className="mb-3 text-xs text-muted-foreground">隱藏文章 {sum.hide_post} 次 · 警告 {sum.warn} 次 · 暫停社群 {sum.suspend} 次</p>}
+      {till && <p className="mb-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800">社群暫停中，到 {fmtDateTime(till)}</p>}
+      {mode ? (
+        <div className="space-y-2 rounded-lg border border-border p-3">
+          {mode === 'suspend' && (
+            <div className="flex gap-2 text-sm">
+              {[7, 30].map((d) => (
+                <button key={d} type="button" onClick={() => setDays(d)} className={`rounded-full border px-3 py-1 ${days === d ? 'border-ink bg-ink text-white' : 'border-border'}`}>{d} 天</button>
+              ))}
+            </div>
+          )}
+          <input className={inputCls} value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} placeholder="原因（會以個人公告通知使用者）" />
+          <div className="flex gap-2">
+            <Button className="flex-1" disabled={busy || !reason.trim()} onClick={() => submit(mode === 'warn' ? { action: 'warn', reason } : { action: 'suspend', days, reason }, mode === 'warn' ? '已警告並通知' : `已暫停社群 ${days} 天並通知`)}>
+              {mode === 'warn' ? '送出警告' : `暫停 ${days} 天`}
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => { setMode(null); setReason(''); }}>取消</Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={() => setMode('warn')}>警告</Button>
+          {till
+            ? <Button variant="outline" className="flex-1" disabled={busy} onClick={() => submit({ action: 'lift' }, '已解除暫停')}>解除暫停</Button>
+            : <Button variant="outline" className="flex-1" onClick={() => setMode('suspend')}>暫停社群</Button>}
+        </div>
+      )}
+      <Notice msg={msg} />
+      {data?.actions?.length > 0 && (
+        <ul className="mt-3 divide-y divide-border text-sm">
+          {data.actions.map((a) => (
+            <li key={a.id} className="py-2">
+              <span className="num text-xs text-muted-foreground">{fmtDateTime(a.created_at)}</span>
+              <span className="ml-2 font-medium">{ACTION_LABEL[a.action] || a.action}{a.days ? ` ${a.days} 天` : ''}</span>
+              {a.reason && <p className="text-xs text-muted-foreground">{a.reason}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function StatusBadge({ u }) {
   const e = u.ent || {};
   let extra = '';
@@ -303,6 +392,8 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
 
         <ResetLink key={`r-${user.id}`} user={user} />
 
+        {!isSelf && <Moderation key={`m-${user.id}`} user={user} onUserChange={syncFrom} />}
+
         <div className="mt-8 border-t border-border pt-5">
           <p className="mb-2 text-sm font-medium">帳號狀態</p>
           {user.is_disabled ? (
@@ -434,7 +525,7 @@ export default function UsersPage({ initial, selfId }) {
                 <td className="num px-3 py-2.5">{u.plan_expires_at || <span className="text-muted-foreground">—</span>}</td>
                 <td className="num px-3 py-2.5 text-muted-foreground">{fmtDate(u.created_at)}</td>
                 <td className="px-3 py-2.5 text-muted-foreground">{ago(u.last_active_at)}</td>
-                <td className="px-4 py-2.5">{u.is_disabled ? <Badge tone="red">已停用</Badge> : <Badge tone="green">使用中</Badge>}</td>
+                <td className="max-w-48 px-4 py-2.5"><AccountState u={u} /></td>
               </tr>
             ))}
           </tbody>

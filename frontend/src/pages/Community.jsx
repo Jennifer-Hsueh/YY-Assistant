@@ -89,11 +89,19 @@ export default function Community() {
   const { can } = usePlan();
   const member = can('community');
   const [error, setError] = useState('');
+  const [suspendedUntil, setSuspendedUntil] = useState(null);
+  // 社群暫停中:顯示後端給的說明;其他錯誤顯示一般訊息
+  const errText = (err) => (err?.code === 'COMMUNITY_SUSPENDED' ? err.message : t('cm_error'));
   const [posting, setPosting] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    api.getProfile().then(({ profile }) => { setIsAdmin(profile?.role === 'admin'); setCountry(profile?.country || null); }).catch(() => {});
+    api.getProfile().then(({ profile }) => {
+      setIsAdmin(profile?.role === 'admin');
+      setCountry(profile?.country || null);
+      const until = profile?.community_suspended_until;
+      setSuspendedUntil(until && new Date(until) > new Date() ? until : null);
+    }).catch(() => {});
   }, []);
 
   function refreshStats() {
@@ -113,7 +121,7 @@ export default function Community() {
       if (tab === 'mine') refreshStats();
     } catch (err) {
       console.error(err);
-      setError(t('cm_error'));
+      setError(errText(err));
     } finally {
       setLoading(false);
     }
@@ -157,7 +165,7 @@ export default function Community() {
       if (tab === 'mine') refreshStats();
     } catch (err) {
       console.error(err);
-      setError(t('cm_error'));
+      setError(errText(err));
     } finally {
       setPosting(false);
     }
@@ -329,6 +337,11 @@ export default function Community() {
         <div className="md:order-1">
           <div className="hidden md:block">{boardIntro}</div>
 
+          {suspendedUntil && (
+            <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              社群功能暫停到 {new Date(suspendedUntil).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })}，期間只能發表僅自己可見的文章
+            </p>
+          )}
           {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
 
           {loading ? (
@@ -338,7 +351,7 @@ export default function Community() {
           ) : (
             <div className="space-y-3">
               {posts.map((p) => (
-                <PostCard key={p.id} post={p} t={t} inMine={tab === 'mine'} isAdmin={isAdmin} onChange={replacePost} onRemove={removePost} onError={() => setError(t('cm_error'))} />
+                <PostCard key={p.id} post={p} t={t} inMine={tab === 'mine'} isAdmin={isAdmin} onChange={replacePost} onRemove={removePost} onError={(err) => setError(errText(err))} />
               ))}
               {hasMore && (
                 <button type="button" onClick={() => load({ append: true })} className="w-full py-2 text-sm text-muted-foreground underline">
@@ -376,7 +389,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
       : t('cm_anon');
 
   async function run(fn) {
-    try { await fn(); } catch (err) { console.error(err); onError(); }
+    try { await fn(); } catch (err) { console.error(err); onError(err); }
   }
 
   const react = (type) => (!member ? askUpgrade('community') : run(async () => { const { post: p } = await api.reactToPost(post.id, type); onChange(p); }));
@@ -407,7 +420,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
       setEditing(null);
     } catch (err) {
       console.error(err);
-      onError();
+      onError(err);
     } finally {
       setSavingEdit(false);
     }
@@ -623,7 +636,7 @@ function Comments({ post, t, isAdmin, onCountChange, onError }) {
       setText('');
     } catch (err) {
       console.error(err);
-      onError();
+      onError(err);
     }
   }
 
@@ -635,7 +648,7 @@ function Comments({ post, t, isAdmin, onCountChange, onError }) {
       onCountChange(next.length);
     } catch (err) {
       console.error(err);
-      onError();
+      onError(err);
     }
   }
 

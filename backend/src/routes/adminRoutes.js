@@ -11,6 +11,8 @@ router.get('/overview', c.overview);
 router.get('/users', c.listUsers);
 router.put('/users/:id', c.updateUser);
 router.post('/users/:id/reset-link', c.createResetLink);
+router.get('/users/:id/moderation', c.listModeration);
+router.post('/users/:id/moderation', c.moderateUser);
 router.get('/users/:id/payments', c.listPayments);
 router.post('/users/:id/payments', c.createPayment);
 router.delete('/users/:id/payments/:paymentId', c.deletePayment);

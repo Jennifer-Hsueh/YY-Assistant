@@ -5,18 +5,22 @@ const { BUCKET } = require('../services/backupService');
 const R = require('../services/restoreService');
 const communityImages = require('../services/communityImages');
 const E = require('../lib/entitlements');
+const M = require('../services/moderation');
+const { sendEmail } = require('../services/emailService');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
 const ROLES = ['user', 'tester', 'admin'];
 const PLANS = E.PLANS;
 const WISH_STATUSES = ['considering', 'planned', 'done'];
-const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, last_active_at, is_disabled, disabled_reason, disabled_at';
+const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, last_active_at, is_disabled, disabled_reason, disabled_at, community_suspended_until';
 const USER_PAGE = 50;
 const EXPIRING_DAYS = 30;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const DAY = 24 * 60 * 60 * 1000;
 const taipeiToday = () => E.taipeiDate();
+
+const escapeHtml = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function fail(res, where, err, msg) {
   console.error(`[adminController.${where}]`, err);
@@ -193,13 +197,83 @@ async function updateUser(req, res) {
       return res.status(400).json({ error: '不能停用自己或移除自己的管理員身份' });
     }
 
+    const { data: before } = await supabase.from('yy_users').select('is_disabled').eq('id', id).maybeSingle();
     const { data, error } = await supabase.from('yy_users').update(updates).eq('id', id).select(USER_COLUMNS).maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ error: '找不到這位使用者' });
     forgetUserStatus(id);
+    // 停用/恢復:留紀錄;停用時寄 Email 通知(寄信失敗不影響停用)
+    if (updates.is_disabled !== undefined && !!before?.is_disabled !== updates.is_disabled) {
+      await M.logAction({ user_id: id, action: updates.is_disabled ? 'disable' : 'enable', reason: updates.disabled_reason || null, created_by: req.user.id });
+      if (updates.is_disabled && data.email) {
+        const reason = updates.disabled_reason ? `<p>原因：${escapeHtml(updates.disabled_reason)}</p>` : '';
+        sendEmail({
+          to: data.email,
+          subject: '[YY手帳] 您的帳號已停用',
+          html: `<div style="font-family:sans-serif;line-height:1.6"><p>您好，</p><p>您的 YY手帳 帳號已依使用條款第 12 條停用，暫時無法登入。</p>${reason}<p>${M.appealText()}</p></div>`,
+        }).catch((e) => console.error('[adminController.updateUser] disable email failed', e));
+      }
+    }
     return res.json({ user: publicUser(data, taipeiToday()) });
   } catch (err) {
     return fail(res, 'updateUser', err, 'Failed to update user');
+  }
+}
+
+// ---------- 違規處理(條款第 12 條):警告、暫停社群、解除暫停、處置紀錄 ----------
+async function moderateUser(req, res) {
+  try {
+    const { action } = req.body || {};
+    const reason = String(req.body?.reason || '').trim().slice(0, 300);
+    const { data: user, error } = await supabase.from('yy_users').select('id, role').eq('id', req.params.id).maybeSingle();
+    if (error) throw error;
+    if (!user) return res.status(404).json({ error: '找不到這位使用者' });
+    if (user.id === req.user.id) return res.status(400).json({ error: '不能處置自己' });
+    let updates = null;
+    if (action === 'warn') {
+      if (!reason) return res.status(400).json({ error: '請填寫原因' });
+      await M.logAction({ user_id: user.id, action: 'warn', reason, created_by: req.user.id });
+      await M.notifyUser(user.id, '社群使用警告',
+        `您在社群的行為違反了社群規範（使用條款第 10 條）。\n原因：${reason}\n請遵守社群規範；再次違規將暫停社群功能。\n${M.appealText()}`);
+    } else if (action === 'suspend') {
+      const days = Number(req.body?.days);
+      if (!M.SUSPEND_DAYS.includes(days)) return res.status(400).json({ error: '暫停天數不正確' });
+      if (!reason) return res.status(400).json({ error: '請填寫原因' });
+      const until = new Date(Date.now() + days * DAY).toISOString();
+      updates = { community_suspended_until: until };
+      await M.logAction({ user_id: user.id, action: 'suspend', reason, days, until, created_by: req.user.id });
+      await M.notifyUser(user.id, '社群功能暫停通知',
+        `您在社群的行為違反了社群規範（使用條款第 10 條），依第 12 條暫停社群功能 ${days} 天，到 ${M.fmtDate(until)} 為止。期間不能公開發文、留言或回應，記帳、行事曆等功能照常。\n原因：${reason}\n${M.appealText()}`);
+    } else if (action === 'lift') {
+      updates = { community_suspended_until: null };
+      await M.logAction({ user_id: user.id, action: 'lift', reason: reason || null, created_by: req.user.id });
+      await M.notifyUser(user.id, '社群功能已恢復', '您的社群功能已恢復，可以正常發文、留言與回應。');
+    } else {
+      return res.status(400).json({ error: '處置項目不正確' });
+    }
+    let row = null;
+    if (updates) {
+      const { data, error: uErr } = await supabase.from('yy_users').update(updates).eq('id', user.id).select(USER_COLUMNS).single();
+      if (uErr) throw uErr;
+      row = data;
+    } else {
+      const { data } = await supabase.from('yy_users').select(USER_COLUMNS).eq('id', user.id).single();
+      row = data;
+    }
+    return res.json({ user: publicUser(row, taipeiToday()) });
+  } catch (err) {
+    return fail(res, 'moderateUser', err, '處置失敗');
+  }
+}
+
+async function listModeration(req, res) {
+  try {
+    const { data, error } = await supabase.from('yy_moderation_actions').select('*').eq('user_id', req.params.id).order('created_at', { ascending: false });
+    if (error) throw error;
+    const count = (a) => data.filter((r) => r.action === a).length;
+    return res.json({ actions: data, summary: { hide_post: count('hide_post'), warn: count('warn'), suspend: count('suspend'), disable: count('disable') } });
+  } catch (err) {
+    return fail(res, 'listModeration', err, '讀取處置紀錄失敗');
   }
 }
 
@@ -429,9 +503,22 @@ async function listReports(req, res) {
 async function setPostHidden(req, res) {
   try {
     const hidden = !!req.body?.hidden;
+    const reason = String(req.body?.reason || '').trim().slice(0, 300);
+    const { data: before } = await supabase.from('yy_posts').select('hidden').eq('id', req.params.id).maybeSingle();
     const { data, error } = await supabase.from('yy_posts').update({ hidden }).eq('id', req.params.id).select().maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ error: '找不到這篇文章' });
+    // 狀態有變,或已被檢舉自動隱藏的文章由管理員「確認違規」時,留紀錄並通知作者
+    if (!!before?.hidden !== hidden || (hidden && req.body?.confirm)) {
+      await M.logAction({ user_id: data.user_id, action: hidden ? 'hide_post' : 'restore_post', post_id: data.id, reason: reason || null, created_by: req.user.id });
+      const label = data.title || `${String(data.content || '').slice(0, 20)}${String(data.content || '').length > 20 ? '…' : ''}`;
+      if (hidden) {
+        await M.notifyUser(data.user_id, '您的文章已被隱藏',
+          `您發表的文章「${label}」因違反社群規範（使用條款第 10 條）已被隱藏，其他人看不到這篇文章。${reason ? `\n原因：${reason}` : ''}\n${M.appealText()}`);
+      } else if (before?.hidden) {
+        await M.notifyUser(data.user_id, '您的文章已恢復顯示', `您發表的文章「${label}」經審核後已恢復顯示。`);
+      }
+    }
     if (!hidden) {
       const { error: dErr } = await supabase.from('yy_post_reports').delete().eq('post_id', data.id);
       if (dErr) throw dErr;
@@ -585,7 +672,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  me, overview, listUsers, updateUser, createResetLink, listPayments, createPayment, deletePayment,
+  me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,
 };

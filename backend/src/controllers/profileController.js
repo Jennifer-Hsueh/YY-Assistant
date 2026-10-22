@@ -3,7 +3,7 @@ const { computeEntitlements, has } = require('../lib/entitlements');
 const { forgetUserStatus, planRequired } = require('../middleware/auth');
 const { TERMS_VERSION } = require('../lib/terms');
 
-const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country, terms_version';
+const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country, terms_version, community_suspended_until';
 
 // 回傳給前端:附上目前的方案權限;沒有「首頁圖片」功能時顯示預設圖片(原本的選擇保留)
 function withEnt(row) {
