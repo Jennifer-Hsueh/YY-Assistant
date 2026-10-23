@@ -53,7 +53,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-16">
       <AuthLangSwitch />
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">

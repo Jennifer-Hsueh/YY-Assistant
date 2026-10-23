@@ -21,6 +21,7 @@ const COPY = {
     ctaFull: '測試名額已滿',
     betaLine: (limit, remaining) => `目前開放 ${limit} 位測試者，還有 ${remaining} 個名額`,
     betaFullLine: (limit) => `${limit} 位測試名額已滿，謝謝你的關注`,
+    foundingLine: '🦫 測試期間使用滿 5 天，正式上線後送你一年全功能',
     peek: '看看能做什麼',
     homeAlt: 'YY手帳 首頁畫面：今日行程、本月累積消費、預算使用與待辦記事',
     shotAlt: (name) => `YY手帳 ${name}畫面`,
@@ -67,6 +68,7 @@ const COPY = {
     ctaFull: 'Beta is full',
     betaLine: (limit, remaining) => `Open to ${limit} beta testers, ${remaining} spots left`,
     betaFullLine: (limit) => `All ${limit} beta spots are taken. Thanks for your interest`,
+    foundingLine: '🦫 Use it on 5 days during the beta, get 1 year of full access free after launch',
     peek: 'See what it does',
     homeAlt: 'YY Assistant home screen: today’s events, monthly spending, budget, and to-dos',
     shotAlt: (name) => `YY Assistant ${name} screen`,
@@ -207,6 +209,9 @@ export default function Landing() {
                   <BetaTag lang={language} />
                   {full ? T.betaFullLine(beta.limit) : T.betaLine(beta.limit, beta.remaining)}
                 </p>
+              )}
+              {beta?.active && !full && (
+                <p className="mb-4 text-sm font-medium" style={{ color: 'var(--ink)' }}>{T.foundingLine}</p>
               )}
               <h1 className={`landing-serif landing-hero-title ${language === 'en' ? 'landing-hero-title-en' : ''}`} style={{ color: 'var(--ink)' }}>
                 {T.heroTitle[0]}<br />{T.heroTitle[1]}

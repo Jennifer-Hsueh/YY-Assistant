@@ -41,7 +41,7 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-16">
       <AuthLangSwitch />
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
@@ -58,6 +58,14 @@ export default function Register() {
               <p className="text-xs leading-relaxed text-muted-foreground">
                 {A.betaInfo(beta.limit, beta.remaining)}
               </p>
+            )}
+            {!full && beta?.active && (
+              <div className="rounded-md px-3 py-2.5" style={{ background: 'var(--secondary)' }}>
+                <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{A.foundingTitle}</p>
+                <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-muted-foreground">
+                  {A.foundingTerms.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+              </div>
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
