@@ -27,6 +27,8 @@ function getToken() {
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
+  // 英文介面:後端錯誤訊息改回英文
+  try { if (localStorage.getItem('language') === 'en') headers['X-Lang'] = 'en'; } catch { /* ignore */ }
   if (auth) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;

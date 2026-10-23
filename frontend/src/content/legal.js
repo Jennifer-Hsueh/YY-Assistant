@@ -155,7 +155,7 @@ export const PRIVACY = {
       rows: [
         ['Supabase', '資料庫、社群照片與每週備份檔', '新加坡'],
         ['Render', '網站與伺服器主機', '新加坡'],
-        ['Resend', '寄送密碼重設與方案通知信', '美國'],
+        ['Google（Gmail）／Resend', '寄送密碼重設與方案通知信', '美國等地'],
         ['Google Firebase', '推播通知', '美國等地'],
       ],
     } },

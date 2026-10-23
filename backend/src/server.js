@@ -33,6 +33,8 @@ app.use('/api/data', express.json({ limit: '15mb' }));
 // 社群照片以 base64 上傳(前端已壓縮,單張約 0.2–1.5MB)
 app.use('/api/community', express.json({ limit: '4mb' }));
 app.use(express.json({ limit: '2mb' }));
+// 英文介面:錯誤訊息換成英文(前端送 X-Lang: en)
+app.use(require('./lib/i18n').langMiddleware);
 
 app.get('/health', (req, res) => {
   const sc = schemaStatus();

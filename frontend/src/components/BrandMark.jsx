@@ -25,7 +25,7 @@ export default function BrandMark({ size = 'md', beta = false, lang = 'zh' }) {
 }
 
 // 登入、註冊頁上方:放大的 LOGO,進場時跳一下,旁邊有對話泡泡
-export function HelloBrand({ greeting, beta = false }) {
+export function HelloBrand({ greeting, beta = false, lang = 'zh' }) {
   return (
     <span className="flex flex-col items-center">
       <span className="relative">
@@ -35,7 +35,7 @@ export function HelloBrand({ greeting, beta = false }) {
       <span className="-mt-2 flex items-baseline gap-1.5">
         <span className="text-2xl font-semibold" style={{ color: 'var(--ink)' }}>YY手帳</span>
         <span className="text-base text-muted-foreground">Assistant</span>
-        {beta && <span className="self-center"><BetaTag /></span>}
+        {beta && <span className="self-center"><BetaTag lang={lang} /></span>}
       </span>
     </span>
   );

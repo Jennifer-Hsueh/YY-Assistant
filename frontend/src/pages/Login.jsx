@@ -7,10 +7,12 @@ import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { isNative } from '../lib/platform';
 import { HelloBrand } from '../components/BrandMark';
+import { useAuthText, AuthLangSwitch } from '../lib/authText';
 import { useBeta } from '../lib/useBeta';
 
 export default function Login() {
   const beta = useBeta();
+  const { A, language } = useAuthText();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,22 +54,23 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4">
+      <AuthLangSwitch />
       {/* LOGO(網頁版點了回入口頁) */}
       <Link to={isNative ? '#' : '/'} onClick={(e) => isNative && e.preventDefault()} className="mb-6" aria-label="YY手帳 Assistant">
-        <HelloBrand greeting="歡迎回來！" beta={!!beta?.active} />
+        <HelloBrand greeting={A.hello} beta={!!beta?.active} lang={language} />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">登入</CardTitle>
+          <CardTitle className="text-xl">{A.login}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {expired && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">登入已逾時，請重新登入</p>}
-            {deleted && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">帳號已刪除，謝謝您曾經使用 YY手帳</p>}
-            {disabled && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-destructive">此帳號已停用，如有疑問請與我們聯絡</p>}
+            {expired && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{A.expired}</p>}
+            {deleted && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{A.deleted}</p>}
+            {disabled && !error && <p className="rounded-md bg-muted px-3 py-2 text-sm text-destructive">{A.disabled}</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{A.email}</Label>
               <Input
                 id="email"
                 type="email"
@@ -77,7 +80,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">密碼 Password</Label>
+              <Label htmlFor="password">{A.password}</Label>
               <Input
                 id="password"
                 type="password"
@@ -87,17 +90,17 @@ export default function Login() {
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? '登入中…' : '登入'}
+              {loading ? A.loggingIn : A.login}
             </Button>
             <p className="text-center text-sm">
               <Link to="/forgot-password" className="text-muted-foreground underline">
-                忘記密碼?
+                {A.forgot}
               </Link>
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              還沒有帳號?{' '}
+              {A.noAccount}{' '}
               <Link to="/register" className="text-foreground underline">
-                註冊
+                {A.register}
               </Link>
             </p>
           </form>
