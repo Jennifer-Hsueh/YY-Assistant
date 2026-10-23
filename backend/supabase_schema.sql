@@ -53,6 +53,13 @@ alter table yy_users add column if not exists community_suspended_until timestam
 alter table yy_users add column if not exists founding_member boolean not null default false;
 alter table yy_users add column if not exists founding_marked_at timestamptz;
 alter table yy_users add column if not exists founding_granted_at date;
+-- 有使用的日子(台灣日期,每人每天一筆)
+create table if not exists yy_active_days (
+  user_id uuid not null references yy_users(id) on delete cascade,
+  day date not null,
+  primary key (user_id, day)
+);
+alter table yy_active_days enable row level security;
 
 create index if not exists idx_password_reset_token_hash on yy_password_reset_tokens (token_hash);
 create index if not exists idx_password_reset_user on yy_password_reset_tokens (user_id);

@@ -99,7 +99,7 @@ function BetaCard() {
           ) : (
             <Button variant="outline" disabled={busy || b.active || founding.total === founding.granted} onClick={() => setGranting(true)}>發放一年全功能</Button>
           )}
-          <p className="w-full text-xs text-muted-foreground">資格：自己建立至少 3 筆記帳、行程、記事、心情或文章。清空測試資料前會自動標記；正式上線後才能發放，一年從發放日起算。</p>
+          <p className="w-full text-xs text-muted-foreground">資格：測試期間有使用 5 天以上（開啟 App 或新增資料的日子）。清空測試資料前會自動標記；正式上線後才能發放，一年從發放日起算。</p>
         </div>
       )}
 

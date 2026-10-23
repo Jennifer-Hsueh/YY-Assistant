@@ -13,6 +13,7 @@ const REQUIRED = {
   yy_moderation_actions: 'id',
   yy_password_reset_tokens: 'id',
   yy_settings: 'key, value',
+  yy_active_days: 'user_id, day',
 };
 
 let status = { ok: null, missing: [] };

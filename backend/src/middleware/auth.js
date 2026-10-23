@@ -7,6 +7,16 @@ const { withBeta, getBeta } = require('../lib/beta');
 const STATUS_TTL_MS = 60 * 1000;
 const ACTIVE_TOUCH_MS = 60 * 60 * 1000; // 最後上線時間最多每小時更新一次
 const statusCache = new Map();
+const touchedDay = new Map(); // 使用者今天是否已記錄使用日
+
+// 記錄「有使用的日子」(台灣日期,每人每天一筆),創始會員資格用
+function touchActiveDay(userId) {
+  const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+  if (touchedDay.get(userId) === day) return;
+  touchedDay.set(userId, day);
+  supabase.from('yy_active_days').upsert({ user_id: userId, day }, { onConflict: 'user_id,day', ignoreDuplicates: true })
+    .then(({ error }) => { if (error) touchedDay.delete(userId); }, () => touchedDay.delete(userId));
+}
 
 function forgetUserStatus(userId) {
   statusCache.delete(userId);
@@ -31,6 +41,7 @@ async function loadStatus(userId) {
   const entry = { at: Date.now(), exists: !!data, disabled: !!data?.is_disabled, row: data ? entitlementRow(data) : null };
   statusCache.set(userId, entry);
   if (data && !data.is_disabled) {
+    touchActiveDay(userId);
     const last = data.last_active_at ? new Date(data.last_active_at).getTime() : 0;
     if (Date.now() - last > ACTIVE_TOUCH_MS) {
       supabase.from('yy_users').update({ last_active_at: new Date().toISOString() }).eq('id', userId)

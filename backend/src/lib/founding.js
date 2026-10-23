@@ -2,7 +2,10 @@
 const supabase = require('../config/supabase');
 const E = require('./entitlements');
 
-const MIN_RECORDS = 3; // 自己建立至少 3 筆記帳、行程、記事、心情或社群文章
+// 資格:測試期間有使用 5 天以上
+// 「有使用的日子」= 有開啟 App 的日子(yy_active_days,從 batch54 開始記錄)
+//                 + 有新增記帳、行程、記事、心情或文章的日子(可回溯到更早之前)
+const MIN_DAYS = 5;
 const CONTENT_TABLES = ['yy_transactions', 'yy_events', 'yy_notes', 'yy_moods', 'yy_posts'];
 const FREE_MONTHS = 12;
 
@@ -16,21 +19,25 @@ async function fetchCol(table, columns) {
   }
 }
 
-// 每位使用者自己建立的資料筆數
-async function recordCounts() {
-  const counts = new Map();
+const taipeiDay = (ts) => new Date(new Date(ts).getTime() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+
+// 每位使用者有使用的天數
+async function activeDayCounts() {
+  const days = new Map();
+  const add = (uid, day) => { if (!days.has(uid)) days.set(uid, new Set()); days.get(uid).add(day); };
+  for (const r of await fetchCol('yy_active_days', 'user_id, day')) add(r.user_id, r.day);
   for (const t of CONTENT_TABLES) {
-    for (const r of await fetchCol(t, 'user_id')) counts.set(r.user_id, (counts.get(r.user_id) || 0) + 1);
+    for (const r of await fetchCol(t, 'user_id, created_at')) if (r.created_at) add(r.user_id, taipeiDay(r.created_at));
   }
-  return counts;
+  return new Map([...days].map(([uid, set]) => [uid, set.size]));
 }
 
 // 標記符合資格的使用者(只會新增標記,不會取消;管理員不算)
 async function markEligible() {
   const users = await fetchCol('yy_users', 'id, role, is_disabled, founding_member');
-  const counts = await recordCounts();
+  const counts = await activeDayCounts();
   const ids = users
-    .filter((u) => u.role !== 'admin' && !u.is_disabled && !u.founding_member && (counts.get(u.id) || 0) >= MIN_RECORDS)
+    .filter((u) => u.role !== 'admin' && !u.is_disabled && !u.founding_member && (counts.get(u.id) || 0) >= MIN_DAYS)
     .map((u) => u.id);
   for (let i = 0; i < ids.length; i += 200) {
     const { error } = await supabase.from('yy_users')
@@ -80,4 +87,4 @@ async function grantAll(adminId, onGranted = () => {}) {
   return { granted: targets.length };
 }
 
-module.exports = { MIN_RECORDS, CONTENT_TABLES, FREE_MONTHS, markEligible, stats, grantAll };
+module.exports = { MIN_DAYS, CONTENT_TABLES, FREE_MONTHS, markEligible, stats, grantAll, activeDayCounts };
