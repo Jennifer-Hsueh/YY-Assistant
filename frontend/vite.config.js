@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -9,8 +10,16 @@ export default defineConfig(({ mode }) => ({
     react(),
     tailwindcss(),
     // APP 版(--mode native)不需要 PWA 的 service worker
+    // APP 版把新版本提示換成空的替身
+    mode === 'native' && {
+      name: 'native-pwa-stub',
+      enforce: 'pre',
+      resolveId(id) {
+        if (id === 'virtual:pwa-register/react') return fileURLToPath(new URL('./src/lib/pwaRegisterStub.js', import.meta.url));
+      },
+    },
     mode !== 'native' && VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'YY手帳 Assistant',

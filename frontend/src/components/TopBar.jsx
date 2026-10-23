@@ -1,3 +1,4 @@
+import { ROUND_SRCSET } from './BrandMark';
 import { LogOut, Languages } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,7 +15,7 @@ export default function TopBar() {
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden" style={{ paddingTop: 'var(--sat, 0px)' }}>
       <div className="mx-auto flex max-w-xl items-center justify-between px-4 pt-2 pb-4">
         <div className="flex items-end gap-4">
-          <img src="/round-logo.png" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.6, marginBottom: '-14px' }} />
+          <img src="/round-logo-192.png" srcSet={ROUND_SRCSET} sizes="72px" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.6, marginBottom: '-14px' }} />
           <div className="flex flex-col items-center gap-1 leading-none">
             <span className="font-semibold" style={{ color: 'var(--ink)', fontSize: '20px', display: 'inline-block' }}>YY手帳</span>
             <span className="text-muted-foreground" style={{ fontSize: '12px', display: 'inline-block' }}>Assistant</span>

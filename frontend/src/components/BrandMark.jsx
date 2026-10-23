@@ -1,3 +1,6 @@
+// 依螢幕解析度挑選大小剛好的 LOGO,避免大圖縮小後變模糊
+export const ROUND_SRCSET = '/round-logo-128.png 128w, /round-logo-192.png 192w, /round-logo-256.png 256w, /round-logo.png 512w';
+
 // LOGO + 「YY手帳 Assistant」(入口頁、登入頁、註冊頁共用)
 // 測試版標籤
 export function BetaTag({ lang = 'zh' }) {
@@ -14,7 +17,7 @@ export default function BrandMark({ size = 'md', beta = false, lang = 'zh' }) {
     : { img: 'h-14 w-14', name: 'text-xl', sub: 'text-sm' };
   return (
     <span className="flex items-center gap-2.5">
-      <img src="/round-logo.png" alt="" className={s.img} />
+      <img src="/round-logo-128.png" srcSet={ROUND_SRCSET} sizes="64px" alt="" className={s.img} />
       <span className="flex items-baseline gap-1.5 whitespace-nowrap">
         <span className={`${s.name} font-semibold`} style={{ color: 'var(--ink)' }}>YY手帳</span>
         <span className={`${s.sub} text-muted-foreground`}>Assistant</span>
@@ -28,11 +31,12 @@ export default function BrandMark({ size = 'md', beta = false, lang = 'zh' }) {
 export function HelloBrand({ greeting, beta = false, lang = 'zh' }) {
   return (
     <span className="flex flex-col items-center">
-      <span className="relative">
-        <img src="/round-logo.png" alt="" className="brand-hop h-28 w-28 md:h-32 md:w-32" />
-        <span className="brand-bubble">{greeting}</span>
+      <span className="relative mt-6">
+        <img src="/logo-mark-288.png" srcSet="/logo-mark-144.png 144w, /logo-mark-288.png 288w, /logo-mark-432.png 432w"
+          sizes="(min-width: 768px) 144px, 128px" alt="" className="brand-hop h-auto w-32 md:w-36" />
+        <span className="brand-bubble" style={{ left: '80%', top: '-22px' }}>{greeting}</span>
       </span>
-      <span className="-mt-2 flex items-baseline gap-1.5">
+      <span className="mt-3 flex items-baseline gap-1.5">
         <span className="text-2xl font-semibold" style={{ color: 'var(--ink)' }}>YY手帳</span>
         <span className="text-base text-muted-foreground">Assistant</span>
         {beta && <span className="self-center"><BetaTag lang={lang} /></span>}

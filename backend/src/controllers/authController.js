@@ -1,3 +1,4 @@
+const { seedDefaults } = require('../lib/defaultData');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -56,6 +57,13 @@ async function register(req, res) {
       .single();
 
     if (error) throw error;
+
+    // 預設分類與帳戶:失敗不影響註冊
+    try {
+      await seedDefaults(user.id, String(req.headers['x-lang'] || '').toLowerCase() === 'en' ? 'en' : 'zh');
+    } catch (e) {
+      console.error('[authController.register] seedDefaults', e.message);
+    }
 
     const token = signToken(user);
     return res.status(201).json({ user, token });

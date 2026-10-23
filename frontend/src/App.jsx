@@ -13,6 +13,7 @@ import Legal from './pages/Legal';
 import Help from './pages/Help';
 import Landing from './pages/Landing';
 import { isNative } from './lib/platform';
+import UpdatePrompt from './components/UpdatePrompt';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
 import BetaEndBanner from './components/BetaEndBanner';
 import { initNativeApp } from './lib/nativeApp';
@@ -82,6 +83,7 @@ export default function App() {
         <PlanProvider>
         <BrowserRouter>
           <NativeBridge />
+          {!isNative && <UpdatePrompt />}
           <Routes>
             <Route path="/terms" element={<Legal doc="terms" />} />
             <Route path="/privacy" element={<Legal doc="privacy" />} />

@@ -46,7 +46,10 @@ export async function requestPushToken() {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return null;
 
-  const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+    // 推播用獨立的範圍,不要蓋掉網頁本身的 service worker(否則會誤判為新版本)
+    scope: '/firebase-cloud-messaging-push-scope',
+  });
 
   try {
     const token = await getToken(messaging, {
