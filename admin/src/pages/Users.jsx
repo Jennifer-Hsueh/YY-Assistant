@@ -17,6 +17,7 @@ const STATUS_FILTER = {
   basic: '基本功能(全部)',
   staff: '不受限制',
   disabled: '已停用帳號',
+  founding: '創始會員',
 };
 const emptyFilters = { q: '', role: '', plan: '', status: '', exp_from: '', exp_to: '' };
 const today = () => fmtDate(new Date().toISOString());
@@ -287,6 +288,7 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
     trial_ends_at: user.trial_ends_at || '',
     last_payment_date: user.last_payment_date || '',
     plan_expires_at: user.plan_expires_at || '',
+    founding_member: !!user.founding_member,
   });
   const [reason, setReason] = useState('');
   const [confirmDisable, setConfirmDisable] = useState(false);
@@ -381,6 +383,10 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
           <label className={`flex items-center gap-2 text-sm ${ADDON_PLANS.includes(form.plan) ? '' : 'text-muted-foreground'}`}>
             <input type="checkbox" checked={ADDON_PLANS.includes(form.plan) && form.addon_community} disabled={!ADDON_PLANS.includes(form.plan)} onChange={set('addon_community')} />
             加購社群
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.founding_member} onChange={set('founding_member')} />
+            創始會員{user.founding_granted_at && <span className="text-xs text-muted-foreground">（{user.founding_granted_at} 已發放一年全功能）</span>}
           </label>
           <p className="text-xs text-muted-foreground">試用結束日空白 = 註冊日起三個月;權限截止日空白 = 付費方案不限期。繳費請用下方「繳費紀錄」登記,會自動延長截止日。</p>
           {isSelf && <p className="text-xs text-muted-foreground">不能修改自己的身份,也不能停用自己。</p>}
@@ -567,7 +573,7 @@ export default function UsersPage({ initial, selfId }) {
                   <p className="truncate">{u.username || <span className="text-muted-foreground">(未設定)</span>}</p>
                   <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                 </td>
-                <td className="px-3 py-2.5">{u.role === 'admin' ? <Badge tone="ink">{ROLE_LABEL.admin}</Badge> : ROLE_LABEL[u.role || 'user']}</td>
+                <td className="px-3 py-2.5"><span className="flex items-center gap-1.5">{u.role === 'admin' ? <Badge tone="ink">{ROLE_LABEL.admin}</Badge> : ROLE_LABEL[u.role || 'user']}{u.founding_member && <Badge tone="amber">創始</Badge>}</span></td>
                 <td className="px-3 py-2.5">{planText(u)}</td>
                 <td className="px-3 py-2.5"><StatusBadge u={u} /></td>
                 <td className="num px-3 py-2.5">{u.plan_expires_at || <span className="text-muted-foreground">—</span>}</td>

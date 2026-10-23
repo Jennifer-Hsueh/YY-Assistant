@@ -60,7 +60,7 @@ async function register(req, res) {
 
     // 預設分類與帳戶:失敗不影響註冊
     try {
-      await seedDefaults(user.id, String(req.headers['x-lang'] || '').toLowerCase() === 'en' ? 'en' : 'zh');
+      await seedDefaults(user.id, String(req.headers?.['x-lang'] || '').toLowerCase() === 'en' ? 'en' : 'zh');
     } catch (e) {
       console.error('[authController.register] seedDefaults', e.message);
     }

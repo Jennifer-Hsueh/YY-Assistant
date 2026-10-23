@@ -4,7 +4,7 @@ const supabase = require('../config/supabase');
 // 缺少時代表 SQL 沒有在 yy-assistant 專案執行(曾經跑到舊專案 line-life-app),Logs 會清楚提示。
 // 結果也會顯示在 /health 的 schema 欄位。
 const REQUIRED = {
-  yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until',
+  yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at',
   yy_posts: 'id, images, edited_at',
   yy_announcements: 'id, target_user_id',
   yy_payments: 'id, user_email',

@@ -49,6 +49,10 @@ create table if not exists yy_password_reset_tokens (
 alter table yy_users add column if not exists terms_version text;
 alter table yy_users add column if not exists terms_accepted_at timestamptz;
 alter table yy_users add column if not exists community_suspended_until timestamptz;
+-- 創始會員(測試期間有實際使用,正式上線後送一年全功能)
+alter table yy_users add column if not exists founding_member boolean not null default false;
+alter table yy_users add column if not exists founding_marked_at timestamptz;
+alter table yy_users add column if not exists founding_granted_at date;
 
 create index if not exists idx_password_reset_token_hash on yy_password_reset_tokens (token_hash);
 create index if not exists idx_password_reset_user on yy_password_reset_tokens (user_id);

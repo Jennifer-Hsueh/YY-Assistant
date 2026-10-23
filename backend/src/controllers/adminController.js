@@ -8,6 +8,7 @@ const E = require('../lib/entitlements');
 const M = require('../services/moderation');
 const { sendEmail } = require('../services/emailService');
 const beta = require('../lib/beta');
+const founding = require('../lib/founding');
 const zlib = require('zlib');
 const { buildSnapshot, ensureBucket } = require('../services/backupService');
 const { USER_TABLES } = require('../services/restoreService');
@@ -16,7 +17,7 @@ const { USER_TABLES } = require('../services/restoreService');
 const ROLES = ['user', 'tester', 'admin'];
 const PLANS = E.PLANS;
 const WISH_STATUSES = ['considering', 'planned', 'done'];
-const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, last_active_at, is_disabled, disabled_reason, disabled_at, community_suspended_until';
+const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, last_active_at, is_disabled, disabled_reason, disabled_at, community_suspended_until, founding_member, founding_marked_at, founding_granted_at';
 const USER_PAGE = 50;
 const EXPIRING_DAYS = 30;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -149,6 +150,7 @@ async function listUsers(req, res) {
     if (ROLES.includes(role)) users = users.filter(({ u }) => (u.role || 'user') === role);
     if (PLANS.includes(plan)) users = users.filter(({ u }) => (u.plan || 'basic') === plan);
     if (status === 'disabled') users = users.filter(({ u }) => u.is_disabled);
+    if (status === 'founding') users = users.filter(({ u }) => u.founding_member);
     if (['trial', 'basic', 'active', 'grace', 'staff'].includes(status)) users = users.filter(({ e }) => e.status === status);
     if (status === 'expiring' || status === 'expired') users = users.filter(({ e }) => e.expiry === status);
     if (status === 'trial_ending') users = users.filter(({ e }) => e.status === 'trial' && e.days_left <= EXPIRING_DAYS);
@@ -179,6 +181,10 @@ async function updateUser(req, res) {
       updates.plan = b.plan;
     }
     if (b.addon_community !== undefined) updates.addon_community = !!b.addon_community;
+    if (b.founding_member !== undefined) {
+      updates.founding_member = !!b.founding_member;
+      updates.founding_marked_at = b.founding_member ? new Date().toISOString() : null;
+    }
     if (b.basic_choice !== undefined) {
       if (b.basic_choice !== null && !['ledger', 'calendar'].includes(b.basic_choice)) return res.status(400).json({ error: '基本功能選項不正確' });
       updates.basic_choice = b.basic_choice; // 管理員代為更換不受每月一次的限制
@@ -227,7 +233,8 @@ async function updateUser(req, res) {
 // ---------- 測試版名額 ----------
 async function getBetaSettings(req, res) {
   try {
-    return res.json({ beta: await beta.betaStatus() });
+    const [b, f] = await Promise.all([beta.betaStatus(), founding.stats()]);
+    return res.json({ beta: b, founding: f });
   } catch (err) {
     return fail(res, 'getBetaSettings', err, '讀取測試設定失敗');
   }
@@ -295,6 +302,8 @@ async function bulkDeleteUsers(req, res) {
 async function clearBetaData(req, res) {
   try {
     if ((req.body || {}).confirm !== '清空測試資料') return res.status(400).json({ error: '請輸入「清空測試資料」確認' });
+    // 清空前先標記創始會員(資格看測試期間的資料筆數,清空後就算不出來了)
+    const { marked } = await founding.markEligible();
     await ensureBucket();
     const snap = await buildSnapshot('beta-end');
     const ts = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
@@ -319,9 +328,29 @@ async function clearBetaData(req, res) {
     for (const id of ids) await communityImages.removeUserFolder(id);
     for (const id of ids) forgetUserStatus(id);
     console.log('[adminController.clearBetaData]', { path, users: ids.length, counts });
-    return res.json({ backup: path, users: ids.length, counts });
+    return res.json({ backup: path, users: ids.length, counts, founding_marked: marked });
   } catch (err) {
     return fail(res, 'clearBetaData', err, '清空失敗(已完成的部分不會還原,可用備份還原)');
+  }
+}
+
+// ---------- 創始會員 ----------
+async function markFounding(req, res) {
+  try {
+    const r = await founding.markEligible();
+    return res.json({ ...r, founding: await founding.stats() });
+  } catch (err) {
+    return fail(res, 'markFounding', err, '標記失敗');
+  }
+}
+// 正式上線後才能發放(一年從發放日起算)
+async function grantFounding(req, res) {
+  try {
+    if ((await beta.betaStatus()).active) return res.status(400).json({ error: '請先結束測試版(正式上線)再發放' });
+    const r = await founding.grantAll(req.user.id, forgetUserStatus);
+    return res.json({ ...r, founding: await founding.stats() });
+  } catch (err) {
+    return fail(res, 'grantFounding', err, '發放失敗(已發放的部分會保留,可再按一次補發)');
   }
 }
 
@@ -777,7 +806,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData,
+  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,

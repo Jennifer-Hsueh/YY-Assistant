@@ -25,8 +25,10 @@ function BetaCard() {
   const [msg, setMsg] = useState(null);
   const [clearing, setClearing] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [founding, setFounding] = useState(null);
+  const [granting, setGranting] = useState(false);
   const sync = (beta) => { setB(beta); setLimit(String(beta.limit)); setEndsAt(beta.ends_at || ''); };
-  const load = () => api.beta().then(({ beta }) => sync(beta)).catch((e) => setMsg({ ok: false, text: e.message }));
+  const load = () => api.beta().then(({ beta, founding: f }) => { sync(beta); setFounding(f); }).catch((e) => setMsg({ ok: false, text: e.message }));
   useEffect(() => { load(); }, []);
   async function save(body, okText) {
     setBusy(true); setMsg(null);
@@ -39,9 +41,16 @@ function BetaCard() {
     try {
       const r = await api.clearBetaData(confirmText);
       const total = Object.values(r.counts).reduce((x, y) => x + y, 0);
-      setMsg({ ok: true, text: `已備份到 ${r.backup}，並清空 ${r.users} 位使用者的 ${total} 筆資料` });
+      setMsg({ ok: true, text: `已備份到 ${r.backup}，並清空 ${r.users} 位使用者的 ${total} 筆資料（清空前新標記 ${r.founding_marked} 位創始會員）` });
+      load();
       setClearing(false); setConfirmText('');
     } catch (e) { setMsg({ ok: false, text: e.message }); }
+    finally { setBusy(false); }
+  }
+  async function foundingAction(fn, okText) {
+    setBusy(true); setMsg(null);
+    try { const r = await fn(); setFounding(r.founding); setMsg({ ok: true, text: okText(r) }); setGranting(false); }
+    catch (e) { setMsg({ ok: false, text: e.message }); }
     finally { setBusy(false); }
   }
   if (!b) return null;
@@ -76,6 +85,23 @@ function BetaCard() {
           <p className="text-xs text-muted-foreground">設定結束日後，會自動發布重要公告，App 每頁上方也會提醒使用者備份。</p>
         </div>
       </div>
+
+      {founding && (
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          <p className="text-sm">創始會員 <span className="num font-semibold text-ink">{founding.total}</span> 位<span className="text-muted-foreground">（已發放 {founding.granted}）</span></p>
+          <Button variant="outline" disabled={busy} onClick={() => foundingAction(api.markFounding, (r) => `新標記 ${r.marked} 位`)}>標記符合資格的使用者</Button>
+          {granting ? (
+            <>
+              <span className="text-sm">發給 {founding.total - founding.granted} 位一年全功能？</span>
+              <Button disabled={busy} onClick={() => foundingAction(api.grantFounding, (r) => `已發放給 ${r.granted} 位`)}>確認發放</Button>
+              <Button variant="outline" onClick={() => setGranting(false)}>取消</Button>
+            </>
+          ) : (
+            <Button variant="outline" disabled={busy || b.active || founding.total === founding.granted} onClick={() => setGranting(true)}>發放一年全功能</Button>
+          )}
+          <p className="w-full text-xs text-muted-foreground">資格：自己建立至少 3 筆記帳、行程、記事、心情或文章。清空測試資料前會自動標記；正式上線後才能發放，一年從發放日起算。</p>
+        </div>
+      )}
 
       <div className="mt-5 border-t border-border pt-4">
         {clearing ? (
