@@ -149,5 +149,15 @@ getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
   reactToPost: (id, type) => request(`/community/posts/${id}/react`, { method: 'POST', body: { type } }),
   reportPost: (id, reason) => request(`/community/posts/${id}/report`, { method: 'POST', body: { reason } }),
   setWishStatus: (id, wish_status) => request(`/community/posts/${id}/status`, { method: 'PUT', body: { wish_status } }),
+  // 好友
+  getFriends: () => request('/friends'),
+  newFriendCode: () => request('/friends/code', { method: 'POST' }),
+  lookupFriend: (code) => request(`/friends/lookup?code=${encodeURIComponent(code)}`),
+  requestFriend: (code) => request('/friends/requests', { method: 'POST', body: { code } }),
+  acceptFriend: (id) => request(`/friends/${id}/accept`, { method: 'POST' }),
+  removeFriend: (id) => request(`/friends/${id}`, { method: 'DELETE' }),
+  blockUser: (id) => request(`/friends/${id}/block`, { method: 'POST' }),
+  unblockUser: (id) => request(`/friends/blocks/${id}`, { method: 'DELETE' }),
+  reportUser: (id, reason) => request(`/friends/${id}/report`, { method: 'POST', body: { reason } }),
 
 };

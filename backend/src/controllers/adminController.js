@@ -334,6 +334,38 @@ async function clearBetaData(req, res) {
   }
 }
 
+// ---------- 使用者檢舉(好友功能) ----------
+async function listUserReports(req, res) {
+  try {
+    const status = req.query.status === 'done' ? 'done' : 'new';
+    const { data, error } = await supabase.from('yy_user_reports').select('*').eq('status', status).order('created_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    const ids = [...new Set((data || []).flatMap((r) => [r.reporter_id, r.reported_id]))];
+    const { data: users, error: uErr } = ids.length ? await supabase.from('yy_users').select('id, email, username, is_disabled').in('id', ids) : { data: [] };
+    if (uErr) throw uErr;
+    const map = new Map((users || []).map((u) => [u.id, u]));
+    // 同一位被檢舉者累計被檢舉次數
+    const { data: all, error: aErr } = await supabase.from('yy_user_reports').select('reported_id');
+    if (aErr) throw aErr;
+    const times = {};
+    for (const r of all || []) times[r.reported_id] = (times[r.reported_id] || 0) + 1;
+    return res.json({ reports: (data || []).map((r) => ({ ...r, reporter: map.get(r.reporter_id) || null, reported: map.get(r.reported_id) || null, reported_times: times[r.reported_id] || 0 })) });
+  } catch (err) {
+    return fail(res, 'listUserReports', err, '讀取使用者檢舉失敗');
+  }
+}
+async function updateUserReport(req, res) {
+  try {
+    const status = req.body?.status === 'new' ? 'new' : 'done';
+    const { data, error } = await supabase.from('yy_user_reports').update({ status }).eq('id', req.params.id).select().maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: '找不到這筆檢舉' });
+    return res.json({ report: data });
+  } catch (err) {
+    return fail(res, 'updateUserReport', err, '更新失敗');
+  }
+}
+
 // ---------- 創始會員 ----------
 async function markFounding(req, res) {
   try {
@@ -806,7 +838,7 @@ async function restoreBackup(req, res) {
 
 module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding,
+  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding, listUserReports, updateUserReport,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,

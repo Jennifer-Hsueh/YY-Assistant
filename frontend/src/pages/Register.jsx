@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBeta } from '../lib/useBeta';
+import { afterAuthPath } from '../lib/pendingInvite';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -32,7 +33,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register(email, password);
-      navigate('/');
+      navigate(afterAuthPath('/'));
     } catch (err) {
       setError(err.message);
     } finally {

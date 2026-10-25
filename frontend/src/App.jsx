@@ -14,6 +14,7 @@ import Help from './pages/Help';
 import Landing from './pages/Landing';
 import { isNative } from './lib/platform';
 import UpdatePrompt from './components/UpdatePrompt';
+import AddFriend from './pages/AddFriend';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
 import BetaEndBanner from './components/BetaEndBanner';
 import { initNativeApp } from './lib/nativeApp';
@@ -76,6 +77,12 @@ function NativeBridge() {
   return null;
 }
 
+// 好友邀請連結:登入後顯示在一般版面裡;還沒登入由頁面自己導去註冊
+function AddFriendRoute() {
+  const { user } = useAuth();
+  return user ? <ProtectedLayout><AddFriend /></ProtectedLayout> : <AddFriend />;
+}
+
 export default function App() {
   return (
     <LanguageProvider>
@@ -93,6 +100,7 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route path="/" element={<RootRoute />} />
+            <Route path="/add-friend" element={<AddFriendRoute />} />
 
             <Route path="/transactions" element={<ProtectedLayout><Transactions /></ProtectedLayout>} />
             <Route path="/accounts" element={<ProtectedLayout><Accounts /></ProtectedLayout>} />

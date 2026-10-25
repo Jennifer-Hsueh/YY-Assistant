@@ -36,6 +36,8 @@ export const api = {
   clearBetaData: (confirm) => request('/admin/beta/clear-data', { method: 'POST', body: { confirm } }),
   markFounding: () => request('/admin/founding/mark', { method: 'POST', body: {} }),
   grantFounding: () => request('/admin/founding/grant', { method: 'POST', body: {} }),
+  userReports: (status) => request(`/admin/user-reports?status=${status}`),
+  setUserReport: (id, status) => request(`/admin/user-reports/${id}`, { method: 'PUT', body: { status } }),
   bulkDeleteUsers: (ids, confirm) => request('/admin/users/bulk-delete', { method: 'POST', body: { ids, confirm } }),
   users: (params) => request(`/admin/users${qs(params)}`),
   updateUser: (id, body) => request(`/admin/users/${id}`, { method: 'PUT', body }),

@@ -122,6 +122,7 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/friends', require('./routes/friendRoutes'));
 app.use('/api/admin', adminRoutes);
 
 // 404 fallback

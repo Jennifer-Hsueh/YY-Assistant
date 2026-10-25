@@ -306,3 +306,40 @@ begin
     execute format('alter table %I enable row level security', t.tablename);
   end loop;
 end $$;
+
+-- ---------- 好友 ----------
+alter table yy_users add column if not exists friend_code text;
+create unique index if not exists uq_users_friend_code on yy_users (friend_code) where friend_code is not null;
+
+create table if not exists yy_friendships (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references yy_users(id) on delete cascade,
+  addressee_id uuid not null references yy_users(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'accepted')),
+  created_at timestamptz not null default now(),
+  accepted_at timestamptz,
+  check (requester_id <> addressee_id)
+);
+create unique index if not exists uq_friend_pair on yy_friendships (least(requester_id, addressee_id), greatest(requester_id, addressee_id));
+create index if not exists idx_friend_requester on yy_friendships (requester_id);
+create index if not exists idx_friend_addressee on yy_friendships (addressee_id);
+alter table yy_friendships enable row level security;
+
+create table if not exists yy_user_blocks (
+  blocker_id uuid not null references yy_users(id) on delete cascade,
+  blocked_id uuid not null references yy_users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id)
+);
+alter table yy_user_blocks enable row level security;
+
+create table if not exists yy_user_reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter_id uuid not null references yy_users(id) on delete cascade,
+  reported_id uuid not null references yy_users(id) on delete cascade,
+  reason text,
+  status text not null default 'new' check (status in ('new', 'done')),
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_user_reports_status on yy_user_reports (status, created_at desc);
+alter table yy_user_reports enable row level security;

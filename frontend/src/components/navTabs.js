@@ -18,6 +18,7 @@ export const navTabs = [
     { to: '/community/finance', key: 'cm_board_finance' },
     { to: '/community/wish', key: 'cm_board_wish' },
     { to: '/community/mine', key: 'cm_mine' },
+    { to: '/community/friends', key: 'cm_friends' },
   ] },
   // 墨箋絮語:只放在網頁版左側選單;手機版從首頁卡片標題進入
   { to: '/notes', key: 'nav_notes', Icon: NotebookPen, color: 'var(--module-notes)', desktopOnly: true },

@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { isNative } from '../lib/platform';
+import { afterAuthPath } from '../lib/pendingInvite';
 import { HelloBrand } from '../components/BrandMark';
 import { useAuthText, AuthLangSwitch } from '../lib/authText';
 import { useBeta } from '../lib/useBeta';
@@ -32,7 +33,7 @@ export default function Login() {
     sessionStorage.removeItem('yy_account_deleted');
     return v;
   });
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from ? `${location.state.from.pathname}${location.state.from.search || ''}` : '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -44,7 +45,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      navigate(afterAuthPath(from), { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

@@ -213,17 +213,53 @@ function WishList() {
   );
 }
 
+function UserReports() {
+  const [status, setStatus] = useState('new');
+  const [list, setList] = useState(null);
+  const [error, setError] = useState('');
+  const load = () => { setList(null); api.userReports(status).then((r) => setList(r.reports)).catch((e) => setError(e.message)); };
+  useEffect(load, [status]);
+  async function mark(r, next) {
+    try { await api.setUserReport(r.id, next); setList((l) => l.filter((x) => x.id !== r.id)); }
+    catch (e) { setError(e.message); }
+  }
+  return (
+    <div>
+      <div className="mb-4"><Segmented value={status} onChange={setStatus} options={[['new', '待處理'], ['done', '已處理']]} /></div>
+      {error && <p className="mb-3 text-sm text-danger">{error}</p>}
+      {!list ? <p className="text-sm text-muted-foreground">載入中…</p> : list.length === 0 ? <p className="text-sm text-muted-foreground">沒有{status === 'new' ? '待處理' : '已處理'}的檢舉</p> : (
+        <div className="space-y-3">
+          {list.map((r) => (
+            <Card key={r.id} className="p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1 text-sm">
+                  <p><span className="text-muted-foreground">被檢舉：</span><Author a={r.reported} />{r.reported?.is_disabled && <span className="ml-2"><Badge tone="red">已停用</Badge></span>}{r.reported_times > 1 && <span className="ml-2"><Badge tone="amber">累計 {r.reported_times} 次</Badge></span>}</p>
+                  <p><span className="text-muted-foreground">檢舉人：</span><Author a={r.reporter} /></p>
+                  <p className="whitespace-pre-wrap break-words">{r.reason || <span className="text-muted-foreground">（未填原因）</span>}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDateTime(r.created_at)}{r.reported && <>・被檢舉者 ID：<span className="font-mono">{r.reported.id}</span></>}</p>
+                </div>
+                <Button variant="outline" onClick={() => mark(r, status === 'new' ? 'done' : 'new')}>{status === 'new' ? '標記已處理' : '改回待處理'}</Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+      <p className="mt-4 text-xs text-muted-foreground">檢舉人會自動封鎖對方。需要處置時，到「使用者管理」用 ID 搜尋，再停用帳號。</p>
+    </div>
+  );
+}
+
 export default function Reports({ initial }) {
   const [tab, setTab] = useState(initial?.tab === 'wish' ? 'wish' : 'reports');
   return (
     <>
       <PageTitle>檢舉與社群</PageTitle>
       <div className="mb-5 flex gap-6 border-b border-border text-sm">
-        {[['reports', '檢舉處理'], ['wish', '許願池狀態']].map(([k, label]) => (
+        {[['reports', '檢舉處理'], ['users', '使用者檢舉'], ['wish', '許願池狀態']].map(([k, label]) => (
           <button key={k} type="button" onClick={() => setTab(k)} className={`-mb-px border-b-2 pb-2.5 ${tab === k ? 'border-ink font-medium text-ink' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>{label}</button>
         ))}
       </div>
-      {tab === 'reports' ? <ReportList initialFilter={initial?.filter} /> : <WishList />}
+      {tab === 'reports' ? <ReportList initialFilter={initial?.filter} /> : tab === 'users' ? <UserReports /> : <WishList />}
     </>
   );
 }

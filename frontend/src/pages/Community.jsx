@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
+import Friends from './Friends';
 import { helplineText } from '../lib/helplines';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'finance', emoji: '🐷' },
   { key: 'wish', emoji: '✨' },
   { key: 'mine', emoji: '🔒' },
+  { key: 'friends', emoji: '🤝' },
 ];
 const BOARD_EMOJI = { mood: '🌦️', finance: '🐷', wish: '✨' };
 const MOODS = [
@@ -109,6 +111,7 @@ export default function Community() {
   }
 
   async function load({ append = false } = {}) {
+    if (tab === 'friends') return;
     if (!append) setLoading(true);
     setError('');
     try {
@@ -130,7 +133,7 @@ export default function Community() {
   useEffect(() => { load(); }, [tab, mineFilter]);
 
   useEffect(() => {
-    if (tab !== 'mine') setDraft((d) => ({ ...d, board: tab }));
+    if (tab !== 'mine' && tab !== 'friends') setDraft((d) => ({ ...d, board: tab }));
   }, [tab]);
 
   function switchTab(key) {
@@ -190,7 +193,7 @@ export default function Community() {
           onClick={() => switchTab(key)}
           className={`flex-1 whitespace-nowrap rounded-md px-1 py-1.5 text-[13px] transition-colors md:px-2.5 md:text-sm ${tab === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
         >
-          <span className="hidden md:inline">{emoji} </span>{key === 'mine' ? t('cm_mine') : t(`cm_board_${key}`)}
+          <span className="hidden md:inline">{emoji} </span>{key === 'mine' ? t('cm_mine') : key === 'friends' ? t('cm_friends') : t(`cm_board_${key}`)}
         </button>
       ))}
     </div>
@@ -291,6 +294,7 @@ export default function Community() {
       {/* 版別列:手機與網頁都橫跨整個內容寬度 */}
       {tabBar}
       {/* 手機版順序:版別 → 版名介紹 → 寫文章 → 文章列表 */}
+      {tab === 'friends' ? <Friends /> : (<>
       <div className="md:hidden">{boardIntro}</div>
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
@@ -362,6 +366,7 @@ export default function Community() {
           )}
         </div>
       </div>
+      </>)}
     </div>
   );
 }
