@@ -10,14 +10,16 @@ const stored = () => { try { return localStorage.getItem(LEDGER_KEY); } catch { 
 export function LedgerProvider({ children }) {
   const { user } = useAuth();
   const [ledgers, setLedgers] = useState([]);
+  const [invites, setInvites] = useState([]);
   const [currentId, setCurrentId] = useState(stored);
   const [version, setVersion] = useState(0); // 切換帳本時 +1,頁面重新載入資料
 
   const reload = useCallback(async () => {
     if (!user) return;
     try {
-      const { ledgers: list } = await api.listLedgers();
+      const { ledgers: list, invites: inv } = await api.listLedgers();
       setLedgers(list);
+      setInvites(inv || []);
       const keep = stored();
       if (!keep || !list.some((l) => l.id === keep)) {
         const def = list.find((l) => l.is_default) || list[0];
@@ -31,7 +33,7 @@ export function LedgerProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
-    if (!user) { setLedgers([]); setCurrentId(null); return; }
+    if (!user) { setLedgers([]); setInvites([]); setCurrentId(null); return; }
     setCurrentId(stored());
     reload();
   }, [user, reload]);
@@ -51,12 +53,12 @@ export function LedgerProvider({ children }) {
 
   const current = ledgers.find((l) => l.id === currentId) || null;
   return (
-    <LedgerContext.Provider value={{ ledgers, current, currentId, version, select, reload }}>
+    <LedgerContext.Provider value={{ ledgers, invites, current, currentId, version, select, reload }}>
       {children}
     </LedgerContext.Provider>
   );
 }
 
 export function useLedger() {
-  return useContext(LedgerContext) || { ledgers: [], current: null, currentId: null, version: 0, select: () => {}, reload: () => {} };
+  return useContext(LedgerContext) || { ledgers: [], invites: [], current: null, currentId: null, version: 0, select: () => {}, reload: () => {} };
 }

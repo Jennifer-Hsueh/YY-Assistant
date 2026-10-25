@@ -4,6 +4,8 @@ import { askUpgrade } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { useLedger } from '../context/LedgerContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -35,6 +37,15 @@ const emptyFilters = { from: '', to: '', type: 'all', account: '', category: '',
 
 export default function Transactions() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const { current: ledger } = useLedger();
+  // 共同帳本:別人記的帳顯示記錄人
+  const recorderName = (uid) => {
+    if (!ledger?.shared && !(ledger?.members || []).length) return null;
+    if (!uid || uid === user?.id) return null;
+    if (ledger.owner?.id === uid) return ledger.owner.name || '?';
+    return (ledger.members || []).find((m) => m.id === uid)?.name || '?';
+  };
   const [view, setView] = useState('list');
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -294,6 +305,7 @@ export default function Transactions() {
           </span>
           <span className="text-foreground"> - {tx.note || t('tx_no_note')}</span>
         </div>
+        {recorderName(tx.user_id) && <span className="ml-1.5 max-w-[5rem] shrink-0 truncate rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">{recorderName(tx.user_id)}</span>}
         <span className={`font-amount shrink-0 pl-2 flex items-baseline ${tx.type === 'income' ? 'text-green-600' : 'text-foreground'}`}>
           <span className="inline-block w-9 text-left">{accountCurrency(tx.account_id)}</span>
           <span className="inline-block w-16 text-right">{tx.type === 'income' ? '+' : '-'}{Number(tx.amount).toLocaleString()}</span>

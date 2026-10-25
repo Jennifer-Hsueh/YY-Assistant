@@ -1,3 +1,4 @@
+const { handOverShared } = require('../lib/ledgers');
 const { seedDefaults } = require('../lib/defaultData');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -270,6 +271,7 @@ async function deleteAccount(req, res) {
     // 繳費紀錄留 Email 快照(帳號刪除後 user_id 會變成空白)
     await supabase.from('yy_payments').update({ user_email: user.email }).eq('user_id', user.id);
 
+    await handOverShared(user.id);
     const { error: delErr } = await supabase.from('yy_users').delete().eq('id', user.id);
     if (delErr) throw delErr;
     forgetUserStatus(user.id);

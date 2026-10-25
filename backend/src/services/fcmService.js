@@ -20,6 +20,11 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
       return { sent: false, reason: 'plan has no notifications' };
     }
   }
+  // 共同帳本的成員通知:依使用者的「帳務通知」開關,不受方案限制
+  if (channel === 'ledger_shared') {
+    const { data: prefs } = await supabase.from('yy_users').select('notify_ledger').eq('id', userId).maybeSingle();
+    if (prefs && prefs.notify_ledger === false) return { sent: false, reason: 'user turned off ledger notifications' };
+  }
 
   const app = getFirebaseApp();
   if (!app) {

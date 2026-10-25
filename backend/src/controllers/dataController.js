@@ -31,14 +31,23 @@ async function insertChunks(table, rows) {
 async function exportData(req, res) {
   try {
     const uid = req.user.id;
-    const [ledgers, accounts, categories, transactions, events, recurring_items, budgets, moods, notes] = await Promise.all([
-      selectAll('yy_ledgers', uid),
-      selectAll('yy_accounts', uid),
+    // 帳本:匯出自己建立的帳本與裡面所有的紀錄(共同帳本含成員記的帳)
+    const ledgers = await selectAll('yy_ledgers', uid);
+    const ids = ledgers.map((l) => l.id);
+    const byLedger = async (table) => {
+      if (!ids.length) return [];
+      const { data, error } = await supabase.from(table).select('*').in('ledger_id', ids);
+      if (error) throw error;
+      return data.map(({ user_id, ...rest }) => rest);
+    };
+    const [accounts, categories, transactions, events, recurringMoney, recurringEvents, budgets, moods, notes] = await Promise.all([
+      byLedger('yy_accounts'),
       selectAll('yy_categories', uid),
-      selectAll('yy_transactions', uid),
+      byLedger('yy_transactions'),
       selectAll('yy_events', uid),
-      selectAll('yy_recurring_items', uid),
-      selectAll('yy_budgets', uid),
+      byLedger('yy_recurring_items'),
+      selectAll('yy_recurring_items', uid).then((rows) => rows.filter((r) => r.kind === 'event')),
+      byLedger('yy_budgets'),
       selectAll('yy_moods', uid),
       // 墨箋絮語:資料表尚未建立時不影響匯出
       selectAll('yy_notes', uid).catch(() => []),
@@ -47,7 +56,7 @@ async function exportData(req, res) {
       app: 'YY手帳',
       version: BACKUP_VERSION,
       exported_at: new Date().toISOString(),
-      data: { ledgers, accounts, categories, transactions, events, recurring_items, budgets, moods, notes },
+      data: { ledgers, accounts, categories, transactions, events, recurring_items: [...recurringMoney, ...recurringEvents], budgets, moods, notes },
     });
   } catch (err) {
     console.error('[dataController.exportData]', err);

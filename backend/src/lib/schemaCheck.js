@@ -16,6 +16,7 @@ const REQUIRED = {
   yy_active_days: 'user_id, day',
   yy_friendships: 'id, status',
   yy_ledgers: 'id, is_default',
+  yy_ledger_members: 'ledger_id, status',
   yy_transactions: 'id, ledger_id',
   yy_accounts: 'id, ledger_id',
   yy_budgets: 'id, ledger_id',

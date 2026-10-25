@@ -34,14 +34,43 @@ async function ensureDefault(userId, lang = 'zh') {
   return created;
 }
 
-// 使用者對某本帳本的權限:owner(自己的)或 null(看不到)
-// 之後共同帳本會加上 member(可編輯)與 left(已退出,只能查看)
+// 使用者對某本帳本的權限:
+// owner(建立者)、member(共同帳本成員,可編輯)、left(已退出,只能查看);邀請中或被移出看不到
 async function accessOf(userId, ledgerId) {
   const { data: ledger, error } = await supabase.from('yy_ledgers').select('*').eq('id', ledgerId).maybeSingle();
   if (error) throw error;
   if (!ledger) return null;
   if (ledger.user_id === userId) return { ledger, role: 'owner', canWrite: true };
+  const { data: m, error: mErr } = await supabase.from('yy_ledger_members').select('status')
+    .eq('ledger_id', ledgerId).eq('user_id', userId).maybeSingle();
+  if (mErr) throw mErr;
+  if (m?.status === 'active') return { ledger, role: 'member', canWrite: true };
+  if (m?.status === 'left') return { ledger, role: 'left', canWrite: false };
   return null;
+}
+
+// 共同帳本裡可以收到通知、算是「目前成員」的人:建立者+已加入的成員
+async function activeUserIds(ledger) {
+  const { data, error } = await supabase.from('yy_ledger_members').select('user_id')
+    .eq('ledger_id', ledger.id).eq('status', 'active');
+  if (error) throw error;
+  return [ledger.user_id, ...(data || []).map((m) => m.user_id)];
+}
+
+// 刪除帳號前:自己建立的共同帳本交給最早加入的成員,避免其他人的資料跟著被刪
+async function handOverShared(userId) {
+  const { data: own, error } = await supabase.from('yy_ledgers').select('id').eq('user_id', userId);
+  if (error) throw error;
+  for (const l of own || []) {
+    const { data: ms, error: mErr } = await supabase.from('yy_ledger_members').select('*').eq('ledger_id', l.id).eq('status', 'active');
+    if (mErr) throw mErr;
+    const heir = (ms || []).sort((a, b) => (a.joined_at || a.created_at).localeCompare(b.joined_at || b.created_at))[0];
+    if (!heir) continue;
+    const { error: e1 } = await supabase.from('yy_ledgers').update({ user_id: heir.user_id, is_default: false }).eq('id', l.id);
+    if (e1) throw e1;
+    const { error: e2 } = await supabase.from('yy_ledger_members').delete().eq('ledger_id', l.id).eq('user_id', heir.user_id);
+    if (e2) throw e2;
+  }
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -72,4 +101,4 @@ function ledgerWritable(req, res, next) {
   return res.status(403).json({ error: '這本帳本只能查看', code: 'LEDGER_READ_ONLY' });
 }
 
-module.exports = { LEDGER_TABLES, MAX_LEDGERS, NAME_MAX, DEFAULT_NAME, ensureDefault, adoptOrphans, accessOf, withLedger, ledgerWritable };
+module.exports = { LEDGER_TABLES, MAX_LEDGERS, NAME_MAX, DEFAULT_NAME, ensureDefault, adoptOrphans, accessOf, activeUserIds, handOverShared, withLedger, ledgerWritable };

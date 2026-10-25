@@ -378,3 +378,17 @@ create index if not exists idx_recurring_ledger on yy_recurring_items (ledger_id
 -- 預算改成「每本帳本、每個分類一筆」
 alter table yy_budgets drop constraint if exists yy_budgets_user_id_category_key;
 create unique index if not exists uq_budgets_ledger_category on yy_budgets (ledger_id, category);
+
+-- ---------- 共同帳本 ----------
+create table if not exists yy_ledger_members (
+  ledger_id uuid not null references yy_ledgers(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  status text not null default 'invited' check (status in ('invited', 'active', 'left')),
+  invited_by uuid references yy_users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  joined_at timestamptz,
+  left_at timestamptz,
+  primary key (ledger_id, user_id)
+);
+create index if not exists idx_ledger_members_user on yy_ledger_members (user_id);
+alter table yy_ledger_members enable row level security;

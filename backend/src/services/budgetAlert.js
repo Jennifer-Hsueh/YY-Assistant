@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const { sendPushToUser } = require('./fcmService');
 const { rateTo } = require('../controllers/exchangeRateController');
+const { activeUserIds } = require('../lib/ledgers');
 
 // 不算收支的分類
 const EXCLUDED = ['轉帳', '餘額調整'];
@@ -21,8 +22,10 @@ async function checkBudgetAfterExpense(userId, tx) {
 
   const { data: budgets } = await supabase.from('yy_budgets').select('category, amount').eq('ledger_id', ledgerId);
   // 不是預設帳本時,通知裡加上帳本名稱
-  const { data: ledger } = await supabase.from('yy_ledgers').select('name, is_default').eq('id', ledgerId).maybeSingle();
-  const ledgerName = ledger && !ledger.is_default ? ledger.name : null;
+  const { data: ledger } = await supabase.from('yy_ledgers').select('*').eq('id', ledgerId).maybeSingle();
+  // 共同帳本通知所有成員
+  const shared = ledger ? await activeUserIds(ledger) : [userId];
+  const ledgerName = ledger && (!ledger.is_default || shared.length > 1) ? ledger.name : null;
   const relevant = (budgets || []).filter((b) => b.category === '' || b.category === tx.category);
   if (relevant.length === 0) return { checked: false };
 
@@ -53,8 +56,8 @@ async function checkBudgetAfterExpense(userId, tx) {
     const name = ledgerName ? `【${ledgerName}】${base}` : base;
     const pct = Math.round(after * 100);
     alerts.push(`${name}已使用 ${pct}%`);
-    await sendPushToUser(userId, {
-      channel: 'ledger',
+    for (const recipient of shared) await sendPushToUser(recipient, {
+      channel: recipient === userId ? 'ledger' : 'ledger_shared',
       title: crossed >= 1 ? '⚠️ 預算已用完' : '💰 預算提醒',
       body: `${name}已使用 ${pct}%(NT$ ${Math.round(spent).toLocaleString()} / ${Number(b.amount).toLocaleString()})`,
       data: { url: '/' },

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
+import { LedgerInvites } from '../components/LedgerSwitcher';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
@@ -111,6 +112,7 @@ export default function Home() {
 )}
 
       <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
+      <LedgerInvites />
       {/* 重要公告橫幅:點進公告頁或按 ✕ 就不再出現 */}
       {banner && (
         <div

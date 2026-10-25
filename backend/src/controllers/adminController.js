@@ -285,6 +285,7 @@ async function bulkDeleteUsers(req, res) {
     const targets = (users || []).filter((u) => u.role !== 'admin' && u.id !== req.user.id);
     for (const u of targets) {
       await supabase.from('yy_payments').update({ user_email: u.email }).eq('user_id', u.id);
+      await require('../lib/ledgers').handOverShared(u.id);
       const { error: dErr } = await supabase.from('yy_users').delete().eq('id', u.id);
       if (dErr) throw dErr;
       forgetUserStatus(u.id);

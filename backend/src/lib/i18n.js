@@ -1,5 +1,16 @@
 // 英文介面的錯誤訊息:前端送 X-Lang: en 時,把常見的中文訊息換成英文(其他維持原文)
 const EN = {
+  '共同帳本不能刪除，請使用「退出」': 'Shared ledgers cannot be deleted. Use "Leave" instead.',
+  '只能邀請你的好友': 'You can only invite your friends',
+  '對方已經在這本帳本裡': 'This person is already in the ledger',
+  '一本帳本最多 11 人': 'A ledger can have up to 11 people',
+  '這本帳本沒有其他成員，可以直接刪除': 'No other members. You can delete this ledger instead.',
+  '只有帳本建立者可以移出成員': 'Only the ledger creator can remove members',
+  '找不到這位成員': 'Member not found',
+  '邀請失敗': 'Could not send the invite',
+  '加入失敗': 'Could not join',
+  '退出失敗': 'Could not leave',
+  '移出失敗': 'Could not remove',
   '找不到這本帳本': 'Ledger not found',
   '這本帳本只能查看': 'This ledger is view-only',
   '帳戶不在這本帳本裡': 'This account is not in the current ledger',

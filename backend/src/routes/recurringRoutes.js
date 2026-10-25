@@ -24,7 +24,7 @@ async function canWrite(req, res, next) {
     let kinds = [];
     if (req.method === 'POST') kinds = [req.body?.kind];
     else {
-      const { data } = await supabase.from('yy_recurring_items').select('kind').eq('id', req.params.id).eq('user_id', req.user.id).maybeSingle();
+      const { data } = await supabase.from('yy_recurring_items').select('kind').eq('id', req.params.id).maybeSingle();
       if (!data) return next(); // 找不到交給 controller 回 404
       kinds = [data.kind];
       if (req.body?.kind) kinds.push(req.body.kind);

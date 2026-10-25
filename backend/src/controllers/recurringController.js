@@ -1,4 +1,15 @@
 const supabase = require('../config/supabase');
+const { accessOf } = require('../lib/ledgers');
+
+// 可以修改的循環項目:自己的循環行程,或自己可編輯的帳本裡的循環記帳(共同帳本成員權限相同)
+async function editableItem(userId, id) {
+  const { data: item, error } = await supabase.from('yy_recurring_items').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!item) return null;
+  if (item.kind === 'event' || !item.ledger_id) return item.user_id === userId ? item : null;
+  const acc = await accessOf(userId, item.ledger_id);
+  return acc?.canWrite ? item : null;
+}
 
 async function listRecurringItems(req, res) {
   try {
@@ -84,11 +95,18 @@ async function updateRecurringItem(req, res) {
       if (req.body[k] !== undefined) updates[k] = req.body[k];
     }
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
+    const item = await editableItem(req.user.id, id);
+    if (!item) return res.status(404).json({ error: 'Recurring item not found' });
+    // 循環記帳和循環行程不能互換;帳戶要在同一本帳本裡
+    if (updates.kind && (updates.kind === 'event') !== (item.kind === 'event')) return res.status(400).json({ error: 'Cannot change kind' });
+    if (updates.account_id && item.ledger_id) {
+      const { data: acc } = await supabase.from('yy_accounts').select('id').eq('id', updates.account_id).eq('ledger_id', item.ledger_id).maybeSingle();
+      if (!acc) return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
     const { data, error } = await supabase
       .from('yy_recurring_items')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', req.user.id)
       .select()
       .maybeSingle();
     if (error) throw error;
@@ -103,11 +121,12 @@ async function updateRecurringItem(req, res) {
 async function deleteRecurringItem(req, res) {
   try {
     const { id } = req.params;
+    const item = await editableItem(req.user.id, id);
+    if (!item) return res.status(404).json({ error: 'Recurring item not found' });
     const { error } = await supabase
       .from('yy_recurring_items')
       .delete()
-      .eq('id', id)
-      .eq('user_id', req.user.id);
+      .eq('id', id);
     if (error) throw error;
     return res.status(204).send();
   } catch (err) {

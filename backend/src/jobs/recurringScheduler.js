@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const supabase = require('../config/supabase');
+const { accessOf } = require('../lib/ledgers');
 const { sendPushToUser } = require('../services/fcmService');
 const { computeEntitlements, has } = require('../lib/entitlements');
 
@@ -101,7 +102,12 @@ async function runDailyRecurringScan() {
     for (const item of dueItems) {
       try {
         const isLedger = item.kind === 'expense' || item.kind === 'income';
-        const active = allowed(item);
+        let active = allowed(item);
+        // 共同帳本:建立這筆循環的人已退出或被移出時,不再自動記帳(期數照樣往後推)
+        if (active && isLedger && item.ledger_id) {
+          const acc = await accessOf(item.user_id, item.ledger_id);
+          if (!acc?.canWrite) active = false;
+        }
         if (!active) paused += 1;
         let date = item.next_trigger_date;
         let count = 0;

@@ -1,5 +1,21 @@
 const supabase = require('../config/supabase');
 const { checkBudgetAfterExpense } = require('../services/budgetAlert');
+const { activeUserIds } = require('../lib/ledgers');
+const { sendPushToUser } = require('../services/fcmService');
+
+// 共同帳本:有人記一筆時通知其他成員
+async function notifyLedgerMembers(ledger, userId, tx) {
+  const ids = (await activeUserIds(ledger)).filter((id) => id !== userId);
+  if (!ids.length) return;
+  const { data: me } = await supabase.from('yy_users').select('username').eq('id', userId).maybeSingle();
+  const who = me?.username || 'YY手帳使用者';
+  const sign = tx.type === 'income' ? '+' : '-';
+  const body = `${who} 記了一筆：${tx.category || '未分類'} ${sign}${Number(tx.amount).toLocaleString()}${tx.note ? `（${tx.note}）` : ''}`;
+  for (const id of ids) {
+    await sendPushToUser(id, { channel: 'ledger_shared', title: `📒 ${ledger.name}`, body, data: { url: '/transactions' } })
+      .catch((err) => console.error('[transaction] member push failed', err.message));
+  }
+}
 
 // List transactions for the logged-in user, optionally filtered by date range / account.
 async function listTransactions(req, res) {
@@ -60,6 +76,7 @@ async function createTransaction(req, res) {
 
     // 預算提醒(背景執行,失敗不影響記帳)
     checkBudgetAfterExpense(req.user.id, tx).catch((err) => console.error('[budgetAlert]', err));
+    notifyLedgerMembers(req.ledger, req.user.id, tx).catch((err) => console.error('[transaction] notify members', err));
 
     return res.status(201).json({ transaction: tx });
   } catch (err) {
