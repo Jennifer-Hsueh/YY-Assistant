@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const supabase = require('../config/supabase');
 const { accessOf } = require('../lib/ledgers');
+const { runDailyReminders } = require('./dailyReminders');
 const { sendPushToUser } = require('../services/fcmService');
 const { computeEntitlements, has } = require('../lib/entitlements');
 
@@ -144,8 +145,15 @@ async function runDailyRecurringScan() {
       }
     }
 
+    // 紀念日、好友生日提醒(失敗不影響循環記帳)
+    let reminders = null;
+    try {
+      reminders = await runDailyReminders();
+    } catch (err) {
+      console.error('[recurringScheduler] daily reminders failed', err);
+    }
     console.log(`[recurringScheduler] ${today}: ${dueItems.length} item(s), ${periods} period(s), ${recorded} transaction(s) recorded, ${paused} paused by plan`);
-    return { date: today, items: dueItems.length, periods, recorded, paused };
+    return { date: today, items: dueItems.length, periods, recorded, paused, reminders };
   } finally {
     running = false;
   }

@@ -4,7 +4,7 @@ const supabase = require('../config/supabase');
 // 缺少時代表 SQL 沒有在 yy-assistant 專案執行(曾經跑到舊專案 line-life-app),Logs 會清楚提示。
 // 結果也會顯示在 /health 的 schema 欄位。
 const REQUIRED = {
-  yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at, friend_code',
+  yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at, friend_code, birthday_md, birthday_visible, notify_birthdays',
   yy_posts: 'id, images, edited_at',
   yy_announcements: 'id, target_user_id',
   yy_payments: 'id, user_email',
@@ -15,8 +15,12 @@ const REQUIRED = {
   yy_settings: 'key, value',
   yy_active_days: 'user_id, day',
   yy_friendships: 'id, status',
-  yy_ledgers: 'id, is_default',
+  yy_ledgers: 'id, is_default, archived_at, owner_hidden',
   yy_ledger_members: 'ledger_id, status',
+  yy_event_members: 'event_id, status',
+  yy_anniversaries: 'id, remind',
+  yy_anniversary_members: 'anniversary_id, status',
+  yy_reminder_log: 'key',
   yy_transactions: 'id, ledger_id',
   yy_accounts: 'id, ledger_id',
   yy_budgets: 'id, ledger_id',

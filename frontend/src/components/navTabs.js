@@ -8,9 +8,10 @@ export const navTabs = [
     { to: '/accounts', key: 'acc_pageTitle' },
     { to: '/ledger-stats', key: 'sub_stats' },
   ] },
-  { to: '/calendar', key: 'nav_calendar', Icon: Calendar, color: 'var(--module-calendar)', match: ['/recurring-events', '/calendar-categories', '/calendar-stats'], children: [
+  { to: '/calendar', key: 'nav_calendar', Icon: Calendar, color: 'var(--module-calendar)', match: ['/recurring-events', '/calendar-categories', '/calendar-stats', '/anniversaries'], children: [
     { to: '/calendar', key: 'cal_pageTitle' },
     { to: '/recurring-events', key: 'sub_recurring_events' },
+    { to: '/anniversaries', key: 'sub_anniversaries' },
     { to: '/calendar-stats', key: 'sub_stats' },
   ] },
   { to: '/community', key: 'nav_community', Icon: Users, color: 'var(--module-accounts)', children: [

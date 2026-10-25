@@ -41,12 +41,16 @@ async function runEventReminders(now = new Date()) {
       const stale = now.getTime() - remindAt > STALE_MS;
       if (!stale) {
         try {
-          await sendPushToUser(ev.user_id, {
-            channel: 'calendar',
-            title: `📅 ${ev.title}`,
-            body: timeLabel(ev.start_at, ev.remind_before_minutes),
-            data: { event_id: ev.id, url: '/calendar' },
-          });
+          // 共同行程:建立者與所有已參加的人都會收到提醒
+          const { data: ms } = await supabase.from('yy_event_members').select('user_id').eq('event_id', ev.id).eq('status', 'active');
+          for (const uid of [ev.user_id, ...(ms || []).map((m) => m.user_id)]) {
+            await sendPushToUser(uid, {
+              channel: 'calendar',
+              title: `📅 ${ev.title}`,
+              body: timeLabel(ev.start_at, ev.remind_before_minutes),
+              data: { event_id: ev.id, url: '/calendar' },
+            });
+          }
           sent += 1;
         } catch (err) {
           console.error('[eventReminder] push failed', ev.id, err);

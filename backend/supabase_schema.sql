@@ -392,3 +392,56 @@ create table if not exists yy_ledger_members (
 );
 create index if not exists idx_ledger_members_user on yy_ledger_members (user_id);
 alter table yy_ledger_members enable row level security;
+
+-- ---------- 共同帳本:失效 ----------
+alter table yy_ledgers add column if not exists archived_at timestamptz;
+alter table yy_ledgers add column if not exists owner_hidden boolean not null default false;
+
+-- ---------- 共同行程 ----------
+create table if not exists yy_event_members (
+  event_id uuid not null references yy_events(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  status text not null default 'invited' check (status in ('invited', 'active')),
+  invited_by uuid references yy_users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  joined_at timestamptz,
+  primary key (event_id, user_id)
+);
+create index if not exists idx_event_members_user on yy_event_members (user_id);
+alter table yy_event_members enable row level security;
+
+-- ---------- 紀念日 ----------
+create table if not exists yy_anniversaries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade, -- 建立者
+  title text not null,
+  date date not null, -- 第一次的日期(每年同一天)
+  remind text not null default 'day' check (remind in ('none', 'day', 'day_1', 'day_3', 'day_7')),
+  note text,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_anniversaries_user on yy_anniversaries (user_id);
+alter table yy_anniversaries enable row level security;
+
+create table if not exists yy_anniversary_members (
+  anniversary_id uuid not null references yy_anniversaries(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  status text not null default 'invited' check (status in ('invited', 'active')),
+  invited_by uuid references yy_users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  primary key (anniversary_id, user_id)
+);
+create index if not exists idx_anniversary_members_user on yy_anniversary_members (user_id);
+alter table yy_anniversary_members enable row level security;
+
+-- ---------- 生日 ----------
+alter table yy_users add column if not exists birthday_md text check (birthday_md is null or birthday_md ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
+alter table yy_users add column if not exists birthday_visible boolean not null default true;
+alter table yy_users add column if not exists notify_birthdays boolean not null default true;
+
+-- 每日提醒(紀念日、生日)防重複寄送
+create table if not exists yy_reminder_log (
+  key text primary key,
+  created_at timestamptz not null default now()
+);
+alter table yy_reminder_log enable row level security;

@@ -30,6 +30,7 @@ import Accounts from './pages/Accounts';
 import RecurringMoney from './pages/RecurringMoney';
 import LedgerStats from './pages/LedgerStats';
 import RecurringEvents from './pages/RecurringEvents';
+import Anniversaries from './pages/Anniversaries';
 import CalendarStats from './pages/CalendarStats';
 import Categories from './pages/Categories';
 import Announcements from './pages/Announcements';
@@ -117,6 +118,7 @@ export default function App() {
 
             <Route path="/calendar" element={<ProtectedLayout><CalendarPage /></ProtectedLayout>} />
             <Route path="/recurring-events" element={<ProtectedLayout><RecurringEvents /></ProtectedLayout>} />
+            <Route path="/anniversaries" element={<ProtectedLayout><Anniversaries /></ProtectedLayout>} />
             <Route path="/calendar-stats" element={<ProtectedLayout><CalendarStats /></ProtectedLayout>} />
 
             <Route path="/announcements" element={<ProtectedLayout><Announcements /></ProtectedLayout>} />

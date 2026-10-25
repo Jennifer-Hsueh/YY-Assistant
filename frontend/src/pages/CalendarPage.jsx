@@ -11,6 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import DateInputSegmented from '../components/DateInputSegmented';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
+import EventPeople, { EventInvites } from '../components/EventPeople';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -35,7 +36,8 @@ const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', n
 
 // 提醒選項(分鐘,存在 remind_before_minutes):有時間的行程 / 全天行程各一組
 export default function CalendarPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [inviteIds, setInviteIds] = useState([]); // 要邀請的好友
   const { can } = usePlan();
   const canCal = can('calendar');
   const [events, setEvents] = useState([]);
@@ -102,6 +104,7 @@ export default function CalendarPage() {
 
   function pickEvent(ev) {
     setActiveId(ev.id);
+    setInviteIds([]);
     setConfirmDelete(false);
     setForm({
       title: ev.title,
@@ -123,6 +126,7 @@ export default function CalendarPage() {
   function resetAfterAction() {
     setForm({ ...emptyForm, date: selectedDay || '' });
     setActiveId(null);
+    setInviteIds([]);
   }
 
   async function handleSubmit(e) {
@@ -143,6 +147,7 @@ export default function CalendarPage() {
         const r = normalizeRemind(form.remind, !!form.time);
         return r === 'none' ? null : Number(r);
       })(),
+      ...(inviteIds.length ? { invite_ids: inviteIds } : {}),
     };
     if (actionMode === 'edit' && activeId) {
       await api.updateEvent(activeId, payload);
@@ -152,6 +157,9 @@ export default function CalendarPage() {
     resetAfterAction();
     load();
   }
+
+  const activeEvent = events.find((e) => e.id === activeId) || null;
+  const isMember = !!activeEvent && activeEvent.is_owner === false;
 
   async function handleConfirmDelete() {
     await api.deleteEvent(activeId);
@@ -343,6 +351,7 @@ export default function CalendarPage() {
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-5xl md:px-8 md:py-10" style={{ '--primary': 'var(--module-calendar)', '--ring': 'var(--module-calendar)' }}>
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')}<span className="ml-3">{year}.{String(month + 1).padStart(2, '0')}</span></h1>
       <CalendarSubNav />
+      <EventInvites onChanged={load} />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
       <div className="md:col-start-2 md:row-start-1">
@@ -499,6 +508,7 @@ export default function CalendarPage() {
                     <span className="shrink-0 font-amount text-xs text-muted-foreground">{timeRange(ev)}</span>
                     <span>{ev.title}</span>
                     {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                    {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
                     {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
                   </div>
                 ))}
@@ -554,6 +564,7 @@ export default function CalendarPage() {
                 rows={2}
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               />
+              <EventPeople selected={inviteIds} onChange={setInviteIds} />
               <Link to="/calendar-categories" className="block text-right text-xs text-muted-foreground underline">
                 {t('tx_manage_categories')}
               </Link>
@@ -587,6 +598,7 @@ export default function CalendarPage() {
                       <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                       <span>{ev.title}</span>
                       {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                    {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
                       {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
                     </button>
                   ))
@@ -626,6 +638,7 @@ export default function CalendarPage() {
                 </div>
                 <Select
                   value={form.category || 'none'}
+                  disabled={isMember}
                   onValueChange={(v) => setForm({ ...form, category: v === 'none' ? '' : v })}
                 >
                   <SelectTrigger><SelectValue placeholder={t('cal_category_placeholder')} /></SelectTrigger>
@@ -643,14 +656,15 @@ export default function CalendarPage() {
                   rows={2}
                   className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                 />
+                {activeEvent && <EventPeople event={activeEvent} selected={inviteIds} onChange={setInviteIds} onRemoved={load} />}
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
-                  <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{t('mode_delete')}</Button>
+                  <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{isMember ? (language === 'en' ? 'Leave' : '不參加') : t('mode_delete')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
                 {confirmDelete && (
                   <div className="space-y-2 rounded-md border border-border p-2">
-                    <p className="text-sm">{t('cal_confirm_delete_title')}</p>
+                    <p className="text-sm">{isMember ? (language === 'en' ? 'Leave this event? It will be removed from your calendar.' : '確定不參加這個行程？行程會從你的行事曆移除。') : activeEvent?.shared ? (language === 'en' ? 'Delete this event for everyone?' : '刪除後，所有參與者的這個行程都會一起刪除。') : t('cal_confirm_delete_title')}</p>
                     <div className="flex gap-2">
                       <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
                       <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>

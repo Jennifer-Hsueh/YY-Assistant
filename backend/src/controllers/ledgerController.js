@@ -31,7 +31,7 @@ async function listLedgers(req, res) {
     const uid = req.user.id;
     await L.ensureDefault(uid, langOf(req));
     const [{ data: own, error: oErr }, { data: mine, error: mErr }] = await Promise.all([
-      supabase.from('yy_ledgers').select('*').eq('user_id', uid),
+      supabase.from('yy_ledgers').select('*').eq('user_id', uid).not('owner_hidden', 'is', true),
       supabase.from('yy_ledger_members').select('*').eq('user_id', uid),
     ]);
     if (oErr) throw oErr;
@@ -52,14 +52,17 @@ async function listLedgers(req, res) {
     const ledgers = all.map((l) => {
       const ms = (members || []).filter((m) => m.ledger_id === l.id);
       const myRow = ms.find((m) => m.user_id === uid);
-      const role = l.user_id === uid ? 'owner' : myRow?.status === 'active' ? 'member' : 'left';
+      const role = l.archived_at ? 'left' : l.user_id === uid ? 'owner' : myRow?.status === 'active' ? 'member' : 'left';
       return {
         id: l.id,
         name: l.name,
         is_default: l.user_id === uid && l.is_default,
         role,
         can_write: role !== 'left',
-        shared: ms.some((m) => m.status === 'active'),
+        shared: !l.archived_at && ms.some((m) => m.status === 'active'),
+        // 曾經有成員加入過的帳本:不能刪除,只能退出
+        was_shared: ms.some((m) => m.status !== 'invited'),
+        archived: !!l.archived_at,
         owner: { id: l.user_id, name: names.get(l.user_id) || null },
         members: ms.map((m) => ({ id: m.user_id, name: names.get(m.user_id) || null, status: m.status })),
         created_at: l.created_at,
@@ -81,7 +84,7 @@ async function createLedger(req, res) {
     const name = cleanName(req.body?.name);
     if (!name) return res.status(400).json({ error: '請輸入帳本名稱' });
     await L.ensureDefault(req.user.id, langOf(req));
-    const { count, error: cErr } = await supabase.from('yy_ledgers').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id);
+    const { count, error: cErr } = await supabase.from('yy_ledgers').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id).is('archived_at', null);
     if (cErr) throw cErr;
     if (count >= L.MAX_LEDGERS) return res.status(400).json({ error: `帳本最多 ${L.MAX_LEDGERS} 本` });
     const { data, error } = await supabase.from('yy_ledgers').insert({ user_id: req.user.id, name, is_default: false }).select('*').single();
@@ -135,10 +138,10 @@ async function deleteLedger(req, res) {
     const acc = await L.accessOf(req.user.id, req.params.id);
     if (!acc || acc.role !== 'owner') return notFound(res);
     const ledger = acc.ledger;
-    if ((await memberRows(ledger.id)).some((m) => m.status === 'active')) {
+    if ((await memberRows(ledger.id)).some((m) => m.status !== 'invited')) {
       return res.status(400).json({ error: '共同帳本不能刪除，請使用「退出」', code: 'LEDGER_SHARED' });
     }
-    const { data: mine, error: mErr } = await supabase.from('yy_ledgers').select('id, created_at').eq('user_id', req.user.id).order('created_at', { ascending: true });
+    const { data: mine, error: mErr } = await supabase.from('yy_ledgers').select('id, created_at').eq('user_id', req.user.id).is('archived_at', null).order('created_at', { ascending: true });
     if (mErr) throw mErr;
     if ((mine || []).length <= 1) return res.status(400).json({ error: '至少要保留一本帳本' });
     await deleteLedgerData(ledger.id);
@@ -233,7 +236,13 @@ async function leaveLedger(req, res) {
     if (acc.role === 'owner') {
       const active = (await memberRows(ledger.id)).filter((m) => m.status === 'active')
         .sort((a, b) => (a.joined_at || a.created_at).localeCompare(b.joined_at || b.created_at));
-      if (!active.length) return res.status(400).json({ error: '這本帳本沒有其他成員，可以直接刪除', code: 'LEDGER_NOT_SHARED' });
+      if (!active.length) {
+        // 沒有其他成員:帳本失效,所有人都只能查看(不刪除)
+        const { error: aErr } = await supabase.from('yy_ledgers').update({ archived_at: now, is_default: false }).eq('id', ledger.id);
+        if (aErr) throw aErr;
+        if (ledger.is_default) await L.ensureDefault(uid, langOf(req));
+        return res.json({ ok: true, archived: true });
+      }
       const heir = active[0];
       // 交給最早加入的成員;原建立者變成「已退出」
       const { error: e1 } = await supabase.from('yy_ledgers').update({ user_id: heir.user_id, is_default: false }).eq('id', ledger.id);
@@ -259,6 +268,14 @@ async function leaveLedger(req, res) {
 // 已退出的帳本從自己的清單移除(之後就看不到了)
 async function hideLedger(req, res) {
   try {
+    // 失效帳本的建立者:從自己的清單移除(資料保留,其他已退出的成員仍可查看)
+    const { data: own } = await supabase.from('yy_ledgers').select('id, archived_at').eq('id', req.params.id).eq('user_id', req.user.id).maybeSingle();
+    if (own) {
+      if (!own.archived_at) return notFound(res);
+      const { error } = await supabase.from('yy_ledgers').update({ owner_hidden: true }).eq('id', own.id);
+      if (error) throw error;
+      return res.json({ ok: true });
+    }
     const row = await myRow(req);
     if (!row || row.status !== 'left') return notFound(res);
     const { error } = await supabase.from('yy_ledger_members').delete().eq('ledger_id', row.ledger_id).eq('user_id', req.user.id);

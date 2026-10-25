@@ -40,6 +40,12 @@ async function accessOf(userId, ledgerId) {
   const { data: ledger, error } = await supabase.from('yy_ledgers').select('*').eq('id', ledgerId).maybeSingle();
   if (error) throw error;
   if (!ledger) return null;
+  // 失效的帳本(建立者退出且沒有其他成員):所有人都只能查看
+  if (ledger.archived_at) {
+    if (ledger.user_id === userId) return ledger.owner_hidden ? null : { ledger, role: 'left', canWrite: false };
+    const { data: m } = await supabase.from('yy_ledger_members').select('status').eq('ledger_id', ledgerId).eq('user_id', userId).maybeSingle();
+    return m && m.status !== 'invited' ? { ledger, role: 'left', canWrite: false } : null;
+  }
   if (ledger.user_id === userId) return { ledger, role: 'owner', canWrite: true };
   const { data: m, error: mErr } = await supabase.from('yy_ledger_members').select('status')
     .eq('ledger_id', ledgerId).eq('user_id', userId).maybeSingle();

@@ -18,11 +18,12 @@ const TEXT = {
     members: '成員', creator: '建立者', invited: '邀請中', left: '已退出', you: '（你）',
     invite: '邀請好友', invitePick: '選擇好友', inviteSend: '邀請', noFriends: '沒有可以邀請的好友，先到「社群 → 好友」加好友',
     remove: '移出', removeConfirm: (n) => `確定把 ${n} 移出這本帳本？移出後對方就看不到這本帳本。`,
-    leave: '退出', leaveConfirm: (n, owner) => `退出「${n}」後，你仍然可以查看，但不能再新增、修改或刪除。${owner ? '帳本會交給最早加入的成員管理。' : ''}`,
+    leave: '退出', leaveConfirm: (n, owner, alone) => `退出「${n}」後，你仍然可以查看，但不能再新增、修改或刪除。${alone ? '目前沒有其他成員，帳本會失效，所有人都只能查看。' : owner ? '帳本會交給最早加入的成員管理。' : ''}`,
     leaveOk: '確定退出',
     hide: '從清單移除', hideConfirm: (n) => `從清單移除「${n}」後就看不到這本帳本了。`,
     inviteFrom: (from, n) => `${from || '好友'} 邀請你加入「${n}」`, join: '加入', decline: '拒絕',
     readOnly: '你已退出這本帳本，只能查看',
+    archived: '這本帳本已失效，只能查看',
     unnamed: '未設定稱呼',
   },
   en: {
@@ -34,11 +35,12 @@ const TEXT = {
     members: 'Members', creator: 'Creator', invited: 'Invited', left: 'Left', you: ' (you)',
     invite: 'Invite a friend', invitePick: 'Choose a friend', inviteSend: 'Invite', noFriends: 'No friends to invite. Add friends in Community → Friends first.',
     remove: 'Remove', removeConfirm: (n) => `Remove ${n} from this ledger? They will no longer see it.`,
-    leave: 'Leave', leaveConfirm: (n, owner) => `After leaving "${n}" you can still view it but cannot add, edit or delete.${owner ? ' The earliest member will take over the ledger.' : ''}`,
+    leave: 'Leave', leaveConfirm: (n, owner, alone) => `After leaving "${n}" you can still view it but cannot add, edit or delete.${alone ? ' There are no other members, so the ledger will be closed and view-only for everyone.' : owner ? ' The earliest member will take over the ledger.' : ''}`,
     leaveOk: 'Leave',
     hide: 'Remove from list', hideConfirm: (n) => `Remove "${n}" from your list? You will no longer see it.`,
     inviteFrom: (from, n) => `${from || 'A friend'} invited you to "${n}"`, join: 'Join', decline: 'Decline',
     readOnly: 'You left this ledger. It is view-only.',
+    archived: 'This ledger is closed and view-only.',
     unnamed: 'No name',
   },
 };
@@ -113,7 +115,7 @@ function LedgerRow({ l, count, run, busy, onSelectAfterRemove }) {
         </form>
       ) : ['delete', 'leave', 'hide'].includes(mode) ? (
         <div className="space-y-2">
-          <p className="text-sm">{mode === 'delete' ? T.delConfirm(l.name) : mode === 'leave' ? T.leaveConfirm(l.name, l.role === 'owner') : T.hideConfirm(l.name)}</p>
+          <p className="text-sm">{mode === 'delete' ? T.delConfirm(l.name) : mode === 'leave' ? T.leaveConfirm(l.name, l.role === 'owner', l.role === 'owner' && !l.shared) : T.hideConfirm(l.name)}</p>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setMode(null)}>{T.cancel}</Button>
             <Button size="sm" variant="destructive" disabled={busy} onClick={async () => {
@@ -135,7 +137,7 @@ function LedgerRow({ l, count, run, busy, onSelectAfterRemove }) {
             {writable && <button type="button" aria-label={T.rename} onClick={() => { setNewName(l.name); setMode('rename'); }} className={iconBtn}><Pencil className="h-4 w-4" /></button>}
             {l.role === 'left' ? (
               <button type="button" aria-label={T.hide} onClick={() => setMode('hide')} className={iconBtn}><Trash2 className="h-4 w-4" /></button>
-            ) : l.shared ? (
+            ) : l.was_shared ? (
               // 共同帳本不能刪除,只能退出
               <button type="button" aria-label={T.leave} onClick={() => setMode('leave')} className={iconBtn}><LogOut className="h-4 w-4" /></button>
             ) : writable && (
@@ -274,7 +276,7 @@ export default function LedgerSwitcher() {
         )}
         {managing && <ManageDialog onClose={() => setManaging(false)} />}
       </div>
-      {current.role === 'left' && <p className="-mt-1 mb-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">{T.readOnly}</p>}
+      {current.role === 'left' && <p className="-mt-1 mb-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">{current.archived ? T.archived : T.readOnly}</p>}
     </>
   );
 }

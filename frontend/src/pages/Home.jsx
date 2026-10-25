@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle } from 'lucide-react';
+import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle, Heart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { LedgerInvites } from '../components/LedgerSwitcher';
+import { EventInvites } from '../components/EventPeople';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
@@ -36,6 +37,16 @@ export default function Home() {
   const { ledgers, current } = useLedger();
   // 有多本帳本時,標題加上目前的帳本名稱
   const ledgerTag = ledgers.length > 1 && current ? `・${current.name}` : '';
+  const [upcoming, setUpcoming] = useState([]);
+  useEffect(() => {
+    api.listAnniversaries().then((d) => {
+      const list = [
+        ...d.anniversaries.map((a) => ({ key: `a${a.id}`, icon: '💝', title: a.years > 0 ? `${a.title}（${a.years}）` : a.title, days: a.days_left })),
+        ...d.birthdays.map((b) => ({ key: `b${b.id}`, icon: '🎂', title: b.name || '—', days: b.days_left })),
+      ].filter((x) => x.days <= 30).sort((x, y) => x.days - y.days);
+      setUpcoming(list);
+    }).catch(() => {});
+  }, []);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profile, setProfile] = useState(null);
   const { banner } = useAnnStatus();
@@ -113,6 +124,7 @@ export default function Home() {
 
       <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       <LedgerInvites />
+      <EventInvites />
       {/* 重要公告橫幅:點進公告頁或按 ✕ 就不再出現 */}
       {banner && (
         <div
@@ -190,6 +202,24 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
+
+        {/* 30 天內的紀念日與好友生日(沒有就不顯示) */}
+        {upcoming.length > 0 && (
+          <Card className="relative z-10 border-none" style={tint('var(--module-calendar)')}>
+            <CardContent className="p-4 md:p-5">
+              <CardTitle Icon={Heart} color="var(--module-calendar)" title={t('sub_anniversaries')} to="/anniversaries" />
+              <ul className="space-y-1.5">
+                {upcoming.slice(0, 4).map((u) => (
+                  <li key={u.key} className="flex items-center gap-2 text-sm">
+                    <span className="w-5 shrink-0 text-center">{u.icon}</span>
+                    <span className="truncate">{u.title}</span>
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">{u.days === 0 ? t('home_today') : `${u.days}${t('home_days_left')}`}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 本月累積消費 */}
         <Card className="relative z-10 border-none" style={tint('var(--module-transactions)')}>

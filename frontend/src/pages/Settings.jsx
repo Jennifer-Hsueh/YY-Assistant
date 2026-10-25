@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import DataTransferCard from '../components/DataTransferCard';
+import BirthdayCard from '../components/BirthdayCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
 import DeleteAccountCard from '../components/DeleteAccountCard';
 import MoodCard from '../components/MoodCard';
@@ -379,6 +380,8 @@ export default function Settings() {
           {pushStatus === 'failed' && <p className="text-xs text-destructive">{t('rec_push_failed')}</p>}
         </CardContent>
       </Card>
+
+      {profile && <BirthdayCard profile={profile} onSaved={setProfile} />}
 
       <Card>
         <CardContent className="p-4">

@@ -21,9 +21,11 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
     }
   }
   // 共同帳本的成員通知:依使用者的「帳務通知」開關,不受方案限制
-  if (channel === 'ledger_shared') {
-    const { data: prefs } = await supabase.from('yy_users').select('notify_ledger').eq('id', userId).maybeSingle();
-    if (prefs && prefs.notify_ledger === false) return { sent: false, reason: 'user turned off ledger notifications' };
+  // calendar_shared:紀念日等,依「行程通知」開關,不受方案限制
+  if (channel === 'ledger_shared' || channel === 'calendar_shared') {
+    const col = channel === 'ledger_shared' ? 'notify_ledger' : 'notify_calendar';
+    const { data: prefs } = await supabase.from('yy_users').select(col).eq('id', userId).maybeSingle();
+    if (prefs && prefs[col] === false) return { sent: false, reason: `user turned off ${col}` };
   }
 
   const app = getFirebaseApp();

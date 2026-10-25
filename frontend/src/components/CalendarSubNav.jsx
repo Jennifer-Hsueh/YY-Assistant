@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 const subTabs = [
   { to: '/calendar', key: 'cal_pageTitle' },
   { to: '/recurring-events', key: 'sub_recurring_events' },
+  { to: '/anniversaries', key: 'sub_anniversaries' },
   { to: '/calendar-stats', key: 'sub_stats' },
 ];
 
