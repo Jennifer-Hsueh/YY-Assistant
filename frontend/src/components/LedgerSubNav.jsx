@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import LedgerSwitcher from './LedgerSwitcher';
 
 const subTabs = [
   { to: '/transactions', key: 'tx_pageTitle' },
@@ -11,6 +12,8 @@ const subTabs = [
 export default function LedgerSubNav() {
   const { t } = useLanguage();
   return (
+    <>
+    <LedgerSwitcher />
     <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm md:hidden">
       {subTabs.map(({ to, key }) => (
         <NavLink
@@ -24,5 +27,6 @@ export default function LedgerSubNav() {
         </NavLink>
       ))}
     </div>
+    </>
   );
 }

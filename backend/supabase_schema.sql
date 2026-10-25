@@ -343,3 +343,38 @@ create table if not exists yy_user_reports (
 );
 create index if not exists idx_user_reports_status on yy_user_reports (status, created_at desc);
 alter table yy_user_reports enable row level security;
+
+-- ---------- 多帳本 ----------
+create table if not exists yy_ledgers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade, -- 建立者(擁有者)
+  name text not null,
+  is_default boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_ledgers_user on yy_ledgers (user_id);
+create unique index if not exists uq_ledgers_default on yy_ledgers (user_id) where is_default;
+alter table yy_ledgers enable row level security;
+
+alter table yy_accounts add column if not exists ledger_id uuid references yy_ledgers(id) on delete cascade;
+alter table yy_transactions add column if not exists ledger_id uuid references yy_ledgers(id) on delete cascade;
+alter table yy_recurring_items add column if not exists ledger_id uuid references yy_ledgers(id) on delete cascade;
+alter table yy_budgets add column if not exists ledger_id uuid references yy_ledgers(id) on delete cascade;
+
+-- 每位使用者建立預設帳本「日常」,現有資料歸到日常
+insert into yy_ledgers (user_id, name, is_default)
+select u.id, '日常', true from yy_users u
+where not exists (select 1 from yy_ledgers l where l.user_id = u.id and l.is_default);
+
+update yy_accounts t set ledger_id = l.id from yy_ledgers l where l.user_id = t.user_id and l.is_default and t.ledger_id is null;
+update yy_transactions t set ledger_id = l.id from yy_ledgers l where l.user_id = t.user_id and l.is_default and t.ledger_id is null;
+update yy_recurring_items t set ledger_id = l.id from yy_ledgers l where l.user_id = t.user_id and l.is_default and t.ledger_id is null and t.kind in ('expense', 'income');
+update yy_budgets t set ledger_id = l.id from yy_ledgers l where l.user_id = t.user_id and l.is_default and t.ledger_id is null;
+
+create index if not exists idx_accounts_ledger on yy_accounts (ledger_id);
+create index if not exists idx_transactions_ledger on yy_transactions (ledger_id, occurred_at desc);
+create index if not exists idx_recurring_ledger on yy_recurring_items (ledger_id);
+
+-- 預算改成「每本帳本、每個分類一筆」
+alter table yy_budgets drop constraint if exists yy_budgets_user_id_category_key;
+create unique index if not exists uq_budgets_ledger_category on yy_budgets (ledger_id, category);

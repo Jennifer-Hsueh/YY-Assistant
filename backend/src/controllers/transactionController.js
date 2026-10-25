@@ -8,7 +8,7 @@ async function listTransactions(req, res) {
     let query = supabase
       .from('yy_transactions')
       .select('*')
-      .eq('user_id', req.user.id)
+      .eq('ledger_id', req.ledger.id)
       .order('occurred_at', { ascending: false });
 
     if (from) query = query.gte('occurred_at', from);
@@ -34,11 +34,15 @@ async function createTransaction(req, res) {
     if (!['income', 'expense'].includes(type)) {
       return res.status(400).json({ error: "type must be 'income' or 'expense'" });
     }
+    if (account_id && !(await accountInLedger(account_id, req.ledger.id))) {
+      return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
 
     const { data: tx, error } = await supabase
       .from('yy_transactions')
       .insert({
         user_id: req.user.id,
+        ledger_id: req.ledger.id,
         account_id: account_id || null,
         type,
         amount,
@@ -71,10 +75,23 @@ async function updateTransaction(req, res) {
       .from('yy_transactions')
       .select('*')
       .eq('id', id)
-      .eq('user_id', req.user.id)
+      .eq('ledger_id', req.ledger.id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
     if (!existing) return res.status(404).json({ error: 'Transaction not found' });
+
+    // 只允許修改這些欄位(不能改 user_id、ledger_id 等)
+    const updates = {};
+    for (const k of ['account_id', 'type', 'amount', 'category', 'note', 'occurred_at']) {
+      if (req.body[k] !== undefined) updates[k] = req.body[k];
+    }
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
+    if (updates.type && !['income', 'expense'].includes(updates.type)) {
+      return res.status(400).json({ error: "type must be 'income' or 'expense'" });
+    }
+    if (updates.account_id && !(await accountInLedger(updates.account_id, req.ledger.id))) {
+      return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
 
     // Reverse the old amount from its account, then apply the new one —
     // matches the reversal rule documented for 帳戶管理 in the planning doc.
@@ -83,7 +100,6 @@ async function updateTransaction(req, res) {
       await adjustAccountBalance(existing.account_id, reverseDelta);
     }
 
-    const updates = { ...req.body };
     const { data: updated, error } = await supabase
       .from('yy_transactions')
       .update(updates)
@@ -112,7 +128,7 @@ async function deleteTransaction(req, res) {
       .from('yy_transactions')
       .select('*')
       .eq('id', id)
-      .eq('user_id', req.user.id)
+      .eq('ledger_id', req.ledger.id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
     if (!existing) return res.status(404).json({ error: 'Transaction not found' });
@@ -130,6 +146,13 @@ async function deleteTransaction(req, res) {
     console.error('[transactionController.deleteTransaction]', err);
     return res.status(500).json({ error: 'Failed to delete transaction' });
   }
+}
+
+// 帳戶必須屬於同一本帳本
+async function accountInLedger(accountId, ledgerId) {
+  const { data, error } = await supabase.from('yy_accounts').select('id').eq('id', accountId).eq('ledger_id', ledgerId).maybeSingle();
+  if (error) throw error;
+  return !!data;
 }
 
 // Shared helper: adjusts an account's balance by `delta` (can be negative).

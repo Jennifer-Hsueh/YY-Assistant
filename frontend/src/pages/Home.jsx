@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useLedger } from '../context/LedgerContext';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
@@ -31,6 +32,9 @@ function CardTitle({ Icon, color, title, to }) {
 
 export default function Home() {
   const { t } = useLanguage();
+  const { ledgers, current } = useLedger();
+  // 有多本帳本時,標題加上目前的帳本名稱
+  const ledgerTag = ledgers.length > 1 && current ? `・${current.name}` : '';
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profile, setProfile] = useState(null);
   const { banner } = useAnnStatus();
@@ -188,7 +192,7 @@ export default function Home() {
         {/* 本月累積消費 */}
         <Card className="relative z-10 border-none" style={tint('var(--module-transactions)')}>
           <CardContent className="p-4 md:p-5">
-            <CardTitle Icon={Wallet} color="var(--module-transactions)" title={t('home_month_spend')} to="/transactions" />
+            <CardTitle Icon={Wallet} color="var(--module-transactions)" title={`${t('home_month_spend')}${ledgerTag}`} to="/transactions" />
             {!overview ? (
               <p className="text-xs text-muted-foreground">{t('loading')}</p>
             ) : (
@@ -208,7 +212,7 @@ export default function Home() {
         {/* 預算使用進度 */}
         <Card className="relative z-10 border-none" style={tint('var(--module-recurring)')}>
           <CardContent className="p-4 md:p-5">
-            <CardTitle Icon={PiggyBank} color="var(--module-recurring)" title={t('home_budget')} to="/ledger-stats" />
+            <CardTitle Icon={PiggyBank} color="var(--module-recurring)" title={`${t('home_budget')}${ledgerTag}`} to="/ledger-stats" />
             {!overview ? (
               <p className="text-xs text-muted-foreground">{t('loading')}</p>
             ) : overview.budgets.length === 0 ? (

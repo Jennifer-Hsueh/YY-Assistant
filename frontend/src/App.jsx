@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { PlanProvider } from './context/PlanContext';
+import { LedgerProvider, useLedger } from './context/LedgerContext';
 import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
@@ -83,15 +84,22 @@ function AddFriendRoute() {
   return user ? <ProtectedLayout><AddFriend /></ProtectedLayout> : <AddFriend />;
 }
 
+// 切換帳本時重新載入所有頁面的資料
+function LedgerRoutes({ children }) {
+  const { version } = useLedger();
+  return <Routes key={version}>{children}</Routes>;
+}
+
 export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
         <PlanProvider>
+        <LedgerProvider>
         <BrowserRouter>
           <NativeBridge />
           {!isNative && <UpdatePrompt />}
-          <Routes>
+          <LedgerRoutes>
             <Route path="/terms" element={<Legal doc="terms" />} />
             <Route path="/privacy" element={<Legal doc="privacy" />} />
             <Route path="/login" element={<Login />} />
@@ -120,8 +128,9 @@ export default function App() {
 
             <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />
             <Route path="/calendar-categories" element={<ProtectedLayout><Categories scope="calendar" /></ProtectedLayout>} />
-          </Routes>
+          </LedgerRoutes>
         </BrowserRouter>
+        </LedgerProvider>
         </PlanProvider>
       </AuthProvider>
     </LanguageProvider>

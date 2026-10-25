@@ -5,7 +5,8 @@ async function listRecurringItems(req, res) {
     const { data, error } = await supabase
       .from('yy_recurring_items')
       .select('*')
-      .eq('user_id', req.user.id)
+      // 循環行程:自己的;循環記帳:目前帳本裡的
+      .or(`and(kind.eq.event,user_id.eq.${req.user.id}),ledger_id.eq.${req.ledger.id}`)
       .order('next_trigger_date', { ascending: true });
     if (error) throw error;
     return res.json({ recurring_items: data });
@@ -37,11 +38,18 @@ async function createRecurringItem(req, res) {
     if (!['monthly', 'weekly', 'yearly'].includes(frequency)) {
       return res.status(400).json({ error: 'Invalid frequency' });
     }
+    const isMoney = kind === 'expense' || kind === 'income';
+    if (isMoney && !req.ledger.canWrite) return res.status(403).json({ error: '這本帳本只能查看', code: 'LEDGER_READ_ONLY' });
+    if (isMoney && account_id) {
+      const { data: acc } = await supabase.from('yy_accounts').select('id').eq('id', account_id).eq('ledger_id', req.ledger.id).maybeSingle();
+      if (!acc) return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
 
     const { data, error } = await supabase
       .from('yy_recurring_items')
       .insert({
         user_id: req.user.id,
+        ledger_id: isMoney ? req.ledger.id : null,
         kind,
         title,
         amount: amount || null,

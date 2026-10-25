@@ -1,5 +1,6 @@
 // 新使用者預設分類與帳戶(註冊時自動建立,之後可自行修改或刪除)
 const supabase = require('../config/supabase');
+const { ensureDefault } = require('./ledgers');
 
 const CATEGORIES = {
   zh: [
@@ -30,7 +31,9 @@ async function seedDefaults(userId, lang = 'zh') {
   const L = lang === 'en' ? 'en' : 'zh';
   const base = Date.now();
   const cats = CATEGORIES[L].map(([name, type, color], i) => ({ user_id: userId, name, type, color, created_at: stamp(base, i) }));
-  const accs = ACCOUNTS[L].map(([name, color], i) => ({ user_id: userId, name, color, balance: 0, currency: 'TWD', created_at: stamp(base, i) }));
+  // 預設帳本「日常」,預設帳戶放在裡面
+  const ledger = await ensureDefault(userId, L);
+  const accs = ACCOUNTS[L].map(([name, color], i) => ({ user_id: userId, ledger_id: ledger.id, name, color, balance: 0, currency: 'TWD', created_at: stamp(base, i) }));
   const [c, a] = await Promise.all([
     supabase.from('yy_categories').insert(cats),
     supabase.from('yy_accounts').insert(accs),

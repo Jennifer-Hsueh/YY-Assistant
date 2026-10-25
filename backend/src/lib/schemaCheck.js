@@ -15,6 +15,11 @@ const REQUIRED = {
   yy_settings: 'key, value',
   yy_active_days: 'user_id, day',
   yy_friendships: 'id, status',
+  yy_ledgers: 'id, is_default',
+  yy_transactions: 'id, ledger_id',
+  yy_accounts: 'id, ledger_id',
+  yy_budgets: 'id, ledger_id',
+  yy_recurring_items: 'id, ledger_id',
   yy_user_blocks: 'blocker_id',
   yy_user_reports: 'id, status',
 };

@@ -6,7 +6,7 @@ async function listBudgets(req, res) {
     const { data, error } = await supabase
       .from('yy_budgets')
       .select('id, category, amount')
-      .eq('user_id', req.user.id)
+      .eq('ledger_id', req.ledger.id)
       .order('category', { ascending: true });
     if (error) throw error;
     return res.json({ budgets: data });
@@ -24,7 +24,7 @@ async function upsertBudget(req, res) {
     if (!(amount > 0)) return res.status(400).json({ error: 'amount must be positive' });
     const { data, error } = await supabase
       .from('yy_budgets')
-      .upsert({ user_id: req.user.id, category, amount }, { onConflict: 'user_id,category' })
+      .upsert({ user_id: req.user.id, ledger_id: req.ledger.id, category, amount }, { onConflict: 'ledger_id,category' })
       .select('id, category, amount')
       .single();
     if (error) throw error;
@@ -41,7 +41,7 @@ async function deleteBudget(req, res) {
       .from('yy_budgets')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id);
+      .eq('ledger_id', req.ledger.id);
     if (error) throw error;
     return res.json({ message: 'Budget deleted' });
   } catch (err) {

@@ -4,9 +4,13 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 export const SESSION_EXPIRED_KEY = 'yy_session_expired';
 export const ACCOUNT_DISABLED_KEY = 'yy_account_disabled';
 
+// 目前的帳本(記帳、帳戶、預算、循環記帳都依這本讀寫)
+export const LEDGER_KEY = 'yy_ledger';
+
 export function clearSession({ expired = false } = {}) {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem(LEDGER_KEY);
   if (expired) sessionStorage.setItem(SESSION_EXPIRED_KEY, '1');
   window.dispatchEvent(new Event('yy:unauthorized'));
 }
@@ -33,6 +37,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
   }
+  try { const ledger = localStorage.getItem(LEDGER_KEY); if (auth && ledger) headers['X-Ledger'] = ledger; } catch { /* ignore */ }
 
   let res;
   try {
@@ -62,7 +67,12 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     err.status = res.status; // 429 = 嘗試次數過多
     err.code = data.code;
     // 方案不允許(例如到期後):重新讀取方案,畫面上的按鈕會跟著更新
-    if (data.code === 'PLAN_REQUIRED') {
+    // 記住的帳本已經不存在(被刪除或換了帳號):回到預設帳本
+    if (data.code === 'LEDGER_NOT_FOUND' && localStorage.getItem(LEDGER_KEY)) {
+      localStorage.removeItem(LEDGER_KEY);
+      window.dispatchEvent(new Event('yy:ledger-reset'));
+    }
+        if (data.code === 'PLAN_REQUIRED') {
       window.dispatchEvent(new Event('yy:plan-changed'));
       window.dispatchEvent(new CustomEvent('yy:plan-locked', { detail: { feature: data.feature } }));
     }
@@ -149,6 +159,11 @@ getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
   reactToPost: (id, type) => request(`/community/posts/${id}/react`, { method: 'POST', body: { type } }),
   reportPost: (id, reason) => request(`/community/posts/${id}/report`, { method: 'POST', body: { reason } }),
   setWishStatus: (id, wish_status) => request(`/community/posts/${id}/status`, { method: 'PUT', body: { wish_status } }),
+  // 帳本
+  listLedgers: () => request('/ledgers'),
+  createLedger: (name) => request('/ledgers', { method: 'POST', body: { name } }),
+  renameLedger: (id, name) => request(`/ledgers/${id}`, { method: 'PUT', body: { name } }),
+  deleteLedger: (id) => request(`/ledgers/${id}`, { method: 'DELETE' }),
   // 好友
   getFriends: () => request('/friends'),
   newFriendCode: () => request('/friends/code', { method: 'POST' }),

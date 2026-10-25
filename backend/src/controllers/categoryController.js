@@ -129,6 +129,9 @@ async function clearAllData(req, res) {
       const { error } = await supabase.from(table).delete().eq('user_id', req.user.id);
       if (error) throw error;
     }
+    // 自己建立的其他帳本也刪除,只留下預設帳本
+    const { error: lErr } = await supabase.from('yy_ledgers').delete().eq('user_id', req.user.id).eq('is_default', false);
+    if (lErr) throw lErr;
     return res.json({ message: 'All data cleared' });
   } catch (err) {
     console.error('[categoryController.clearAllData]', err);

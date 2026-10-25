@@ -4,6 +4,7 @@ import { askUpgrade } from './PlanNotice';
 import { Plus, X, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
+import { useLedger } from '../context/LedgerContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
@@ -17,6 +18,7 @@ const emptyEv = () => ({ title: '', date: ymd(new Date()), time: '', end_date: '
 
 export default function FloatingAddButton() {
   const { t } = useLanguage();
+  const { ledgers, current } = useLedger();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('tx');
   // 依方案只顯示能用的分頁(待辦記事一律可用)
@@ -148,6 +150,7 @@ export default function FloatingAddButton() {
 
             {tab === 'tx' ? (
               <form onSubmit={saveTx} className="space-y-2">
+                {ledgers.length > 1 && current && <p className="text-xs text-muted-foreground">📒 {current.name}</p>}
                 <div className="flex gap-2">
                   <div className="flex rounded-lg border border-border p-1">
                     {['expense', 'income'].map((ty) => (

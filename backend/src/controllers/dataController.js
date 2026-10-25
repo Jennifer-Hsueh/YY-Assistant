@@ -1,8 +1,9 @@
 const supabase = require('../config/supabase');
+const Ledgers = require('../lib/ledgers');
 
 // 匯出 / 匯入使用者的全部資料(備份與還原)
 // 只處理登入者自己的資料;匯入時欄位一律白名單,不接受 user_id / id 等系統欄位。
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2; // 2:加入帳本
 const CHUNK = 500;
 
 const pick = (row, keys) => Object.fromEntries(keys.filter((k) => row[k] !== undefined).map((k) => [k, row[k]]));
@@ -30,7 +31,8 @@ async function insertChunks(table, rows) {
 async function exportData(req, res) {
   try {
     const uid = req.user.id;
-    const [accounts, categories, transactions, events, recurring_items, budgets, moods, notes] = await Promise.all([
+    const [ledgers, accounts, categories, transactions, events, recurring_items, budgets, moods, notes] = await Promise.all([
+      selectAll('yy_ledgers', uid),
       selectAll('yy_accounts', uid),
       selectAll('yy_categories', uid),
       selectAll('yy_transactions', uid),
@@ -45,7 +47,7 @@ async function exportData(req, res) {
       app: 'YY手帳',
       version: BACKUP_VERSION,
       exported_at: new Date().toISOString(),
-      data: { accounts, categories, transactions, events, recurring_items, budgets, moods, notes },
+      data: { ledgers, accounts, categories, transactions, events, recurring_items, budgets, moods, notes },
     });
   } catch (err) {
     console.error('[dataController.exportData]', err);
@@ -63,7 +65,7 @@ async function importData(req, res) {
 
     // ---- 只匯入記帳明細(來自 Excel):依帳戶名稱對應,並更新帳戶餘額
     if (Array.isArray(req.body.transactions)) {
-      const { data: accounts, error } = await supabase.from('yy_accounts').select('id, name, balance').eq('user_id', uid);
+      const { data: accounts, error } = await supabase.from('yy_accounts').select('id, name, balance').eq('ledger_id', req.ledger.id);
       if (error) throw error;
       const byName = Object.fromEntries(accounts.map((a) => [a.name, a]));
       const rows = [];
@@ -77,6 +79,7 @@ async function importData(req, res) {
         if (r.account && !acc) unknownAccounts.add(String(r.account).trim());
         rows.push({
           user_id: uid,
+          ledger_id: req.ledger.id,
           type,
           amount,
           account_id: acc?.id || null,
@@ -103,11 +106,26 @@ async function importData(req, res) {
     if (!data || typeof data !== 'object') return res.status(400).json({ error: 'Invalid backup file' });
 
     if (mode === 'replace') {
-      for (const table of ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_budgets', 'yy_moods', 'yy_notes', 'yy_accounts']) {
+      for (const table of ['yy_transactions', 'yy_events', 'yy_recurring_items', 'yy_categories', 'yy_budgets', 'yy_moods', 'yy_notes', 'yy_accounts', 'yy_ledgers']) {
         const { error } = await supabase.from(table).delete().eq('user_id', uid);
         if (error) throw error;
       }
     }
+
+    // 帳本:備份裡的預設帳本對應到目前的預設帳本,其他帳本另外建立
+    // 舊版備份(沒有帳本)全部歸到預設帳本
+    const defaultLedger = await Ledgers.ensureDefault(uid);
+    const ledgerMap = {};
+    for (const l of data.ledgers || []) {
+      if (!l.id) continue;
+      if (l.is_default) { ledgerMap[l.id] = defaultLedger.id; continue; }
+      const name = String(l.name || '').trim().slice(0, Ledgers.NAME_MAX);
+      if (!name) continue;
+      const { data: created, error } = await supabase.from('yy_ledgers').insert({ user_id: uid, name, is_default: false }).select('id').single();
+      if (error) throw error;
+      ledgerMap[l.id] = created.id;
+    }
+    const ledgerOf = (row) => ledgerMap[row.ledger_id] || defaultLedger.id;
 
     // 帳戶:建立新帳戶,記下舊 id → 新 id(記帳、循環要用)
     const accountMap = {};
@@ -115,7 +133,7 @@ async function importData(req, res) {
       if (!a.name) continue;
       const { data: created, error } = await supabase
         .from('yy_accounts')
-        .insert({ user_id: uid, ...pick(a, ['name', 'currency', 'color']), balance: Number(a.balance) || 0 })
+        .insert({ user_id: uid, ledger_id: ledgerOf(a), ...pick(a, ['name', 'currency', 'color']), balance: Number(a.balance) || 0 })
         .select('id')
         .single();
       if (error) throw error;
@@ -134,7 +152,7 @@ async function importData(req, res) {
     // 記帳:帳戶餘額已包含這些紀錄,所以不再調整餘額
     summary.transactions = await insertChunks('yy_transactions', (data.transactions || [])
       .filter((t) => (t.type === 'income' || t.type === 'expense') && Number(t.amount) > 0 && isDate(t.occurred_at))
-      .map((t) => ({ user_id: uid, ...pick(t, ['type', 'amount', 'category', 'note', 'occurred_at']), account_id: accountMap[t.account_id] || null })));
+      .map((t) => ({ user_id: uid, ledger_id: ledgerOf(t), ...pick(t, ['type', 'amount', 'category', 'note', 'occurred_at']), account_id: accountMap[t.account_id] || null })));
 
     summary.events = await insertChunks('yy_events', (data.events || [])
       .filter((e) => e.title && isDate(e.start_at))
@@ -151,11 +169,18 @@ async function importData(req, res) {
         user_id: uid,
         ...pick(r, ['kind', 'title', 'amount', 'category', 'frequency', 'day_of_month', 'day_of_week', 'next_trigger_date', 'reminder_method', 'is_active', 'end_date']),
         account_id: accountMap[r.account_id] || null,
+        ledger_id: r.kind === 'event' ? null : ledgerOf(r),
       })));
 
-    const budgetRows = (data.budgets || []).filter((b) => Number(b.amount) > 0).map((b) => ({ user_id: uid, category: b.category || '', amount: Number(b.amount) }));
+    // 同一本帳本、同一個分類只留最後一筆
+    const budgetByKey = new Map();
+    for (const b of (data.budgets || []).filter((x) => Number(x.amount) > 0)) {
+      const row = { user_id: uid, ledger_id: ledgerOf(b), category: b.category || '', amount: Number(b.amount) };
+      budgetByKey.set(`${row.ledger_id}|${row.category}`, row);
+    }
+    const budgetRows = [...budgetByKey.values()];
     if (budgetRows.length) {
-      const { error } = await supabase.from('yy_budgets').upsert(budgetRows, { onConflict: 'user_id,category' });
+      const { error } = await supabase.from('yy_budgets').upsert(budgetRows, { onConflict: 'ledger_id,category' });
       if (error) throw error;
     }
     summary.budgets = budgetRows.length;

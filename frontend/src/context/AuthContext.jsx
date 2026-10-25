@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { api, clearSession, isTokenExpired } from '../lib/api';
+import { api, clearSession, isTokenExpired, LEDGER_KEY } from '../lib/api';
 import { applyTheme } from '../lib/theme';
 
 const AuthContext = createContext(null);
@@ -46,6 +46,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { user, token } = await api.login(email, password);
+    localStorage.removeItem(LEDGER_KEY);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
@@ -53,6 +54,7 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (email, password) => {
     const { user, token } = await api.register(email, password);
+    localStorage.removeItem(LEDGER_KEY);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
@@ -61,6 +63,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem(LEDGER_KEY);
     sessionStorage.removeItem('yy_session_expired');
     setUser(null);
   }, []);

@@ -36,6 +36,7 @@ async function recordTransaction(item, dateStr) {
   const amount = Number(item.amount);
   const { error } = await supabase.from('yy_transactions').insert({
     user_id: item.user_id,
+    ledger_id: item.ledger_id || null,
     account_id: item.account_id || null,
     type: item.kind,
     amount,

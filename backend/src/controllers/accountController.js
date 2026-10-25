@@ -7,7 +7,7 @@ async function listAccounts(req, res) {
     const { data, error } = await supabase
       .from('yy_accounts')
       .select('*')
-      .eq('user_id', req.user.id)
+      .eq('ledger_id', req.ledger.id)
       .order('created_at', { ascending: true });
     if (error) throw error;
     return res.json({ accounts: data });
@@ -25,7 +25,7 @@ async function createAccount(req, res) {
 
     const { data, error } = await supabase
       .from('yy_accounts')
-      .insert({ user_id: req.user.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null })
+      .insert({ user_id: req.user.id, ledger_id: req.ledger.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null })
       .select()
       .single();
     if (error) throw error;
@@ -44,11 +44,11 @@ async function updateAccount(req, res) {
 
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_accounts')
-      .select('id, user_id')
+      .select('id, ledger_id')
       .eq('id', id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
-    if (!existing || existing.user_id !== req.user.id) {
+    if (!existing || existing.ledger_id !== req.ledger.id) {
       return res.status(404).json({ error: 'Account not found' });
     }
 
@@ -80,11 +80,11 @@ async function deleteAccount(req, res) {
     const { id } = req.params;
     const { data: existing, error: fetchErr } = await supabase
       .from('yy_accounts')
-      .select('id, user_id')
+      .select('id, ledger_id')
       .eq('id', id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
-    if (!existing || existing.user_id !== req.user.id) {
+    if (!existing || existing.ledger_id !== req.ledger.id) {
       return res.status(404).json({ error: 'Account not found' });
     }
 
@@ -115,13 +115,13 @@ async function transferBetweenAccounts(req, res) {
 
     const { data: accounts, error } = await supabase
       .from('yy_accounts')
-      .select('id, name, balance, user_id, currency')
+      .select('id, name, balance, ledger_id, currency')
       .in('id', [from_account_id, to_account_id]);
     if (error) throw error;
 
     const from = accounts.find((a) => a.id === from_account_id);
     const to = accounts.find((a) => a.id === to_account_id);
-    if (!from || !to || from.user_id !== req.user.id || to.user_id !== req.user.id) {
+    if (!from || !to || from.ledger_id !== req.ledger.id || to.ledger_id !== req.ledger.id) {
       return res.status(404).json({ error: 'One or both accounts were not found' });
     }
 
@@ -143,6 +143,7 @@ async function transferBetweenAccounts(req, res) {
     await supabase.from('yy_transactions').insert([
       {
         user_id: req.user.id,
+        ledger_id: req.ledger.id,
         account_id: from_account_id,
         type: 'expense',
         amount: Number(amount),
@@ -152,6 +153,7 @@ async function transferBetweenAccounts(req, res) {
       },
       {
         user_id: req.user.id,
+        ledger_id: req.ledger.id,
         account_id: to_account_id,
         type: 'income',
         amount: creditedAmount,

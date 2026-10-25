@@ -1,5 +1,15 @@
 // 英文介面的錯誤訊息:前端送 X-Lang: en 時,把常見的中文訊息換成英文(其他維持原文)
 const EN = {
+  '找不到這本帳本': 'Ledger not found',
+  '這本帳本只能查看': 'This ledger is view-only',
+  '帳戶不在這本帳本裡': 'This account is not in the current ledger',
+  '請輸入帳本名稱': 'Please enter a ledger name',
+  '帳本最多 20 本': 'You can have up to 20 ledgers',
+  '至少要保留一本帳本': 'You need to keep at least one ledger',
+  '讀取帳本失敗': 'Could not load ledgers',
+  '新增帳本失敗': 'Could not create the ledger',
+  '修改帳本失敗': 'Could not update the ledger',
+  '刪除帳本失敗': 'Could not delete the ledger',
   '找不到這組好友碼': 'No one found with this friend code',
   '這是你自己的好友碼': 'This is your own friend code',
   '好友最多 200 位': 'You can have up to 200 friends',

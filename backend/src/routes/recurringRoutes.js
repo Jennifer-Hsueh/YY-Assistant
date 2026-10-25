@@ -2,6 +2,7 @@ const express = require('express');
 const supabase = require('../config/supabase');
 const { requireAuth, planRequired } = require('../middleware/auth');
 const { has } = require('../lib/entitlements');
+const { withLedger } = require('../lib/ledgers');
 const {
   listRecurringItems,
   createRecurringItem,
@@ -11,6 +12,8 @@ const {
 
 const router = express.Router();
 router.use(requireAuth);
+// 循環記帳屬於目前的帳本;循環行程不分帳本
+router.use(withLedger);
 
 // 循環記帳 / 循環行程各自屬於不同方案的功能:依項目種類檢查
 const featureOf = (kind) => (kind === 'event' ? 'calendar_recurring' : 'ledger_recurring');
