@@ -83,17 +83,24 @@ function Section({ title, children }) {
   );
 }
 
-function Person({ name, sub, children }) {
+function Person({ name, sub, children, onClick }) {
   const T = useFriendText();
   return (
     <li className="flex items-center gap-3 py-2">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium" style={{ color: 'var(--ink)' }}>
         {(name || '?').slice(0, 1)}
       </span>
-      <div className="min-w-0 flex-1">
-        <p className={`truncate text-sm ${name ? '' : 'text-muted-foreground'}`}>{name || T.unnamed}</p>
-        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-      </div>
+      {onClick ? (
+        <button type="button" onClick={onClick} className="min-w-0 flex-1 text-left">
+          <p className={`truncate text-sm ${name ? '' : 'text-muted-foreground'}`}>{name || T.unnamed}</p>
+          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+        </button>
+      ) : (
+        <div className="min-w-0 flex-1">
+          <p className={`truncate text-sm ${name ? '' : 'text-muted-foreground'}`}>{name || T.unnamed}</p>
+          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+        </div>
+      )}
       {children}
     </li>
   );
@@ -150,7 +157,7 @@ function FriendActions({ f, onDone, setError }) {
   );
 }
 
-export default function Friends() {
+export default function Friends({ onOpen }) {
   const T = useFriendText();
   const { language } = useLanguage();
   const [data, setData] = useState(null);
@@ -256,7 +263,7 @@ export default function Friends() {
         {data.friends.length === 0 ? <p className="text-sm text-muted-foreground">{T.none}</p> : (
           <ul className="divide-y divide-border">
             {data.friends.map((f) => (
-              <Person key={f.id} name={f.name} sub={T.since(fmtDay(f.since))}>
+              <Person key={f.id} name={f.name} sub={T.since(fmtDay(f.since))} onClick={onOpen ? () => onOpen(f) : undefined}>
                 <FriendActions f={f} onDone={load} setError={setError} />
               </Person>
             ))}

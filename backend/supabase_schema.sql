@@ -475,6 +475,8 @@ alter table yy_posts add constraint yy_posts_visibility_check check (visibility 
 
 -- 發文時可選「不讓好友看到」(公開文章才有效);原本的「隱藏好友」篩選已移除
 alter table yy_posts add column if not exists hide_friends boolean not null default false;
+-- 發文時選擇隱藏的好友(這些好友看不到這篇)
+alter table yy_posts add column if not exists hidden_from uuid[] not null default '{}';
 drop table if exists yy_feed_hidden;
 
 -- ---------- 小紙條(2026-10-26) ----------

@@ -33,8 +33,12 @@ function commentsAllowed(post, userId) {
 }
 
 // 僅好友可見:作者的好友(沒有互相封鎖)才看得到
+// 作者發文時選擇隱藏的好友
+const hiddenFor = (post, userId) => Array.isArray(post.hidden_from) && post.hidden_from.includes(userId);
+
 async function canRead(post, userId, admin) {
   if (post.user_id === userId) return true;
+  if (!admin && hiddenFor(post, userId)) return false;
   if (post.visibility === 'friends') {
     if (post.hidden && !admin) return false;
     if (admin) return true;
@@ -66,9 +70,11 @@ async function decorate(posts, userId) {
       counts[r.type] = (counts[r.type] || 0) + 1;
       if (r.user_id === userId) myReaction = r.type;
     }
-    const { user_id, ...rest } = p;
+    const { user_id, hidden_from, ...rest } = p;
     return {
       ...rest,
+      // 隱藏了哪些好友只給作者自己看
+      ...(mine ? { hidden_from: hidden_from || [] } : {}),
       is_mine: mine,
       author_name: p.anonymous && !mine ? null : (author?.username || author?.email?.split('@')[0] || ''),
       reactions: counts,
@@ -92,6 +98,12 @@ async function listPosts(req, res) {
     if (board === 'mine') {
       q = q.eq('user_id', req.user.id);
       if (VISIBILITIES.includes(visibility)) q = q.eq('visibility', visibility);
+    } else if (board === 'friend') {
+      // 某位好友的文章:僅好友可見+具名公開;不含匿名、被隱藏的
+      const fid = String(req.query.user_id || '');
+      if (!fid || !(await F.areFriends(req.user.id, fid)) || (await F.isBlockedEither(req.user.id, fid))) return res.status(404).json({ error: 'Not found' });
+      q = q.eq('user_id', fid).eq('hidden', false).eq('hide_friends', false)
+        .or('visibility.eq.friends,and(visibility.eq.public,anonymous.eq.false)');
     } else if (BOARDS.includes(board) && scope === 'friends') {
       // 好友篩選:好友的公開(具名)文章+僅好友可見的文章;不含作者設定「不讓好友看到」的文章
       const ids = await F.friendIds(req.user.id);
@@ -106,13 +118,13 @@ async function listPosts(req, res) {
     if (before) q = q.lt('created_at', before);
     const { data, error } = await q;
     if (error) throw error;
-    let rows = data || [];
+    let rows = (data || []).filter((p) => p.user_id === req.user.id || !hiddenFor(p, req.user.id));
     // 公開板:作者設定「不讓好友看到」的文章,不給作者的好友看
-    if (board !== 'mine' && scope !== 'friends' && rows.some((p) => p.hide_friends && p.user_id !== req.user.id)) {
+    if (BOARDS.includes(board) && scope !== 'friends' && rows.some((p) => p.hide_friends && p.user_id !== req.user.id)) {
       const friends = new Set(await F.friendIds(req.user.id));
       rows = rows.filter((p) => !(p.hide_friends && friends.has(p.user_id)));
     }
-    return res.json({ posts: await decorate(rows, req.user.id) });
+    return res.json({ posts: await decorate(rows, req.user.id), has_more: (data || []).length === PAGE_SIZE });
   } catch (err) {
     console.error('[communityController.listPosts]', err);
     return res.status(500).json({ error: 'Failed to fetch posts' });
@@ -148,6 +160,13 @@ async function myStats(req, res) {
   }
 }
 
+// 隱藏名單:只能選自己的好友
+async function cleanHidden(userId, list) {
+  if (!Array.isArray(list) || !list.length) return [];
+  const friends = new Set(await F.friendIds(userId));
+  return [...new Set(list.map(String))].filter((id) => friends.has(id)).slice(0, 200);
+}
+
 async function createPost(req, res) {
   try {
     const { board, visibility, anonymous, mood, title } = req.body;
@@ -172,6 +191,7 @@ async function createPost(req, res) {
         visibility: vis,
         anonymous: vis === 'public' && !!anonymous,
         hide_friends: vis === 'public' && !!req.body.hide_friends,
+        hidden_from: vis === 'private' ? [] : await cleanHidden(req.user.id, req.body.hidden_from),
         mood: board === 'mood' ? mood || null : null,
         title: board === 'mood' ? null : clean(title, MAX_TITLE) || null,
         content,
@@ -204,8 +224,10 @@ async function updatePost(req, res) {
     // 僅好友可見一定具名
     if ((updates.visibility || post.visibility) === 'friends') updates.anonymous = false;
     if (req.body.hide_friends !== undefined) updates.hide_friends = !!req.body.hide_friends;
-    // 「不讓好友看到」只適用公開文章
+    if (req.body.hidden_from !== undefined) updates.hidden_from = await cleanHidden(req.user.id, req.body.hidden_from);
+    // 「隱藏全部好友」只適用公開文章;僅自己可見不需要隱藏名單
     if ((updates.visibility || post.visibility) !== 'public') updates.hide_friends = false;
+    if ((updates.visibility || post.visibility) === 'private') updates.hidden_from = [];
     if (mood !== undefined && post.board === 'mood') {
       if (mood !== null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
       updates.mood = mood;

@@ -50,9 +50,59 @@ const REPORT_REASONS = [
 ];
 const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.visibility === 'friends' ? 'friends' : p.anonymous ? 'anon' : 'named');
 
-const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', hideFriends: false, images: [] };
-// 公開(匿名或具名)才能選「不讓好友看到」
-const canHideFriends = (scopeKey) => scopeKey === 'anon' || scopeKey === 'named';
+const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', hide: { mode: 'none', ids: [] }, images: [] };
+// 隱藏好友:公開文章可以「全部好友」或「選擇好友」;僅好友可見只能選擇好友;僅自己不需要
+const hideModes = (scopeKey) => (scopeKey === 'private' ? [] : scopeKey === 'friends' ? ['none', 'pick'] : ['none', 'all', 'pick']);
+const hideOf = (p) => (p.hide_friends ? { mode: 'all', ids: [] } : p.hidden_from?.length ? { mode: 'pick', ids: p.hidden_from } : { mode: 'none', ids: [] });
+const hideBody = (scopeKey, h) => {
+  const modes = hideModes(scopeKey);
+  const mode = modes.includes(h.mode) ? h.mode : 'none';
+  return { hide_friends: mode === 'all', hidden_from: mode === 'pick' ? h.ids : [] };
+};
+
+// 好友名單只抓一次
+let friendsCache = null;
+function useFriendList(enabled) {
+  const [list, setList] = useState(friendsCache);
+  useEffect(() => {
+    if (!enabled || friendsCache) return;
+    api.getFriends().then(({ friends }) => { friendsCache = friends; setList(friends); }).catch(() => setList([]));
+  }, [enabled]);
+  return list;
+}
+
+// 隱藏好友:不隱藏/全部好友/選擇好友(勾選要隱藏的人)
+function HidePicker({ t, scopeKey, value, onChange }) {
+  const modes = hideModes(scopeKey);
+  const friends = useFriendList(value.mode === 'pick');
+  if (!modes.length) return null;
+  const mode = modes.includes(value.mode) ? value.mode : 'none';
+  const toggle = (id) => onChange({ mode: 'pick', ids: value.ids.includes(id) ? value.ids.filter((x) => x !== id) : [...value.ids, id] });
+  return (
+    <div className="mt-2 w-full">
+      <p className="mb-1.5 text-xs text-muted-foreground">{t('cm_hide_title')}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {modes.map((m) => (
+          <button key={m} type="button" onClick={() => onChange({ mode: m, ids: value.ids })} className={pillClass(mode === m)}>{t(`cm_hide_${m}`)}</button>
+        ))}
+      </div>
+      {mode === 'pick' && (
+        <div className="mt-2 rounded-md border border-border p-2">
+          {!friends ? <p className="text-xs text-muted-foreground">{t('loading')}</p> : friends.length === 0 ? <p className="text-xs text-muted-foreground">{t('cm_hide_no_friends')}</p> : (
+            <div className="flex flex-wrap gap-1.5">
+              {friends.map((f) => (
+                <button key={f.id} type="button" onClick={() => toggle(f.id)} className={`rounded-full border px-2.5 py-0.5 text-xs ${value.ids.includes(f.id) ? 'border-foreground bg-muted text-foreground line-through' : 'border-border text-muted-foreground'}`}>
+                  {f.name || '—'}
+                </button>
+              ))}
+            </div>
+          )}
+          {friends?.length > 0 && <p className="mt-1.5 text-[11px] text-muted-foreground">{t('cm_hide_pick_hint').replace('{n}', value.ids.length)}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function pillClass(active) {
   return `rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${active ? 'border-foreground bg-muted font-medium text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`;
@@ -77,7 +127,10 @@ export default function Community() {
   // 版別由網址決定(/community/mood 等),左側選單與頁內版別列共用
   const { board } = useParams();
   const navigate = useNavigate();
-  const tab = TABS.some((x) => x.key === board) ? board : 'mood';
+  // /community(沒有版名)先顯示社群使用規則,點版名後才顯示內容
+  const tab = TABS.some((x) => x.key === board) ? board : null;
+  const [friendView, setFriendView] = useState(null);
+  useEffect(() => { setFriendView(null); }, [tab]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -111,7 +164,7 @@ export default function Community() {
   }
 
   async function load({ append = false } = {}) {
-    if (tab === 'friends') return;
+    if (!tab || tab === 'friends') return;
     if (!append) setLoading(true);
     setError('');
     try {
@@ -119,9 +172,9 @@ export default function Community() {
       if (tab === 'mine' && mineFilter !== 'all') params.visibility = mineFilter;
       if (tab !== 'mine' && feedScope === 'friends') params.scope = 'friends';
       if (append && posts.length) params.before = posts[posts.length - 1].created_at;
-      const { posts: rows } = await api.listPosts(params);
+      const { posts: rows, has_more } = await api.listPosts(params);
       setPosts((prev) => (append ? [...prev, ...rows] : rows));
-      setHasMore(rows.length === 30);
+      setHasMore(has_more ?? rows.length === 30);
       if (tab === 'mine') refreshStats();
     } catch (err) {
       console.error(err);
@@ -134,7 +187,7 @@ export default function Community() {
   useEffect(() => { load(); }, [tab, mineFilter, feedScope]);
 
   useEffect(() => {
-    if (tab !== 'mine' && tab !== 'friends') setDraft((d) => ({ ...d, board: tab }));
+    if (tab && tab !== 'mine' && tab !== 'friends') setDraft((d) => ({ ...d, board: tab }));
   }, [tab]);
 
   function switchTab(key) {
@@ -158,9 +211,9 @@ export default function Community() {
         content: draft.content,
         images: draft.images.map((i) => i.key),
         ...scope,
-        hide_friends: canHideFriends(draft.scope) && draft.hideFriends,
+        ...hideBody(draft.scope, draft.hide),
       });
-      setDraft({ ...emptyDraft, board: draftBoard, scope: draft.scope, hideFriends: draft.hideFriends });
+      setDraft({ ...emptyDraft, board: draftBoard, scope: draft.scope, hide: draft.hide });
       setComposeOpen(false);
       // 公開文章出現在目前的板上;私人文章只出現在「我的」
       const showsHere = tab === 'mine'
@@ -275,12 +328,7 @@ export default function Community() {
                 </button>
               ))}
             </div>
-            {canHideFriends(draft.scope) && (
-              <label className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <input type="checkbox" checked={draft.hideFriends} onChange={(e) => setDraft({ ...draft, hideFriends: e.target.checked })} />
-                {t('cm_hide_friends')}
-              </label>
-            )}
+            <HidePicker t={t} scopeKey={draft.scope} value={draft.hide} onChange={(hide) => setDraft((d) => ({ ...d, hide }))} />
           </div>
           <Button type="submit" className="w-full" disabled={posting || uploading || !draft.content.trim()}>{t('cm_publish')}</Button>
         </form>
@@ -302,7 +350,27 @@ export default function Community() {
       {/* 版別列:手機與網頁都橫跨整個內容寬度 */}
       {tabBar}
       {/* 手機版順序:版別 → 版名介紹 → 寫文章 → 文章列表 */}
-      {tab === 'friends' ? <Friends /> : (<>
+      {!tab ? (
+        <Card>
+          <CardContent className="p-5">
+            <p className="mb-2 text-base font-semibold">📋 {t('cm_rules_title')}</p>
+            <p className="mb-3 text-sm text-muted-foreground">{t('cm_rules_intro')}</p>
+            <ol className="mb-4 space-y-2 text-sm">
+              {['cm_rule_1', 'cm_rule_2', 'cm_rule_3'].map((k, i) => (
+                <li key={k} className="flex gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white" style={{ background: 'var(--module-accounts)' }}>{i + 1}</span>
+                  <span>{t(k)}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="text-xs text-muted-foreground">{t('cm_rules_outro')}</p>
+          </CardContent>
+        </Card>
+      ) : tab === 'friends' ? (
+        friendView
+          ? <FriendPosts friend={friendView} t={t} isAdmin={isAdmin} onBack={() => setFriendView(null)} />
+          : <Friends onOpen={setFriendView} />
+      ) : (<>
       <div className="md:hidden">{boardIntro}</div>
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-6">
@@ -387,12 +455,56 @@ export default function Community() {
   );
 }
 
+// 某位好友的文章(僅好友可見+具名公開;對我隱藏的看不到)
+function FriendPosts({ friend, t, isAdmin, onBack }) {
+  const [posts, setPosts] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState('');
+  async function load(append = false) {
+    try {
+      const params = { board: 'friend', user_id: friend.id };
+      if (append && posts?.length) params.before = posts[posts.length - 1].created_at;
+      const { posts: rows, has_more } = await api.listPosts(params);
+      setPosts((prev) => (append ? [...(prev || []), ...rows] : rows));
+      setHasMore(!!has_more);
+    } catch (err) {
+      console.error(err);
+      setError(t('cm_error'));
+      setPosts((p) => p || []);
+    }
+  }
+  useEffect(() => { load(); }, [friend.id]);
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-3 flex items-center gap-2">
+        <button type="button" onClick={onBack} className="text-sm text-muted-foreground underline">← {t('cm_back_friends')}</button>
+        <p className="ml-auto text-sm font-medium">{t('cm_friend_posts').replace('{name}', friend.name || '—')}</p>
+      </div>
+      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+      {!posts ? <p className="text-sm text-muted-foreground">{t('loading')}</p> : posts.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">{t('cm_friend_posts_empty')}</p>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} t={t} inMine={false} isAdmin={isAdmin}
+              onChange={(np) => setPosts((list) => list.map((x) => (x.id === np.id ? np : x)))}
+              onRemove={(id) => setPosts((list) => list.filter((x) => x.id !== id))}
+              onError={() => setError(t('cm_error'))} />
+          ))}
+          {hasMore && <button type="button" onClick={() => load(true)} className="w-full py-2 text-sm text-muted-foreground underline">{t('cm_load_more')}</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
   const member = usePlan().can('community');
   const [confirm, setConfirm] = useState(null); // 'delete' | 'report' | 'reported'
   const [reportReason, setReportReason] = useState(null);
   const [reportDetail, setReportDetail] = useState('');
   const [scopeOpen, setScopeOpen] = useState(false);
+  const [hideDraft, setHideDraft] = useState(null);
   // 編輯自己的文章:標題、內容、照片
   const [editing, setEditing] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -417,6 +529,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
   const changeScope = (key, extra = {}) => run(async () => {
     const { post: p } = await api.updatePost(post.id, { ...SCOPES.find((s) => s.key === key).value, ...extra });
     setScopeOpen(false);
+    setHideDraft(null);
     // 在板上改成「僅自己」= 從板上收回
     if (inMine || p.visibility === 'public') onChange(p); else onRemove(post.id);
   });
@@ -468,6 +581,9 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
                   {isPrivate && <Lock className="h-3 w-3" />}
                   {t(SCOPES.find((s) => s.key === scopeOf(post)).label)}
                 </span>
+                {post.is_mine && (post.hide_friends || post.hidden_from?.length > 0) && (
+                  <span>· {post.hide_friends ? t('cm_hidden_all') : t('cm_hidden_n').replace('{n}', post.hidden_from.length)}</span>
+                )}
               </>
             ) : (
               <span>{displayName}</span>
@@ -577,11 +693,13 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
                 {t(s.label)}
               </button>
             ))}
-            {canHideFriends(scopeOf(post)) && (
-              <label className="flex w-full items-center gap-1.5 text-xs text-muted-foreground">
-                <input type="checkbox" checked={!!post.hide_friends} onChange={(e) => changeScope(scopeOf(post), { hide_friends: e.target.checked })} />
-                {t('cm_hide_friends')}
-              </label>
+            {hideModes(scopeOf(post)).length > 0 && (
+              <>
+                <HidePicker t={t} scopeKey={scopeOf(post)} value={hideDraft || hideOf(post)} onChange={setHideDraft} />
+                {hideDraft && (
+                  <Button size="sm" className="mt-1" onClick={() => changeScope(scopeOf(post), hideBody(scopeOf(post), hideDraft))}>{t('cm_save')}</Button>
+                )}
+              </>
             )}
           </div>
         )}

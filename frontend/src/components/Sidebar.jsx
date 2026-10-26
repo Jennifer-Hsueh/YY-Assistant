@@ -34,7 +34,8 @@ export default function Sidebar() {
       return;
     }
     setOpenGroup(tab.to);
-    navigate(tab.children[0].to);
+    // 社群先到使用規則頁,其他群組到第一個子項目
+    navigate(tab.to === '/community' ? '/community' : tab.children[0].to);
   }
 
   return (
