@@ -6,6 +6,7 @@ import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import Friends from './Friends';
+import { LegalOverlay } from './Legal';
 import { helplineText } from '../lib/helplines';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -130,6 +131,7 @@ export default function Community() {
   // /community(沒有版名)先顯示社群使用規則,點版名後才顯示內容
   const tab = TABS.some((x) => x.key === board) ? board : null;
   const [friendView, setFriendView] = useState(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
   useEffect(() => { setFriendView(null); }, [tab]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -356,14 +358,17 @@ export default function Community() {
             <p className="mb-2 text-base font-semibold">📋 {t('cm_rules_title')}</p>
             <p className="mb-3 text-sm text-muted-foreground">{t('cm_rules_intro')}</p>
             <ol className="mb-4 space-y-2 text-sm">
-              {['cm_rule_1', 'cm_rule_2', 'cm_rule_3'].map((k, i) => (
+              {['cm_rule_1', 'cm_rule_2', 'cm_rule_3', 'cm_rule_4', 'cm_rule_5', 'cm_rule_6'].map((k, i) => (
                 <li key={k} className="flex gap-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white" style={{ background: 'var(--module-accounts)' }}>{i + 1}</span>
                   <span>{t(k)}</span>
                 </li>
               ))}
             </ol>
-            <p className="text-xs text-muted-foreground">{t('cm_rules_outro')}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{t('cm_rules_outro')}</p>
+            {helplineText(country, language) && <p className="mb-2 text-xs text-muted-foreground">{t('cm_rules_care')} {helplineText(country, language)}</p>}
+            <button type="button" onClick={() => setRulesOpen(true)} className="text-xs text-muted-foreground underline">{t('cm_rules_full')}</button>
+            <LegalOverlay doc={rulesOpen ? 'terms' : null} anchor="community" onClose={() => setRulesOpen(false)} />
           </CardContent>
         </Card>
       ) : tab === 'friends' ? (

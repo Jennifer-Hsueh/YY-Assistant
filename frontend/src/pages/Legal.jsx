@@ -10,7 +10,7 @@ const DOCS = { zh: { terms: TERMS, privacy: PRIVACY }, en: { terms: TERMS_EN, pr
 const show = (b) => !(hidePricing && b?.noIOS);
 
 function Block({ b }) {
-  if (b.part) return <h2 className="pt-4 text-base font-semibold">{b.part}</h2>;
+  if (b.part) return <h2 id={b.id} className="scroll-mt-4 pt-4 text-base font-semibold">{b.part}</h2>;
   if (b.h) return <h3 className="pt-2 text-sm font-semibold">{b.h}</h3>;
   if (b.p) return <p>{b.p}</p>;
   if (b.ol || b.ul) {
@@ -50,8 +50,12 @@ export function LegalContent({ doc, onDone }) {
 }
 
 // 疊在畫面上的條款視窗(看完按關閉回到原本畫面,填到一半的資料不會不見)
-export function LegalOverlay({ doc, onClose }) {
+export function LegalOverlay({ doc, onClose, anchor }) {
   const { A } = useAuthText();
+  // 指定段落時(例如社群規範),打開後直接捲到那裡
+  useEffect(() => {
+    if (doc && anchor) setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ block: 'start' }), 50);
+  }, [doc, anchor]);
   if (!doc) return null;
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-card" style={{ paddingTop: 'var(--sat, 0px)' }}>
