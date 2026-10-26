@@ -125,6 +125,7 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/friends', require('./routes/friendRoutes'));
 app.use('/api/ledgers', require('./routes/ledgerRoutes'));
 app.use('/api/anniversaries', require('./routes/anniversaryRoutes'));
+app.use('/api/slips', require('./routes/slipRoutes'));
 app.use('/api/admin', adminRoutes);
 
 // 404 fallback

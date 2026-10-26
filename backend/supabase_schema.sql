@@ -476,3 +476,18 @@ alter table yy_posts add constraint yy_posts_visibility_check check (visibility 
 -- 發文時可選「不讓好友看到」(公開文章才有效);原本的「隱藏好友」篩選已移除
 alter table yy_posts add column if not exists hide_friends boolean not null default false;
 drop table if exists yy_feed_hidden;
+
+-- ---------- 小紙條(2026-10-26) ----------
+-- 收件人撕掉之前一直保留;寄件人刪除帳號後保留紙條(顯示已刪除的成員)
+create table if not exists yy_slips (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid references yy_users(id) on delete set null,
+  recipient_id uuid not null references yy_users(id) on delete cascade,
+  content text not null check (char_length(content) between 1 and 25),
+  read_at timestamptz,
+  sender_hidden boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_slips_recipient on yy_slips (recipient_id, created_at desc);
+create index if not exists idx_slips_sender on yy_slips (sender_id, created_at desc);
+alter table yy_slips enable row level security;

@@ -1,5 +1,15 @@
 // 英文介面的錯誤訊息:前端送 X-Lang: en 時,把常見的中文訊息換成英文(其他維持原文)
 const EN = {
+  '讀取名單失敗': 'Could not load the list',
+  '讀取小紙條失敗': 'Could not load notes',
+  '請寫點什麼': 'Please write something',
+  '小紙條最多 25 個字': 'Notes can be up to 25 characters',
+  '只能傳給好友或共同成員': 'You can only send notes to friends or people you share with',
+  '今天傳太多張了，明天再傳吧': "You've sent a lot today. Try again tomorrow",
+  '傳送失敗': 'Could not send',
+  '更新失敗': 'Could not update',
+  '找不到這張小紙條': 'Note not found',
+  '刪除失敗': 'Could not delete',
   '圖示不正確': 'Invalid icon',
   '請輸入紀念日名稱': 'Please enter a name',
   '日期格式不正確': 'Invalid date',

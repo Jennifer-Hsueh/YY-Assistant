@@ -16,6 +16,7 @@ import { CloudSun } from 'lucide-react';
 import { usePlan } from '../context/PlanContext';
 import { PlanBanner } from '../components/PlanNotice';
 import HomeNotesCard from '../components/HomeNotesCard';
+import HomeSlipsCard from '../components/HomeSlipsCard';
 
 // 首頁卡片的淡色漸層底(依模組顏色)
 const tint = (color) => ({
@@ -293,6 +294,9 @@ export default function Home() {
 
         {/* 墨箋絮語:只顯示未完成的項目 */}
         <HomeNotesCard t={t} style={tint('var(--module-notes)')} />
+
+        {/* 小紙條 */}
+        <HomeSlipsCard t={t} style={tint('var(--module-recurring)')} />
       </div>
     </div>
   );
