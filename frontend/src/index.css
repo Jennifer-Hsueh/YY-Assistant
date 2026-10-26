@@ -62,6 +62,8 @@
 
   /* 各模組專屬色 — 首頁與底部導覽依此呼應 */
   --module-transactions: var(--expense);
+  /* 左側選單/底部導覽:目前所在功能的文字顏色,所有功能一致 */
+  --nav-active: var(--module-transactions);
   --module-transactions-bg: color-mix(in srgb, var(--expense) 10%, white);
   --module-accounts: var(--income);
   --module-accounts-bg: color-mix(in srgb, var(--income) 10%, white);
@@ -161,7 +163,7 @@
 /* ───────── 莫蘭迪主題 ─────────
    明亮的燕麥底,搭配霧感的鼠尾草綠、薰衣草紫、奶油黃 */
 :root[data-theme="morandi"] {
-  --background: #F3F0EA;
+  --background: #FFFFFF;
   --foreground: #4F4B47;
   /* 米紙的白色區塊 → 莫蘭迪紫;紅色區塊 → 莫蘭迪黃 */
   --card: #EEE9F4;
@@ -267,13 +269,12 @@
 }
 :root[data-theme="sport"] .page-title-row {
   padding-bottom: 6px;
-  border-bottom: 3px solid var(--sport-blue);
-  box-shadow: 0 3px 0 var(--sport-yellow);
+  border-bottom: 3px solid #FFFFFF;
   margin-bottom: 1.25rem;
 }
 :root[data-theme="sport"] [data-slot="sidebar"] {
   background: #EDF4FC;
-  border-right: 4px solid var(--sport-yellow);
+  border-right: 4px solid #FFFFFF;
 }
 :root[data-theme="sport"] [data-slot="bottom-nav"] {
   border-top: 3px solid var(--sport-yellow);

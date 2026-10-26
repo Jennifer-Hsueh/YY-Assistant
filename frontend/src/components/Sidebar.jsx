@@ -110,7 +110,7 @@ export default function Sidebar() {
               to="/announcements"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
               style={({ isActive }) => ({
-                color: isActive ? 'var(--module-recurring)' : 'var(--muted-foreground)',
+                color: isActive ? 'var(--nav-active)' : 'var(--muted-foreground)',
                 fontWeight: isActive ? 500 : 400,
                 backgroundColor: isActive ? 'var(--muted)' : undefined,
               })}
@@ -125,7 +125,7 @@ export default function Sidebar() {
               to="/help"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
               style={({ isActive }) => ({
-                color: isActive ? 'var(--ink)' : 'var(--muted-foreground)',
+                color: isActive ? 'var(--nav-active)' : 'var(--muted-foreground)',
                 fontWeight: isActive ? 500 : 400,
                 backgroundColor: isActive ? 'var(--muted)' : undefined,
               })}

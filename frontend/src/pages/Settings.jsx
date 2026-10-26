@@ -223,26 +223,26 @@ export default function Settings() {
                 )}
               </div>
 
-              <div className="flex items-start justify-between gap-3">
-                <span className="shrink-0 pt-1 text-muted-foreground">{t('settings_interface')}</span>
-                <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-xs shadow-sm">
-                  {[
-                    { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
-                    { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
-                    { name: 'morandi', swatch: '#A88782', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
-                    { name: 'sport', swatch: '#FF6B1A', label: language === 'en' ? 'Sporty' : '運動風' },
-                  ].map(({ name, swatch, label }) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onClick={() => selectTheme(name)}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors ${theme === name ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
-                    >
-                      <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: swatch }} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="shrink-0 text-muted-foreground">{t('settings_interface')}</span>
+                <Select value={theme} onValueChange={selectTheme}>
+                  <SelectTrigger className="h-8 w-auto min-w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[
+                      { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
+                      { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
+                      { name: 'morandi', swatch: '#D2B35C', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
+                      { name: 'sport', swatch: '#1D4ED8', label: language === 'en' ? 'Sporty' : '運動風' },
+                    ].map(({ name, swatch, label }) => (
+                      <SelectItem key={name} value={name}>
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: swatch }} />
+                          {label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center justify-between gap-4">
