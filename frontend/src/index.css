@@ -163,27 +163,28 @@
 :root[data-theme="morandi"] {
   --background: #F3F0EA;
   --foreground: #4F4B47;
-  --card: #FDFBF8;
-  --card-foreground: #4F4B47;
-  --primary: #8AA58A;
-  --primary-foreground: #FFFFFF;
+  /* 米紙的白色區塊 → 莫蘭迪紫;紅色區塊 → 莫蘭迪黃 */
+  --card: #EEE9F4;
+  --card-foreground: #4A4553;
+  --primary: #D2B35C;
+  --primary-foreground: #4A4036;
   --secondary: #E7E2EF;
   --secondary-foreground: #6F6488;
-  --muted: #ECE7DF;
+  --muted: #E4DDEC;
   --muted-foreground: #958E86;
-  --accent: #F1ECE4;
+  --accent: #E8E2EF;
   --accent-foreground: #6F6488;
   --destructive: #C07A74;
   --destructive-foreground: #FFFFFF;
   --border: rgba(111, 100, 136, 0.16);
   --input: rgba(111, 100, 136, 0.2);
-  --ring: #8AA58A;
+  --ring: #B89A45;
 
   --ink: #7A6F93;
   --income: #8AA58A;
-  --expense: #B49AC4;
-  --highlight: #D9B44A;
-  --module-notes: #C99AB4;
+  --expense: #D2B35C;
+  --highlight: #C99AB4;
+  --module-notes: #9A88B8;
   /* 各模組:行事曆鼠尾草綠、記帳薰衣草紫、預算奶油黃、墨箋玫瑰紫 */
   --module-calendar: #7FA27F;
   --module-calendar-bg: color-mix(in srgb, #7FA27F 10%, white);
@@ -213,10 +214,11 @@
   --sport-blue: #1D4ED8;
   --sport-navy: #0B2A6B;
   --sport-red: #E11D2E;
+  --sport-yellow: #F5B800;
 
-  --background: #F4F7FC;
+  --background: #E3EEFB;
   --foreground: #0B2A6B;
-  --card: #FFFFFF;
+  --card: #F3F8FE;
   --card-foreground: #0B2A6B;
   --primary: var(--sport-blue);
   --primary-foreground: #FFFFFF;
@@ -256,29 +258,25 @@
   --color-red-500: var(--sport-red);
   --color-red-600: var(--sport-red);
 }
-/* 運動風:背景用斜條紋取代點點,卡片上緣一條紅線,標題下方紅藍雙線,導覽列紅色色塊 */
+/* 運動風:淡藍底,卡片上緣一條黃線,標題下方藍黃雙線,導覽列黃色線條 */
 :root[data-theme="sport"] body {
-  background-image: repeating-linear-gradient(135deg, rgba(29, 78, 216, 0.035) 0 14px, transparent 14px 28px);
-  background-size: auto;
+  background-image: none;
 }
 :root[data-theme="sport"] [data-slot="card"] {
-  border-top: 3px solid var(--sport-red);
+  border-top: 3px solid var(--sport-yellow);
 }
 :root[data-theme="sport"] .page-title-row {
   padding-bottom: 6px;
   border-bottom: 3px solid var(--sport-blue);
-  box-shadow: 0 3px 0 var(--sport-red);
+  box-shadow: 0 3px 0 var(--sport-yellow);
   margin-bottom: 1.25rem;
 }
 :root[data-theme="sport"] [data-slot="sidebar"] {
-  border-right: 4px solid var(--sport-red);
-  background: linear-gradient(180deg, var(--sport-navy) 0 110px, #FFFFFF 110px);
-}
-:root[data-theme="sport"] [data-slot="sidebar"] > div:first-child span {
-  color: #FFFFFF !important;
+  background: #EDF4FC;
+  border-right: 4px solid var(--sport-yellow);
 }
 :root[data-theme="sport"] [data-slot="bottom-nav"] {
-  border-top: 3px solid var(--sport-red);
+  border-top: 3px solid var(--sport-yellow);
 }
 
 html {
