@@ -1,17 +1,17 @@
 const supabase = require('../config/supabase');
-const { computeEntitlements, has } = require('../lib/entitlements');
-const { forgetUserStatus, planRequired } = require('../middleware/auth');
+const { computeEntitlements } = require('../lib/entitlements');
+const { forgetUserStatus } = require('../middleware/auth');
 const { TERMS_VERSION } = require('../lib/terms');
 const { withBeta } = require('../lib/beta');
 
-const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, home_image, theme, notify_ledger, notify_calendar, country, terms_version, community_suspended_until, birthday_md, birthday_visible, notify_birthdays';
+const PROFILE_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, theme, notify_ledger, notify_calendar, country, terms_version, community_suspended_until, birthday_md, birthday_visible, notify_birthdays';
 
-// 回傳給前端:附上目前的方案權限;沒有「首頁圖片」功能時顯示預設圖片(原本的選擇保留)
+// 回傳給前端:附上目前的方案權限(首頁圖片功能已移除,不再回傳)
 function withEnt(row) {
   const ent = withBeta(computeEntitlements(row));
-  const { basic_choice_changed_at, ...profile } = row;
+  const { basic_choice_changed_at, home_image, ...profile } = row;
   // terms_ok:已同意目前版本的使用條款(沒同意前 App 會跳出同意視窗)
-  return { ...profile, home_image: has(ent, 'home_image') ? row.home_image : null, ent, terms_ok: row.terms_version === TERMS_VERSION };
+  return { ...profile, ent, terms_ok: row.terms_version === TERMS_VERSION };
 }
 // 國別(決定社群顯示哪一國的安心專線);只開放已查證有專線的國家
 const COUNTRIES = ['TW', 'HK', 'JP', 'SG', 'MY', 'CN', 'US', 'GB'];
@@ -37,17 +37,11 @@ async function getProfile(req, res) {
 // access or upgrade their own plan by calling this endpoint.
 async function updateProfile(req, res) {
   try {
-    const { username, home_image, theme, notify_ledger, notify_calendar, country, birthday_md, birthday_visible, notify_birthdays } = req.body;
+    const { username, theme, notify_ledger, notify_calendar, country, birthday_md, birthday_visible, notify_birthdays } = req.body;
     const updates = {};
     if (username !== undefined) updates.username = username;
-    if (home_image !== undefined) {
-      if (req.ent && !has(req.ent, 'home_image')) return planRequired(res, 'home_image');
-      const valid = home_image === null || (typeof home_image === 'string' && /^\/home-images\/yy-([1-9]|1[0-2])\.png$/.test(home_image));
-      if (!valid) return res.status(400).json({ error: 'Invalid image' });
-      updates.home_image = home_image;
-    }
     if (theme !== undefined) {
-      if (!['default', 'grey'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
+      if (!['default', 'grey', 'morandi', 'sport'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
       updates.theme = theme;
     }
     if (country !== undefined) {

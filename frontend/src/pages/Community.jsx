@@ -40,6 +40,7 @@ const WISH_STATUSES = ['considering', 'planned', 'done'];
 const SCOPES = [
   { key: 'private', label: 'cm_private', value: { visibility: 'private', anonymous: false } },
   { key: 'anon', label: 'cm_public_anon', value: { visibility: 'public', anonymous: true } },
+  { key: 'friends', label: 'cm_friends_only', value: { visibility: 'friends', anonymous: false } },
   { key: 'named', label: 'cm_public_named', value: { visibility: 'public', anonymous: false } },
 ];
 // 檢舉原因(對應使用條款第 10 條);存進資料庫一律用中文,方便後台閱讀
@@ -52,7 +53,7 @@ const REPORT_REASONS = [
   { key: 'selfharm', zh: '鼓勵自我傷害或危險行為' },
   { key: 'other', zh: '其他' },
 ];
-const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.anonymous ? 'anon' : 'named');
+const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.visibility === 'friends' ? 'friends' : p.anonymous ? 'anon' : 'named');
 
 const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', images: [] };
 
@@ -84,6 +85,9 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [mineFilter, setMineFilter] = useState('all');
+  // 板上的「全部／好友」篩選;好友篩選可以隱藏特定好友
+  const [feedScope, setFeedScope] = useState('all');
+  const [hideOpen, setHideOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -117,6 +121,7 @@ export default function Community() {
     try {
       const params = { board: tab };
       if (tab === 'mine' && mineFilter !== 'all') params.visibility = mineFilter;
+      if (tab !== 'mine' && feedScope === 'friends') params.scope = 'friends';
       if (append && posts.length) params.before = posts[posts.length - 1].created_at;
       const { posts: rows } = await api.listPosts(params);
       setPosts((prev) => (append ? [...prev, ...rows] : rows));
@@ -130,7 +135,7 @@ export default function Community() {
     }
   }
 
-  useEffect(() => { load(); }, [tab, mineFilter]);
+  useEffect(() => { load(); }, [tab, mineFilter, feedScope]);
 
   useEffect(() => {
     if (tab !== 'mine' && tab !== 'friends') setDraft((d) => ({ ...d, board: tab }));
@@ -316,7 +321,7 @@ export default function Community() {
                   ))}
                 </div>
                 <div className="mt-3 flex gap-1.5">
-                  {[['all', 'cm_filter_all'], ['private', 'cm_private'], ['public', 'cm_stat_public']].map(([k, label]) => (
+                  {[['all', 'cm_filter_all'], ['private', 'cm_private'], ['friends', 'cm_friends_only'], ['public', 'cm_stat_public']].map(([k, label]) => (
                     <button key={k} type="button" onClick={() => setMineFilter(k)} className={pillClass(mineFilter === k)}>{t(label)}</button>
                   ))}
                 </div>
@@ -348,6 +353,18 @@ export default function Community() {
           )}
           {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
 
+          {tab !== 'mine' && (
+            <div className="mb-3 flex items-center gap-1.5">
+              {[['all', 'cm_feed_all'], ['friends', 'cm_feed_friends']].map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setFeedScope(k)} className={pillClass(feedScope === k)}>{t(label)}</button>
+              ))}
+              {feedScope === 'friends' && (
+                <button type="button" onClick={() => setHideOpen(true)} className="ml-auto text-xs text-muted-foreground underline">{t('cm_feed_hide')}</button>
+              )}
+            </div>
+          )}
+          {hideOpen && <FeedHideDialog t={t} onClose={(changed) => { setHideOpen(false); if (changed) load(); }} />}
+
           {loading ? (
             <p className="text-sm text-muted-foreground">{t('loading')}</p>
           ) : posts.length === 0 ? (
@@ -367,6 +384,47 @@ export default function Community() {
         </div>
       </div>
       </>)}
+    </div>
+  );
+}
+
+// 好友篩選:勾選要顯示的好友(取消勾選 = 隱藏)
+function FeedHideDialog({ t, onClose }) {
+  const [friends, setFriends] = useState(null);
+  const [hidden, setHidden] = useState(new Set());
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    Promise.all([api.getFriends(), api.getFeedHidden()])
+      .then(([f, h]) => { setFriends(f.friends); setHidden(new Set(h.hidden)); })
+      .catch(() => setFriends([]));
+  }, []);
+  const toggle = (id) => setHidden((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  async function save() {
+    setBusy(true);
+    try { await api.setFeedHidden([...hidden]); onClose(true); } catch { setBusy(false); }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 md:items-center" onClick={() => onClose(false)}>
+      <div className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-xl bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <p className="mb-1 text-sm font-medium">{t('cm_feed_hide')}</p>
+        <p className="mb-3 text-xs text-muted-foreground">{t('cm_feed_hide_hint')}</p>
+        {!friends ? <p className="text-sm text-muted-foreground">{t('loading')}</p> : friends.length === 0 ? <p className="text-sm text-muted-foreground">{t('cm_feed_no_friends')}</p> : (
+          <ul className="mb-3 space-y-1.5">
+            {friends.map((f) => (
+              <li key={f.id}>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={!hidden.has(f.id)} onChange={() => toggle(f.id)} />
+                  {f.name || '—'}
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex gap-2">
+          <Button className="flex-1" disabled={busy || !friends} onClick={save}>{t('save')}</Button>
+          <Button variant="outline" className="flex-1" onClick={() => onClose(false)}>{t('cancel')}</Button>
+        </div>
+      </div>
     </div>
   );
 }

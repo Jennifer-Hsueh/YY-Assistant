@@ -36,13 +36,14 @@ const segBtn = (on) => `rounded-md transition-colors ${on ? 'bg-muted font-mediu
 const emptyFilters = { from: '', to: '', type: 'all', account: '', category: '', min: '', max: '', keyword: '' };
 
 export default function Transactions() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { current: ledger } = useLedger();
   // 共同帳本:別人記的帳顯示記錄人
   const recorderName = (uid) => {
     if (!ledger?.shared && !(ledger?.members || []).length) return null;
-    if (!uid || uid === user?.id) return null;
+    if (!uid) return language === 'en' ? 'Former member' : '已刪除的成員';
+    if (uid === user?.id) return null;
     if (ledger.owner?.id === uid) return ledger.owner.name || '?';
     return (ledger.members || []).find((m) => m.id === uid)?.name || '?';
   };

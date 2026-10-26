@@ -5,7 +5,7 @@ const TEXT = {
     status: { trial: '免費試用中', active: '使用中', grace: '寬限期', basic: '基本功能', staff: '不受限制' },
     feat: {
       ledger: '記帳', calendar: '行事曆', ledger_recurring: '循環記帳', calendar_recurring: '循環行程', notifications: '通知',
-      home_image: '首頁圖片', mood: '本日心情', export: '資料匯出與備份', community: '社群',
+      mood: '本日心情', export: '資料匯出與備份', community: '社群',
     },
     title: '我的方案',
     addon: '+社群',
@@ -25,8 +25,8 @@ const TEXT = {
     perYear: (y) => `年繳 ${y} 元`,
     planDesc: {
       adv_a: '記帳＋行事曆的基本功能',
-      adv_b: '記帳＋循環記帳、通知、首頁圖片、本日心情、資料匯出與備份',
-      adv_c: '行事曆＋循環行程、通知、首頁圖片、本日心情、資料匯出與備份',
+      adv_b: '記帳＋循環記帳、通知、本日心情、資料匯出與備份',
+      adv_c: '行事曆＋循環行程、通知、本日心情、資料匯出與備份',
       full: '全部功能（含社群）',
     },
     contact: '續費請與我們聯絡，付款後會為您延長權限。',
@@ -46,7 +46,7 @@ const TEXT = {
     status: { trial: 'Free trial', active: 'Active', grace: 'Grace period', basic: 'Basic', staff: 'Unlimited' },
     feat: {
       ledger: 'Ledger', calendar: 'Calendar', ledger_recurring: 'Recurring ledger', calendar_recurring: 'Recurring events', notifications: 'Notifications',
-      home_image: 'Home image', mood: 'Daily mood', export: 'Export & backup', community: 'Community',
+      mood: 'Daily mood', export: 'Export & backup', community: 'Community',
     },
     title: 'My plan',
     addon: ' + Community',
@@ -66,8 +66,8 @@ const TEXT = {
     perYear: (y) => `${y} TWD / year`,
     planDesc: {
       adv_a: 'Basic ledger + calendar',
-      adv_b: 'Ledger + recurring, notifications, home image, mood, export & backup',
-      adv_c: 'Calendar + recurring, notifications, home image, mood, export & backup',
+      adv_b: 'Ledger + recurring, notifications, mood, export & backup',
+      adv_c: 'Calendar + recurring, notifications, mood, export & backup',
       full: 'Everything, including community',
     },
     contact: 'Contact us to renew; we will extend your plan after payment.',

@@ -12,6 +12,7 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
 import EventPeople, { EventInvites } from '../components/EventPeople';
+import { AnnivIcon } from './Anniversaries';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -38,6 +39,8 @@ const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', n
 export default function CalendarPage() {
   const { t, language } = useLanguage();
   const [inviteIds, setInviteIds] = useState([]); // 要邀請的好友
+  const [annivs, setAnnivs] = useState([]); // 紀念日(顯示在行事曆上)
+  useEffect(() => { api.listAnniversaries().then((d) => setAnnivs(d.anniversaries)).catch(() => {}); }, []);
   const { can } = usePlan();
   const canCal = can('calendar');
   const [events, setEvents] = useState([]);
@@ -197,6 +200,28 @@ export default function CalendarPage() {
   }
 
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
+  // 紀念日:依目前顯示的年份算出每年的那一天(不循環的只在原本那天)
+  const annivByDay = (() => {
+    const years = view === 'week'
+      ? [weekStart.getFullYear(), new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6).getFullYear()]
+      : [year];
+    const out = {};
+    for (const a of annivs) {
+      for (const y of new Set(years)) {
+        let key = null;
+        if (!a.recurring) key = Number(a.date.slice(0, 4)) === y ? a.date : null;
+        else if (a.year_known && y < Number(a.date.slice(0, 4))) key = null;
+        else {
+          let md = a.date.slice(5);
+          if (md === '02-29' && !((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0)) md = '02-28';
+          key = `${y}-${md}`;
+        }
+        if (key) (out[key] ||= []).push(a);
+      }
+    }
+    return out;
+  })();
+  const selectedDayAnnivs = selectedDay ? (annivByDay[selectedDay] || []) : [];
   const weekdays = t('cal_weekdays');
   const categoryColor = (name) => categories.find((c) => c.name === name)?.color || '#9CA3AF';
   const eventColor = (ev) => (ev.category ? categoryColor(ev.category) : '#9CA3AF');
@@ -442,7 +467,13 @@ export default function CalendarPage() {
                 <p className={`mb-1 text-xs ${isToday ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                   {weekdays[d.getDay()]} {d.getMonth() + 1}/{d.getDate()}
                 </p>
-                {list.length === 0 ? (
+                {(annivByDay[key] || []).map((a) => (
+                  <p key={a.id} className="flex items-center gap-1.5 truncate py-0.5 text-xs">
+                    <AnnivIcon icon={a.icon} className="h-4 w-4 text-[11px]" />
+                    <span className="truncate">{a.title}</span>
+                  </p>
+                ))}
+                {list.length === 0 && !(annivByDay[key] || []).length ? (
                   <p className="text-xs text-muted-foreground/60 md:hidden">—</p>
                 ) : list.map((ev) => (
                   <p key={ev.id} className="flex items-center gap-1.5 truncate py-0.5 text-xs">
@@ -468,7 +499,7 @@ export default function CalendarPage() {
               const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const dayEvents = eventsByDay[dateKey] || [];
               const isSelected = selectedDay === dateKey;
-              const hasEvents = dayEvents.length > 0;
+              const hasEvents = dayEvents.length > 0 || !!annivByDay[dateKey];
               return (
                 <button
                   type="button"
@@ -478,7 +509,13 @@ export default function CalendarPage() {
                   style={hasEvents ? { backgroundColor: pastelForDate(dateKey) } : undefined}
                 >
                   <span>{day}</span>
-                  {dayEvents.slice(0, 2).map((ev) => (
+                  {(annivByDay[dateKey] || []).slice(0, 1).map((a) => (
+                    <span key={a.id} title={a.title} className="flex w-full items-center gap-0.5 truncate px-0.5 text-xs text-black">
+                      <AnnivIcon icon={a.icon} className="h-3.5 w-3.5 text-[10px]" />
+                      <span className="truncate">{a.title}</span>
+                    </span>
+                  ))}
+                  {dayEvents.slice(0, (annivByDay[dateKey] || []).length ? 1 : 2).map((ev) => (
                     <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
                       <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                       <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
@@ -498,7 +535,19 @@ export default function CalendarPage() {
         <Card>
           <CardContent className="space-y-2 p-4">
             <p className="text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
-            {selectedDayEvents.length === 0 ? (
+            {selectedDayAnnivs.map((a) => (
+              <Link key={a.id} to="/anniversaries" className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm hover:bg-muted/50">
+                <AnnivIcon icon={a.icon} className="h-5 w-5" />
+                <span>{a.title}</span>
+                {(() => {
+                  // 這一天是第幾週年/幾歲(看的是哪一年就算哪一年)
+                  const n = a.year_known && a.recurring ? Number(selectedDay.slice(0, 4)) - Number(a.date.slice(0, 4)) : 0;
+                  if (n <= 0 || !(a.show_age || a.show_years)) return null;
+                  return <span className="text-xs text-muted-foreground">{a.show_age ? (language === 'en' ? `age ${n}` : `${n} 歲`) : (language === 'en' ? `${n} yrs` : `${n} 週年`)}</span>;
+                })()}
+              </Link>
+            ))}
+            {selectedDayEvents.length === 0 && !selectedDayAnnivs.length ? (
               <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
             ) : (
               <div className="space-y-1">

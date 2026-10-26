@@ -71,7 +71,7 @@ function compose(n, ent, user) {
     subject = n.left === 0 ? 'YY手帳 免費試用今天結束' : `YY手帳 免費試用將於 ${md(n.ref)} 結束`;
     push = `免費試用將於${when}結束`;
     body = `<p>YY手帳的三個月免費試用將於 <b>${when}</b> 結束。</p>
-      <p>試用結束後會改為「基本功能」:記帳或行事曆二擇一,沒有循環、通知、社群、首頁圖片、本日心情與資料匯出備份。您的資料都會保留。</p>
+      <p>試用結束後會改為「基本功能」:記帳或行事曆二擇一,沒有循環、通知、社群、本日心情與資料匯出備份。您的資料都會保留。</p>
       <p>想繼續使用完整功能,可以選擇進階方案:</p>${priceTable()}`;
   } else if (n.kind === 'expire') {
     subject = n.left === 0 ? `YY手帳 ${planLabel(ent)} 今天到期` : `YY手帳 ${planLabel(ent)} 將於 ${md(n.ref)} 到期`;

@@ -19,10 +19,17 @@ function nextOf(md, today = taipeiToday()) {
   return { next, days_left: daysBetween(today, next) };
 }
 
-// 紀念日:date 為第一次的日期 'YYYY-MM-DD';years = 這次是第幾週年
-function anniversaryInfo(date, today = taipeiToday()) {
+// 紀念日:date 為第一次的日期 'YYYY-MM-DD'
+// recurring=false:只在那一天(可能已經過去,days_left 會是負數)
+// year_known=false:不知道年份(不算週年、年紀)
+// years:這次是第幾週年/幾歲
+function anniversaryInfo(a, today = taipeiToday()) {
+  const date = typeof a === 'string' ? a : a.date;
+  const recurring = typeof a === 'string' ? true : a.recurring !== false;
+  const yearKnown = typeof a === 'string' ? true : a.year_known !== false;
+  if (!recurring) return { next: date, days_left: daysBetween(today, date), years: null };
   const { next, days_left } = nextOf(date.slice(5, 10), today);
-  return { next, days_left, years: Number(next.slice(0, 4)) - Number(date.slice(0, 4)) };
+  return { next, days_left, years: yearKnown ? Number(next.slice(0, 4)) - Number(date.slice(0, 4)) : null };
 }
 
 module.exports = { taipeiToday, nextOf, anniversaryInfo, daysBetween };

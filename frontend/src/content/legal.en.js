@@ -34,7 +34,7 @@ export const TERMS_EN = {
     { ol: [
       'When your trial ends, or your paid plan expires (after the grace period), your account switches to the free Basic plan.',
       'On Basic, you choose either Budget or Calendar and can switch once a month. You can still view your data in the other one, but you cannot add or edit it.',
-      'Basic does not include recurring entries or events, notifications, community, home image, daily mood, or data export and backup.',
+      'Basic does not include recurring entries or events, notifications, community, daily mood, or data export and backup.',
       'Your data is not deleted when you switch to Basic. Features come back as soon as you upgrade.',
     ] },
     { h: 'Article 6  Paid plans and prices' },
@@ -43,8 +43,8 @@ export const TERMS_EN = {
       head: ['Plan', 'Includes', 'Monthly (NT$)', 'Yearly (NT$)'],
       rows: [
         ['Plus A', 'Basic budget and calendar', '69', '728'],
-        ['Plus B', 'Budget, recurring entries, notifications, home image, daily mood, export and backup', '69', '728'],
-        ['Plus C', 'Calendar, recurring events, notifications, home image, daily mood, export and backup', '69', '728'],
+        ['Plus B', 'Budget, recurring entries, notifications, daily mood, export and backup', '69', '728'],
+        ['Plus C', 'Calendar, recurring events, notifications, daily mood, export and backup', '69', '728'],
         ['Plus A / B / C + Community', 'Any of the above plus community', '79', '848'],
         ['Complete', 'Every feature, including community', '109', '1208'],
       ],

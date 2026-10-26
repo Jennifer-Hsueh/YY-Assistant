@@ -6,35 +6,54 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePlan } from '../context/PlanContext';
 import CalendarSubNav from '../components/CalendarSubNav';
 import EventPeople from '../components/EventPeople';
+import DigitDateInput from '../components/DigitDateInput';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 
+// 內建圖示 a01～a16(public/anniv-icons)
+export const ANNIV_ICONS = Array.from({ length: 16 }, (_, i) => `a${String(i + 1).padStart(2, '0')}`);
+export const annivIconSrc = (key) => (key ? `/anniv-icons/${key}.png` : null);
+
+export function AnnivIcon({ icon, className = 'h-6 w-6' }) {
+  return icon ? <img src={annivIconSrc(icon)} alt="" className={`${className} shrink-0`} /> : <span className={`${className} flex shrink-0 items-center justify-center`}>💝</span>;
+}
+
 const TEXT = {
   zh: {
-    add: '新增紀念日', edit: '編輯紀念日', title: '名稱，例如：交往紀念日', date: '日期', note: '備註（選填）',
-    remind: '提醒', reminds: { none: '不提醒', day: '當天', day_1: '前 1 天＋當天', day_3: '前 3 天＋當天', day_7: '前 7 天＋當天' },
+    add: '新增紀念日', edit: '編輯紀念日', title: '名稱，例如：交往紀念日', note: '備註（選填）',
+    remind: '提醒', reminds: { none: '不提醒', day: '當天', day_3: '前 3 天（當天也會提醒）' },
+    icon: '圖示', recurring: '每年循環', showYears: '顯示紀念年次', showAge: '顯示年紀', noYear: '不知道年份',
     save: '儲存', create: '新增', cancel: '取消', del: '刪除', leave: '不再參加',
     delConfirm: (shared) => (shared ? '刪除後，所有參與者的這個紀念日都會一起刪除。' : '確定刪除這個紀念日？'),
     leaveConfirm: '確定不再參加？這個紀念日會從你的清單移除。',
-    empty: '還沒有紀念日，新增一個重要的日子吧 💝',
-    today: '就是今天！', left: (n) => `還有 ${n} 天`, nth: (n) => `${n} 週年`,
+    empty: '還沒有紀念日，新增一個重要的日子吧 💝', badDate: '請輸入正確的日期',
+    today: '就是今天！', left: (n) => `還有 ${n} 天`, ago: (n) => `${n} 天前`, nth: (n) => `${n} 週年`, age: (n) => `${n} 歲`, days: '天',
     birthdays: '好友生日', noBirthdays: '好友還沒有公開生日', mine: '設定我的生日與提醒',
     invite: (from, t) => `${from || '好友'} 邀請你一起記住「${t}」`, join: '加入', decline: '婉拒',
   },
   en: {
-    add: 'Add anniversary', edit: 'Edit anniversary', title: 'Name, e.g. Our anniversary', date: 'Date', note: 'Note (optional)',
-    remind: 'Remind', reminds: { none: 'Off', day: 'On the day', day_1: '1 day before + on the day', day_3: '3 days before + on the day', day_7: '7 days before + on the day' },
+    add: 'Add anniversary', edit: 'Edit anniversary', title: 'Name, e.g. Our anniversary', note: 'Note (optional)',
+    remind: 'Remind', reminds: { none: 'Off', day: 'On the day', day_3: '3 days before (and on the day)' },
+    icon: 'Icon', recurring: 'Repeat every year', showYears: 'Show years', showAge: 'Show age', noYear: 'Year unknown',
     save: 'Save', create: 'Add', cancel: 'Cancel', del: 'Delete', leave: 'Leave',
     delConfirm: (shared) => (shared ? 'This will delete it for everyone.' : 'Delete this anniversary?'),
     leaveConfirm: 'Leave this anniversary? It will be removed from your list.',
-    empty: 'No anniversaries yet. Add a day that matters 💝',
-    today: 'Today!', left: (n) => `${n} days to go`, nth: (n) => `${n} year${n > 1 ? 's' : ''}`,
+    empty: 'No anniversaries yet. Add a day that matters 💝', badDate: 'Please enter a valid date',
+    today: 'Today!', left: (n) => `${n} days to go`, ago: (n) => `${n} days ago`, nth: (n) => `${n} year${n > 1 ? 's' : ''}`, age: (n) => `age ${n}`, days: 'days',
     birthdays: "Friends' birthdays", noBirthdays: 'No friends have shared their birthday yet', mine: 'Set my birthday and reminders',
     invite: (from, t) => `${from || 'A friend'} invited you to "${t}"`, join: 'Join', decline: 'Decline',
   },
 };
-const empty = { title: '', date: '', remind: 'day', note: '' };
+const empty = { title: '', date: '', remind: 'day', note: '', icon: null, recurring: true, show_years: true, show_age: false, year_known: true };
+
+// 紀念日旁的「N 週年」「N 歲」
+export function yearsLabel(a, T) {
+  if (a.years == null || a.years <= 0) return '';
+  if (a.show_age) return T.age(a.years);
+  if (a.show_years) return T.nth(a.years);
+  return '';
+}
 
 export default function Anniversaries() {
   const { t, language } = useLanguage();
@@ -43,7 +62,7 @@ export default function Anniversaries() {
   const writable = can('calendar');
   const [data, setData] = useState(null);
   const [form, setForm] = useState(empty);
-  const [editing, setEditing] = useState(null); // 正在編輯的紀念日
+  const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [inviteIds, setInviteIds] = useState([]);
   const [confirm, setConfirm] = useState(false);
@@ -53,11 +72,12 @@ export default function Anniversaries() {
   const load = () => api.listAnniversaries().then(setData).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
 
-  function startAdd() { setEditing(null); setForm(empty); setInviteIds([]); setConfirm(false); setOpen(true); }
+  const toTop = () => { if (window.innerWidth < 768) window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  function startAdd() { setEditing(null); setForm(empty); setInviteIds([]); setConfirm(false); setError(''); setOpen(true); toTop(); }
   function startEdit(a) {
-    setEditing(a); setForm({ title: a.title, date: a.date, remind: a.remind, note: a.note || '' });
-    setInviteIds([]); setConfirm(false); setOpen(true);
-    if (window.innerWidth < 768) window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEditing(a);
+    setForm({ title: a.title, date: a.date, remind: a.remind === 'day_1' ? 'day' : a.remind === 'day_7' ? 'day_3' : a.remind, note: a.note || '', icon: a.icon, recurring: a.recurring, show_years: a.show_years, show_age: a.show_age, year_known: a.year_known });
+    setInviteIds([]); setConfirm(false); setError(''); setOpen(true); toTop();
   }
   function close() { setOpen(false); setEditing(null); setConfirm(false); }
 
@@ -67,20 +87,40 @@ export default function Anniversaries() {
   }
   async function submit(e) {
     e.preventDefault();
+    if (!form.date) { setError(T.badDate); return; }
     const body = { ...form, ...(inviteIds.length ? { invite_ids: inviteIds } : {}) };
     if (await run(() => (editing ? api.updateAnniversary(editing.id, body) : api.createAnniversary(body)))) close();
   }
-  const fmt = (ymd) => ymd.replace(/-/g, '/');
-  const md = (s) => s.replace('-', '/');
+  const dateLabel = (a) => (a.year_known ? a.next.replace(/-/g, '/') : a.next.slice(5).replace('-', '/'));
+  const when = (a) => (a.days_left === 0 ? T.today : a.days_left < 0 ? T.ago(-a.days_left) : T.left(a.days_left));
+  const check = (key, label, disabled = false) => (
+    <label className={`flex items-center gap-2 text-sm ${disabled ? 'text-muted-foreground' : ''}`}>
+      <input type="checkbox" disabled={disabled} checked={!!form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />{label}
+    </label>
+  );
 
   const form_ = open && (
     <Card className="mb-3">
       <CardContent className="p-4">
-        <form onSubmit={submit} className="space-y-2">
+        <form onSubmit={submit} className="space-y-2.5">
           <p className="text-sm font-medium">{editing ? T.edit : T.add}</p>
           <Input required maxLength={50} placeholder={T.title} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <div className="flex items-center gap-2">
-            <Input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="min-w-0 flex-1" />
+          <div className="flex items-center gap-3">
+            <DigitDateInput value={form.date} noYear={!form.year_known} onChange={(v) => setForm({ ...form, date: v })} className="min-w-0 flex-1" />
+            <label className="flex shrink-0 items-center gap-2 text-sm">
+              <input type="checkbox" checked={!form.year_known} onChange={(e) => setForm({ ...form, year_known: !e.target.checked, ...(e.target.checked ? { recurring: true } : {}) })} />{T.noYear}
+            </label>
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs text-muted-foreground">{T.icon}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button type="button" onClick={() => setForm({ ...form, icon: null })} className={`flex h-9 w-9 items-center justify-center rounded-full border text-base ${!form.icon ? 'border-primary ring-2 ring-primary' : 'border-border'}`}>💝</button>
+              {ANNIV_ICONS.map((k) => (
+                <button key={k} type="button" onClick={() => setForm({ ...form, icon: k })} className={`rounded-full ${form.icon === k ? 'ring-2 ring-primary ring-offset-1' : ''}`}>
+                  <img src={annivIconSrc(k)} alt="" className="h-9 w-9" />
+                </button>
+              ))}
+            </div>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <span className="shrink-0 text-xs text-muted-foreground">🔔 {T.remind}</span>
@@ -88,6 +128,11 @@ export default function Anniversaries() {
               {Object.entries(T.reminds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </label>
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+            {check('recurring', T.recurring, !form.year_known)}
+            {check('show_years', T.showYears, !form.year_known)}
+            {check('show_age', T.showAge, !form.year_known)}
+          </div>
           <textarea rows={2} placeholder={T.note} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm" />
           <EventPeople event={editing ? { ...editing, shared: editing.members.length > 0 } : null} selected={inviteIds} onChange={setInviteIds}
             removeMember={(uid) => api.removeAnniversaryMember(editing.id, uid)} onRemoved={async () => { const d = await api.listAnniversaries(); setData(d); setEditing(d.anniversaries.find((x) => x.id === editing.id) || null); }} />
@@ -118,7 +163,7 @@ export default function Anniversaries() {
 
       {data?.invites?.map((inv) => (
         <div key={inv.id} className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
-          <Heart className="h-4 w-4 shrink-0" style={{ color: 'var(--module-calendar)' }} />
+          {inv.icon ? <AnnivIcon icon={inv.icon} className="h-5 w-5" /> : <Heart className="h-4 w-4 shrink-0" style={{ color: 'var(--module-calendar)' }} />}
           <span className="min-w-0 flex-1 text-sm">{T.invite(inv.from, inv.title)}</span>
           <Button size="sm" disabled={busy} onClick={() => run(() => api.acceptAnniversary(inv.id))}>{T.join}</Button>
           <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => api.declineAnniversary(inv.id))}>{T.decline}</Button>
@@ -137,7 +182,7 @@ export default function Anniversaries() {
                   {data.birthdays.map((b) => (
                     <li key={b.id} className="flex items-center gap-2">
                       <span className="flex-1 truncate">{b.name || '—'}</span>
-                      <span className="font-amount text-xs text-muted-foreground">{md(b.md)}</span>
+                      <span className="font-amount text-xs text-muted-foreground">{b.md.replace('-', '/')}</span>
                       <span className={`w-20 text-right text-xs ${b.days_left === 0 ? 'font-medium' : 'text-muted-foreground'}`} style={b.days_left === 0 ? { color: 'var(--module-calendar)' } : undefined}>{b.days_left === 0 ? T.today : T.left(b.days_left)}</span>
                     </li>
                   ))}
@@ -152,19 +197,20 @@ export default function Anniversaries() {
           {data && data.anniversaries.length === 0 && <p className="px-1 text-sm text-muted-foreground">{T.empty}</p>}
           <div className="space-y-2">
             {data?.anniversaries.map((a) => (
-              <Card key={a.id} onClick={() => startEdit(a)} className={`cursor-pointer transition-colors hover:bg-muted/50 ${editing?.id === a.id ? 'bg-muted' : ''}`}>
+              <Card key={a.id} onClick={() => startEdit(a)} className={`cursor-pointer transition-colors hover:bg-muted/50 ${editing?.id === a.id ? 'bg-muted' : ''} ${a.days_left < 0 ? 'opacity-60' : ''}`}>
                 <CardContent className="flex items-center gap-3 p-3">
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg" style={{ background: 'color-mix(in srgb, var(--module-calendar) 14%, transparent)' }}>
-                    <span className="font-amount text-lg font-semibold leading-none" style={{ color: 'var(--module-calendar)' }}>{a.days_left === 0 ? '🎉' : a.days_left}</span>
-                    {a.days_left > 0 && <span className="text-[10px] text-muted-foreground">{language === 'en' ? 'days' : '天'}</span>}
+                    <span className="font-amount text-lg font-semibold leading-none" style={{ color: 'var(--module-calendar)' }}>{a.days_left === 0 ? '🎉' : Math.abs(a.days_left)}</span>
+                    {a.days_left !== 0 && <span className="text-[10px] text-muted-foreground">{T.days}</span>}
                   </div>
+                  <AnnivIcon icon={a.icon} className="h-8 w-8" />
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 truncate text-sm font-medium">
                       {a.title}
                       {a.members.some((m) => m.status === 'active') && <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {fmt(a.next)}{a.years > 0 && ` · ${T.nth(a.years)}`} · {a.days_left === 0 ? T.today : T.left(a.days_left)}
+                      {[dateLabel(a), yearsLabel(a, T), when(a)].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                   {a.remind !== 'none' && <span className="text-xs">🔔</span>}

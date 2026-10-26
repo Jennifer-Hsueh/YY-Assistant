@@ -36,8 +36,8 @@ const COPY = {
     plans: [
       ['基本功能', '記帳或行事曆二選一，每個月可以換一次'],
       ['進階 A', '記帳＋行事曆的基本功能'],
-      ['進階 B', '記帳＋循環記帳、通知、首頁圖片、本日心情、資料匯出與備份'],
-      ['進階 C', '行事曆＋循環行程、通知、首頁圖片、本日心情、資料匯出與備份'],
+      ['進階 B', '記帳＋循環記帳、通知、本日心情、資料匯出與備份'],
+      ['進階 C', '行事曆＋循環行程、通知、本日心情、資料匯出與備份'],
       ['進階 A／B／C＋社群', '上述任一方案加購社群'],
       ['完整版', '全部功能，包含社群'],
     ],
@@ -83,8 +83,8 @@ const COPY = {
     plans: [
       ['Basic', 'Budget or calendar (your choice, switch once a month)'],
       ['Plus A', 'Basic budget and calendar'],
-      ['Plus B', 'Budget, recurring entries, notifications, home image, daily mood, export and backup'],
-      ['Plus C', 'Calendar, recurring events, notifications, home image, daily mood, export and backup'],
+      ['Plus B', 'Budget, recurring entries, notifications, daily mood, export and backup'],
+      ['Plus C', 'Calendar, recurring events, notifications, daily mood, export and backup'],
       ['Plus A / B / C + Community', 'Any of the above plus community'],
       ['Complete', 'Everything, including community'],
     ],

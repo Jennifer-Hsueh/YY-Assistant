@@ -3,7 +3,8 @@ const F = require('../lib/friends');
 const A = require('../lib/annualDates');
 const { sendPushToUser } = require('../services/fcmService');
 
-const REMINDS = ['none', 'day', 'day_1', 'day_3', 'day_7'];
+const REMINDS = ['none', 'day', 'day_3'];
+const ICON_RE = /^a(0[1-9]|1[0-6])$/; // 內建圖示 a01～a16
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_INVITES = 30;
 
@@ -66,15 +67,16 @@ async function listAll(req, res) {
 
     const names = await namesOf([...all.map((a) => a.user_id), ...(ms || []).map((m) => m.user_id), ...invitedRows.map((m) => m.invited_by)]);
     const anniversaries = visible.map((a) => ({
-      id: a.id, title: a.title, date: a.date, remind: a.remind, note: a.note,
+      id: a.id, title: a.title, date: a.date, remind: a.remind, note: a.note, icon: a.icon || null,
+      recurring: a.recurring !== false, show_years: a.show_years !== false, show_age: !!a.show_age, year_known: a.year_known !== false,
       is_owner: a.user_id === uid,
       owner: { id: a.user_id, name: names.get(a.user_id) || null },
       members: (ms || []).filter((m) => m.anniversary_id === a.id).map((m) => ({ id: m.user_id, name: names.get(m.user_id) || null, status: m.status })),
-      ...A.anniversaryInfo(a.date, today),
-    })).sort((x, y) => x.days_left - y.days_left);
+      ...A.anniversaryInfo(a, today),
+    })).sort((x, y) => ((x.days_left < 0) - (y.days_left < 0)) || (x.days_left < 0 ? y.days_left - x.days_left : x.days_left - y.days_left));
     const invites = invitedRows.map((m) => {
       const a = all.find((x) => x.id === m.anniversary_id);
-      return a && { id: a.id, title: a.title, date: a.date, from: names.get(m.invited_by) || null };
+      return a && { id: a.id, title: a.title, date: a.date, icon: a.icon || null, from: names.get(m.invited_by) || null };
     }).filter(Boolean);
     const birthdays = (friends || []).filter((f) => f.birthday_md && f.birthday_visible && !f.is_disabled)
       .map((f) => ({ id: f.id, name: f.username || null, md: f.birthday_md, ...A.nextOf(f.birthday_md, today) }))
@@ -119,6 +121,16 @@ function clean(body, partial) {
     out.remind = body.remind;
   }
   if (body.note !== undefined) out.note = String(body.note || '').trim().slice(0, 300) || null;
+  if (body.icon !== undefined) {
+    if (body.icon !== null && !ICON_RE.test(body.icon)) return { error: '圖示不正確' };
+    out.icon = body.icon;
+  }
+  for (const k of ['recurring', 'show_years', 'show_age', 'year_known']) {
+    if (body[k] !== undefined) out[k] = !!body[k];
+  }
+  // 不知道年份:用 2000 年(閏年,2/29 也能存)當代表,只取月日
+  if (out.year_known === false && out.date) out.date = `2000-${out.date.slice(5, 10)}`;
+  if (out.year_known === false) out.recurring = true;
   return { out };
 }
 

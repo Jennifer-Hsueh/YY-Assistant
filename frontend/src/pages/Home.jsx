@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { LedgerInvites } from '../components/LedgerSwitcher';
 import { EventInvites } from '../components/EventPeople';
+import { AnnivIcon } from './Anniversaries';
 import { api } from '../lib/api';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
@@ -41,9 +42,12 @@ export default function Home() {
   useEffect(() => {
     api.listAnniversaries().then((d) => {
       const list = [
-        ...d.anniversaries.map((a) => ({ key: `a${a.id}`, icon: '💝', title: a.years > 0 ? `${a.title}（${a.years}）` : a.title, days: a.days_left })),
+        ...d.anniversaries.map((a) => {
+          const n = a.years > 0 ? (a.show_age ? `（${a.years} 歲）` : a.show_years ? `（${a.years} 週年）` : '') : '';
+          return { key: `a${a.id}`, icon: <AnnivIcon icon={a.icon} className="h-5 w-5" />, title: `${a.title}${n}`, days: a.days_left };
+        }),
         ...d.birthdays.map((b) => ({ key: `b${b.id}`, icon: '🎂', title: b.name || '—', days: b.days_left })),
-      ].filter((x) => x.days <= 30).sort((x, y) => x.days - y.days);
+      ].filter((x) => x.days >= 0 && x.days <= 30).sort((x, y) => x.days - y.days);
       setUpcoming(list);
     }).catch(() => {});
   }, []);
@@ -113,7 +117,7 @@ export default function Home() {
   return (
     <div className="relative mx-auto max-w-xl px-4 pt-4 pb-40 md:max-w-5xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
-{profileLoaded && !profile?.home_image && (
+{profileLoaded && (
   <img
     src="/home-watermark-logo.png"
     alt=""
@@ -156,9 +160,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* 角色放大,下緣約 2/5 壓在「今日行程」卡片上(負 margin = 40% 圖高 + 原本的間距) */}
-      <div className="mb-3 flex items-end gap-[64px] md:mb-5 md:gap-[92px]">
-        <div className="min-w-0 pb-1">
+      {/* 日期、招呼語;右邊是今天的心情 */}
+      <div className="mb-3 mt-1 flex items-end justify-between gap-3 md:mb-5">
+        <div className="min-w-0">
           <p className="text-muted-foreground" style={{ fontSize: '15.4px' }}>
             {new Intl.DateTimeFormat(t('home_date_locale'), { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())}
           </p>
@@ -166,15 +170,10 @@ export default function Home() {
             <p className="mt-0.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
           )}
         </div>
-        {profile?.home_image && (
-          <div className="pointer-events-none relative z-20 -mb-[63px] shrink-0 md:-mb-[84px]">
-            <img src={profile.home_image} alt="" className="h-32 w-auto md:h-40" style={{ maxWidth: 'none' }} />
-            {mood && can('mood') && (
-              <span className="absolute -left-2 top-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-base shadow-sm">
-                {moodEmoji(mood)}
-              </span>
-            )}
-          </div>
+        {mood && can('mood') && (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-xl shadow-sm">
+            {moodEmoji(mood)}
+          </span>
         )}
       </div>
 
@@ -202,24 +201,6 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
-
-        {/* 30 天內的紀念日與好友生日(沒有就不顯示) */}
-        {upcoming.length > 0 && (
-          <Card className="relative z-10 border-none" style={tint('var(--module-calendar)')}>
-            <CardContent className="p-4 md:p-5">
-              <CardTitle Icon={Heart} color="var(--module-calendar)" title={t('sub_anniversaries')} to="/anniversaries" />
-              <ul className="space-y-1.5">
-                {upcoming.slice(0, 4).map((u) => (
-                  <li key={u.key} className="flex items-center gap-2 text-sm">
-                    <span className="w-5 shrink-0 text-center">{u.icon}</span>
-                    <span className="truncate">{u.title}</span>
-                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">{u.days === 0 ? t('home_today') : `${u.days}${t('home_days_left')}`}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
 
         {/* 本月累積消費 */}
         <Card className="relative z-10 border-none" style={tint('var(--module-transactions)')}>
@@ -254,6 +235,24 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
+
+        {/* 30 天內的紀念日與好友生日(沒有就不顯示) */}
+        {upcoming.length > 0 && (
+          <Card className="relative z-10 border-none" style={tint('var(--module-calendar)')}>
+            <CardContent className="p-4 md:p-5">
+              <CardTitle Icon={Heart} color="var(--module-calendar)" title={t('sub_anniversaries')} to="/anniversaries" />
+              <ul className="space-y-1.5">
+                {upcoming.slice(0, 4).map((u) => (
+                  <li key={u.key} className="flex items-center gap-2 text-sm">
+                    <span className="flex w-5 shrink-0 justify-center">{u.icon}</span>
+                    <span className="truncate">{u.title}</span>
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">{u.days === 0 ? t('home_today') : `${u.days}${t('home_days_left')}`}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 墨箋絮語:只顯示未完成的項目 */}
         <HomeNotesCard t={t} style={tint('var(--module-notes)')} />

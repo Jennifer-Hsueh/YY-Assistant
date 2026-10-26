@@ -5,7 +5,7 @@ const A = require('../lib/annualDates');
 const F = require('../lib/friends');
 const { sendPushToUser } = require('../services/fcmService');
 
-const BEFORE = { day: 0, day_1: 1, day_3: 3, day_7: 7 };
+const BEFORE = { day: 0, day_3: 3 };
 
 // 第一次寫入成功才回 true(已寄過就略過)
 async function once(key) {
@@ -37,19 +37,20 @@ async function runDailyReminders(now = new Date()) {
   const members = await fetchAll('yy_anniversary_members', 'anniversary_id, user_id, status');
   for (const a of list) {
     if (a.remind === 'none') continue;
-    const { next, days_left: left, years } = A.anniversaryInfo(a.date, today);
+    const { next, days_left: left, years } = A.anniversaryInfo(a, today);
     const before = BEFORE[a.remind] || 0;
     const isDay = left === 0;
     const isBefore = before > 0 && left === before;
     if (!isDay && !isBefore) continue;
     const who = [a.user_id, ...members.filter((m) => m.anniversary_id === a.id && m.status === 'active').map((m) => m.user_id)];
-    const nth = years > 0 ? `（${years} 週年）` : '';
+    const nth = years > 0 && a.show_age ? `（${years} 歲）` : years > 0 && a.show_years !== false ? `（${years} 週年）` : '';
+    const label = a.year_known === false ? next.slice(5).replace('-', '/') : next.replace(/-/g, '/');
     for (const uid of who) {
       if (!(await once(`anniv:${a.id}:${next}:${isDay ? 'day' : 'before'}:${uid}`))) continue;
       await sendPushToUser(uid, {
         channel: 'calendar_shared',
         title: isDay ? `💝 今天是「${a.title}」` : `💝 ${before} 天後是「${a.title}」`,
-        body: isDay ? `${next.replace(/-/g, '/')}${nth}` : `${next.replace(/-/g, '/')}${nth}，別忘了準備喔`,
+        body: isDay ? `${label}${nth}` : `${label}${nth}，別忘了準備喔`,
         data: { url: '/anniversaries' },
       }).catch(() => {});
       anniv += 1;

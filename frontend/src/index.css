@@ -158,6 +158,96 @@
   --color-red-600: var(--g-ink);
 }
 
+/* ───────── 莫蘭迪主題 ─────────
+   低飽和、帶灰的柔和色:霧玫瑰、鼠尾草綠、灰藍、燕麥 */
+:root[data-theme="morandi"] {
+  --background: #E8E2DA;
+  --foreground: #4A4542;
+  --card: #F6F2ED;
+  --card-foreground: #4A4542;
+  --primary: #A88782;
+  --primary-foreground: #FAF7F3;
+  --secondary: #DCE0E2;
+  --secondary-foreground: #5D6B74;
+  --muted: #E3DCD3;
+  --muted-foreground: #8E8781;
+  --accent: #EBE5DD;
+  --accent-foreground: #5D6B74;
+  --destructive: #A0605C;
+  --destructive-foreground: #FAF7F3;
+  --border: rgba(93, 107, 116, 0.18);
+  --input: rgba(93, 107, 116, 0.2);
+  --ring: #5D6B74;
+
+  --ink: #5D6B74;
+  --income: #8C9C86;
+  --expense: #A88782;
+  --highlight: #B3A07E;
+  --module-notes: #8F7E87;
+
+  --acc-1: #8C9C86;
+  --acc-2: #7F8FA6;
+  --acc-3: #A88782;
+  --acc-4: #B3A07E;
+  --acc-5: #9A8BA6;
+
+  --pastel-1: #DDE1E6;
+  --pastel-2: #E1E5DC;
+  --pastel-3: #EAE1D8;
+  --pastel-4: #E4DDE6;
+  --pastel-5: #DCE4E4;
+  --pastel-6: #EADDDA;
+
+  --dot-pattern: rgba(93, 107, 116, 0.09);
+  --color-green-600: #7E8F78;
+  --color-red-500: #A0605C;
+  --color-red-600: #A0605C;
+}
+
+/* ───────── 運動風主題 ─────────
+   明亮、對比強:海軍藍＋活力橘,搭配螢光綠與天空藍 */
+:root[data-theme="sport"] {
+  --background: #EEF2F6;
+  --foreground: #14213D;
+  --card: #FFFFFF;
+  --card-foreground: #14213D;
+  --primary: #FF6B1A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #DCE6F2;
+  --secondary-foreground: #14213D;
+  --muted: #E3E9F0;
+  --muted-foreground: #66748A;
+  --accent: #E8EEF5;
+  --accent-foreground: #14213D;
+  --destructive: #E5383B;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(20, 33, 61, 0.14);
+  --input: rgba(20, 33, 61, 0.18);
+  --ring: #14213D;
+  --radius: 0.6rem;
+
+  --ink: #14213D;
+  --income: #16A34A;
+  --expense: #FF6B1A;
+  --highlight: #0EA5E9;
+  --module-notes: #6D5DD3;
+
+  --acc-1: #16A34A;
+  --acc-2: #2563EB;
+  --acc-3: #FF6B1A;
+  --acc-4: #0EA5E9;
+  --acc-5: #E5383B;
+
+  --pastel-1: #DBEAFE;
+  --pastel-2: #DCFCE7;
+  --pastel-3: #FFEDD5;
+  --pastel-4: #EDE9FE;
+  --pastel-5: #CFFAFE;
+  --pastel-6: #FEE2E2;
+
+  --dot-pattern: rgba(20, 33, 61, 0.07);
+}
+
 html {
   /* 全站文字/圖示等比縮放 —— 目前為 99%(上一版 110% 的 90%)。
      首頁的「首頁」標題與歡迎詞改用固定像素值,不受此設定影響。 */

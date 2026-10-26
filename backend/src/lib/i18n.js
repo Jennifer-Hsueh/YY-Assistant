@@ -1,5 +1,6 @@
 // 英文介面的錯誤訊息:前端送 X-Lang: en 時,把常見的中文訊息換成英文(其他維持原文)
 const EN = {
+  '圖示不正確': 'Invalid icon',
   '請輸入紀念日名稱': 'Please enter a name',
   '日期格式不正確': 'Invalid date',
   '提醒設定不正確': 'Invalid reminder setting',

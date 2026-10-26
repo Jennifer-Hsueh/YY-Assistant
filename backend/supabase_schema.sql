@@ -445,3 +445,39 @@ create table if not exists yy_reminder_log (
   created_at timestamptz not null default now()
 );
 alter table yy_reminder_log enable row level security;
+
+-- ---------- 紀念日改版 ----------
+alter table yy_anniversaries add column if not exists icon text;
+alter table yy_anniversaries add column if not exists recurring boolean not null default true;
+alter table yy_anniversaries add column if not exists show_years boolean not null default true;
+alter table yy_anniversaries add column if not exists show_age boolean not null default false;
+alter table yy_anniversaries add column if not exists year_known boolean not null default true;
+-- 提醒只剩:不提醒、當天、前 3 天(＋當天)
+update yy_anniversaries set remind = 'day' where remind = 'day_1';
+update yy_anniversaries set remind = 'day_3' where remind = 'day_7';
+alter table yy_anniversaries drop constraint if exists yy_anniversaries_remind_check;
+alter table yy_anniversaries add constraint yy_anniversaries_remind_check check (remind in ('none', 'day', 'day_3'));
+
+-- ---------- 成員刪除帳號後,共同帳本裡的紀錄保留 ----------
+alter table yy_transactions alter column user_id drop not null;
+alter table yy_transactions drop constraint if exists yy_transactions_user_id_fkey;
+alter table yy_transactions add constraint yy_transactions_user_id_fkey foreign key (user_id) references yy_users(id) on delete set null;
+alter table yy_accounts alter column user_id drop not null;
+alter table yy_accounts drop constraint if exists yy_accounts_user_id_fkey;
+alter table yy_accounts add constraint yy_accounts_user_id_fkey foreign key (user_id) references yy_users(id) on delete set null;
+alter table yy_budgets alter column user_id drop not null;
+alter table yy_budgets drop constraint if exists yy_budgets_user_id_fkey;
+alter table yy_budgets add constraint yy_budgets_user_id_fkey foreign key (user_id) references yy_users(id) on delete set null;
+
+-- ---------- 社群:僅好友可見、好友篩選 ----------
+alter table yy_posts drop constraint if exists yy_posts_visibility_check;
+alter table yy_posts add constraint yy_posts_visibility_check check (visibility in ('private', 'friends', 'public'));
+
+-- 好友篩選中選擇不看的好友
+create table if not exists yy_feed_hidden (
+  user_id uuid not null references yy_users(id) on delete cascade,
+  hidden_id uuid not null references yy_users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, hidden_id)
+);
+alter table yy_feed_hidden enable row level security;

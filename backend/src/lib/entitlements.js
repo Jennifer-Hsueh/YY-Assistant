@@ -2,20 +2,20 @@
 //
 // - 新註冊:註冊日起三個月免費試用,全部功能
 // - 試用結束 / 付費到期且過了寬限期:基本功能,記帳或行事曆二擇一(免費,每月可換一次)
-//   基本功能沒有循環、社群、通知、首頁圖片、本日心情、資料匯出與備份
+//   基本功能沒有循環、社群、通知、本日心情、資料匯出與備份
 // - 付費方案到期後有 7 天寬限期,功能照常
 // - 管理員、測試員不受限制
 // - 沒有權限的資料仍可讀取,只是不能新增或修改
 
-const FEATURES = ['ledger', 'calendar', 'ledger_recurring', 'calendar_recurring', 'notifications', 'home_image', 'mood', 'export', 'community'];
+const FEATURES = ['ledger', 'calendar', 'ledger_recurring', 'calendar_recurring', 'notifications', 'mood', 'export', 'community'];
 
 const PLANS = ['basic', 'adv_a', 'adv_b', 'adv_c', 'full'];
 const PAID_PLANS = ['adv_a', 'adv_b', 'adv_c', 'full'];
 const ADDON_PLANS = ['adv_a', 'adv_b', 'adv_c']; // 可加購社群
 const PLAN_FEATURES = {
   adv_a: ['ledger', 'calendar'],
-  adv_b: ['ledger', 'ledger_recurring', 'notifications', 'home_image', 'mood', 'export'],
-  adv_c: ['calendar', 'calendar_recurring', 'notifications', 'home_image', 'mood', 'export'],
+  adv_b: ['ledger', 'ledger_recurring', 'notifications', 'mood', 'export'],
+  adv_c: ['calendar', 'calendar_recurring', 'notifications', 'mood', 'export'],
   full: FEATURES,
 };
 

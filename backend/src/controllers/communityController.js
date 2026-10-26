@@ -1,6 +1,7 @@
 const supabase = require('../config/supabase');
 const images = require('../services/communityImages');
 const moderation = require('../services/moderation');
+const F = require('../lib/friends');
 
 // 社群:三個板 + 「我的」。
 // 可見性一律由後端判斷 —— 私人文章只回傳給作者本人,
@@ -13,6 +14,7 @@ const REPORT_HIDE_THRESHOLD = 3;
 const MAX_CONTENT = 2000;
 const MAX_TITLE = 80;
 const PAGE_SIZE = 30;
+const VISIBILITIES = ['private', 'friends', 'public']; // friends:僅好友可見(一定顯示暱稱)
 
 async function isAdmin(userId) {
   const { data } = await supabase.from('yy_users').select('role').eq('id', userId).maybeSingle();
@@ -30,8 +32,14 @@ function commentsAllowed(post, userId) {
   return post.board !== 'mood';
 }
 
-function canRead(post, userId, admin) {
+// 僅好友可見:作者的好友(沒有互相封鎖)才看得到
+async function canRead(post, userId, admin) {
   if (post.user_id === userId) return true;
+  if (post.visibility === 'friends') {
+    if (post.hidden && !admin) return false;
+    if (admin) return true;
+    return (await F.areFriends(userId, post.user_id)) && !(await F.isBlockedEither(userId, post.user_id));
+  }
   if (post.visibility !== 'public') return false;
   return !post.hidden || admin;
 }
@@ -73,14 +81,59 @@ async function fetchPost(id) {
   return data;
 }
 
-// GET /community/posts?board=mood|finance|wish|mine&visibility=private|public&before=ISO
+// 好友篩選要顯示的好友(扣掉自己隱藏的)
+async function visibleFriendIds(userId) {
+  const ids = await F.friendIds(userId);
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from('yy_feed_hidden').select('hidden_id').eq('user_id', userId);
+  if (error) throw error;
+  const hidden = new Set((data || []).map((r) => r.hidden_id));
+  return ids.filter((id) => !hidden.has(id));
+}
+
+// GET /community/feed-hidden:好友篩選中隱藏的好友
+async function getFeedHidden(req, res) {
+  try {
+    const { data, error } = await supabase.from('yy_feed_hidden').select('hidden_id').eq('user_id', req.user.id);
+    if (error) throw error;
+    return res.json({ hidden: (data || []).map((r) => r.hidden_id) });
+  } catch (err) {
+    console.error('[communityController.getFeedHidden]', err);
+    return res.status(500).json({ error: 'Failed to load settings' });
+  }
+}
+// PUT /community/feed-hidden { hidden: [userId...] }:整份取代
+async function setFeedHidden(req, res) {
+  try {
+    const friends = new Set(await F.friendIds(req.user.id));
+    const ids = [...new Set((Array.isArray(req.body?.hidden) ? req.body.hidden : []).map(String))].filter((id) => friends.has(id));
+    const { error: dErr } = await supabase.from('yy_feed_hidden').delete().eq('user_id', req.user.id);
+    if (dErr) throw dErr;
+    if (ids.length) {
+      const { error } = await supabase.from('yy_feed_hidden').insert(ids.map((id) => ({ user_id: req.user.id, hidden_id: id })));
+      if (error) throw error;
+    }
+    return res.json({ hidden: ids });
+  } catch (err) {
+    console.error('[communityController.setFeedHidden]', err);
+    return res.status(500).json({ error: 'Failed to save settings' });
+  }
+}
+
+// GET /community/posts?board=mood|finance|wish|mine&visibility=private|friends|public&scope=friends&before=ISO
 async function listPosts(req, res) {
   try {
-    const { board, visibility, before } = req.query;
+    const { board, visibility, before, scope } = req.query;
     let q = supabase.from('yy_posts').select('*').order('created_at', { ascending: false }).limit(PAGE_SIZE);
     if (board === 'mine') {
       q = q.eq('user_id', req.user.id);
-      if (visibility === 'private' || visibility === 'public') q = q.eq('visibility', visibility);
+      if (VISIBILITIES.includes(visibility)) q = q.eq('visibility', visibility);
+    } else if (BOARDS.includes(board) && scope === 'friends') {
+      // 好友篩選:好友的公開(具名)文章+僅好友可見的文章;排除自己選擇隱藏的好友
+      const ids = await visibleFriendIds(req.user.id);
+      if (!ids.length) return res.json({ posts: [] });
+      q = q.eq('board', board).eq('hidden', false).in('user_id', ids)
+        .or('visibility.eq.friends,and(visibility.eq.public,anonymous.eq.false)');
     } else if (BOARDS.includes(board)) {
       q = q.eq('board', board).eq('visibility', 'public').eq('hidden', false);
     } else {
@@ -115,6 +168,7 @@ async function myStats(req, res) {
       stats: {
         private: posts.filter((p) => p.visibility === 'private').length,
         public: posts.filter((p) => p.visibility === 'public').length,
+        friends: posts.filter((p) => p.visibility === 'friends').length,
         reactions_received: received,
       },
     });
@@ -134,7 +188,8 @@ async function createPost(req, res) {
     const keys = images.validKeys(req.user.id, req.body.images);
     if (keys === null) return res.status(400).json({ error: 'Invalid images' });
     // 社群暫停期間只能發表僅自己可見的文章
-    if (visibility === 'public') {
+    const vis = VISIBILITIES.includes(visibility) ? visibility : 'private';
+    if (vis !== 'private') {
       const until = await moderation.suspendedUntil(req.user.id);
       if (until) return moderation.suspendedError(res, until);
     }
@@ -144,8 +199,8 @@ async function createPost(req, res) {
       .insert({
         user_id: req.user.id,
         board,
-        visibility: visibility === 'public' ? 'public' : 'private',
-        anonymous: !!anonymous,
+        visibility: vis,
+        anonymous: vis === 'public' && !!anonymous,
         mood: board === 'mood' ? mood || null : null,
         title: board === 'mood' ? null : clean(title, MAX_TITLE) || null,
         content,
@@ -169,12 +224,14 @@ async function updatePost(req, res) {
     if (!post || post.user_id !== req.user.id) return res.status(404).json({ error: 'Post not found' });
     const updates = { updated_at: new Date().toISOString() };
     const { visibility, anonymous, mood, title, content } = req.body;
-    if (visibility !== undefined) updates.visibility = visibility === 'public' ? 'public' : 'private';
-    if ((updates.visibility || post.visibility) === 'public') {
+    if (visibility !== undefined) updates.visibility = VISIBILITIES.includes(visibility) ? visibility : 'private';
+    if ((updates.visibility || post.visibility) !== 'private') {
       const until = await moderation.suspendedUntil(req.user.id);
       if (until) return moderation.suspendedError(res, until);
     }
     if (anonymous !== undefined) updates.anonymous = !!anonymous;
+    // 僅好友可見一定具名
+    if ((updates.visibility || post.visibility) === 'friends') updates.anonymous = false;
     if (mood !== undefined && post.board === 'mood') {
       if (mood !== null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
       updates.mood = mood;
@@ -226,7 +283,7 @@ async function listComments(req, res) {
   try {
     const post = await fetchPost(req.params.id);
     const admin = post && post.user_id !== req.user.id ? await isAdmin(req.user.id) : false;
-    if (!post || !canRead(post, req.user.id, admin)) return res.status(404).json({ error: 'Post not found' });
+    if (!post || !(await canRead(post, req.user.id, admin))) return res.status(404).json({ error: 'Post not found' });
     const { data, error } = await supabase
       .from('yy_post_comments')
       .select('id, user_id, content, created_at')
@@ -259,7 +316,7 @@ async function listComments(req, res) {
 async function createComment(req, res) {
   try {
     const post = await fetchPost(req.params.id);
-    if (!post || !canRead(post, req.user.id, false) || post.hidden) return res.status(404).json({ error: 'Post not found' });
+    if (!post || !(await canRead(post, req.user.id, false)) || post.hidden) return res.status(404).json({ error: 'Post not found' });
     if (!commentsAllowed(post, req.user.id)) return res.status(403).json({ error: 'Comments are not allowed on this post' });
     if (post.user_id !== req.user.id) {
       const until = await moderation.suspendedUntil(req.user.id);
@@ -309,7 +366,7 @@ async function deleteComment(req, res) {
 async function react(req, res) {
   try {
     const post = await fetchPost(req.params.id);
-    if (!post || post.visibility !== 'public' || post.hidden) return res.status(404).json({ error: 'Post not found' });
+    if (!post || post.visibility === 'private' || post.hidden || !(await canRead(post, req.user.id, false))) return res.status(404).json({ error: 'Post not found' });
     const { type } = req.body;
     const allowed = post.board === 'mood' ? MOOD_REACTIONS : ['like'];
     if (!allowed.includes(type)) return res.status(400).json({ error: 'Invalid reaction' });
@@ -337,7 +394,7 @@ async function react(req, res) {
 async function report(req, res) {
   try {
     const post = await fetchPost(req.params.id);
-    if (!post || post.visibility !== 'public' || post.user_id === req.user.id) return res.status(404).json({ error: 'Post not found' });
+    if (!post || post.visibility === 'private' || post.user_id === req.user.id || !(await canRead(post, req.user.id, false))) return res.status(404).json({ error: 'Post not found' });
     const { error } = await supabase
       .from('yy_post_reports')
       .upsert({ post_id: post.id, user_id: req.user.id, reason: clean(req.body.reason, 200) || null }, { onConflict: 'post_id,user_id' });
@@ -386,6 +443,7 @@ async function uploadImage(req, res) {
 }
 
 module.exports = {
+  getFeedHidden, setFeedHidden,
   uploadImage,
   listPosts, myStats, createPost, updatePost, deletePost,
   listComments, createComment, deleteComment, react, report, setWishStatus,

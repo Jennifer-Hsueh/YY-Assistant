@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestPushToken, pushPermissionGranted } from '../lib/firebase';
@@ -14,35 +14,16 @@ import BirthdayCard from '../components/BirthdayCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
 import DeleteAccountCard from '../components/DeleteAccountCard';
 import MoodCard from '../components/MoodCard';
-import { useIsDesktop } from '../lib/useIsDesktop';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { COUNTRY_CODES, countryName } from '../lib/helplines';
 import { usePlan } from '../context/PlanContext';
 import { PlanCard, LockedArea, askUpgrade } from '../components/PlanNotice';
 
 
-const HOME_IMAGES = [
-  null,
-  '/home-images/yy-1.png',
-  '/home-images/yy-2.png',
-  '/home-images/yy-3.png',
-  '/home-images/yy-4.png',
-  '/home-images/yy-5.png',
-  '/home-images/yy-6.png',
-  '/home-images/yy-7.png',
-  '/home-images/yy-8.png',
-  '/home-images/yy-9.png',
-  '/home-images/yy-10.png',
-  '/home-images/yy-11.png',
-  '/home-images/yy-12.png',
-];
-// 縮圖(約 200px 高),點了才載入完整圖案預覽
-const thumbOf = (src) => (src ? src.replace('/home-images/', '/home-images/thumbs/') : '/home-watermark-logo.png');
 
 export default function Settings() {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const isDesktop = useIsDesktop();
   const { can } = usePlan();
   const [pushStatus, setPushStatus] = useState('idle');
   // 通知偏好存在伺服器(換手機或重新安裝也會保留)
@@ -63,8 +44,6 @@ export default function Settings() {
   const [clearText, setClearText] = useState('');
   const [clearStatus, setClearStatus] = useState('idle');
 
-  const [imageStatus, setImageStatus] = useState('idle');
-  const [previewSrc, setPreviewSrc] = useState(undefined); // undefined = 沒有開啟預覽
   const [theme, setTheme] = useState(getStoredTheme);
 
   // 立即套用,再存到伺服器(Web 與 APP 共用同一個設定)
@@ -86,19 +65,6 @@ export default function Settings() {
     } catch (err) {
       console.error(err);
       setProfileError(t('settings_profile_error'));
-    }
-  }
-
-  async function selectImage(src) {
-    setImageStatus('saving');
-    try {
-      const { profile } = await api.updateProfile({ home_image: src });
-      setProfile(profile);
-      setImageStatus('idle');
-      setPreviewSrc(undefined);
-    } catch (err) {
-      console.error(err);
-      setImageStatus('failed');
     }
   }
 
@@ -211,15 +177,18 @@ export default function Settings() {
       <div>
       <Card className="mb-3">
         <CardContent className="p-4">
-          <p className="mb-2 text-sm font-medium">{t('settings_account')}</p>
+          {/* 標題與使用說明、條款連結同一行,中間保留間距 */}
+          <div className="mb-2 flex flex-wrap items-baseline gap-x-8 gap-y-1">
+            <p className="text-sm font-medium">{t('settings_account')}</p>
+            <p className="flex gap-4 text-xs text-muted-foreground">
+              <Link to="/help" className="underline">{t('nav_help')}</Link>
+              <Link to="/terms" className="underline">{language === 'en' ? 'Terms' : '使用條款'}</Link>
+              <Link to="/privacy" className="underline">{language === 'en' ? 'Privacy' : '隱私權政策'}</Link>
+            </p>
+          </div>
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Mail className="h-4 w-4" />
             {user?.email}
-          </p>
-          <p className="mt-2 flex gap-4 pl-6 text-xs text-muted-foreground">
-            <Link to="/help" className="underline">{t('nav_help')}</Link>
-            <Link to="/terms" className="underline">使用條款</Link>
-            <Link to="/privacy" className="underline">隱私權政策</Link>
           </p>
         </CardContent>
       </Card>
@@ -254,12 +223,14 @@ export default function Settings() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('settings_interface')}</span>
-                <div className="flex rounded-lg border border-border bg-card p-1 text-xs shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <span className="shrink-0 pt-1 text-muted-foreground">{t('settings_interface')}</span>
+                <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-xs shadow-sm">
                   {[
                     { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
                     { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
+                    { name: 'morandi', swatch: '#A88782', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
+                    { name: 'sport', swatch: '#FF6B1A', label: language === 'en' ? 'Sporty' : '運動風' },
                   ].map(({ name, swatch, label }) => (
                     <button
                       key={name}
@@ -301,53 +272,8 @@ export default function Settings() {
 
       <PlanCard />
 
-      <Card className="mb-3">
-        <CardContent className="p-4">
-          <p className="mb-3 flex items-center gap-1.5 text-sm font-medium">
-            <ImageIcon className="h-4 w-4" />
-            {t('settings_home_image')}
-          </p>
-          <div className="grid grid-cols-4 gap-2">
-            {HOME_IMAGES.map((src) => {
-              const selected = (profile?.home_image || null) === src;
-              return (
-                <button
-                  key={src || 'default'}
-                  type="button"
-                  disabled={imageStatus === 'saving'}
-                  onClick={() => (can('home_image') ? setPreviewSrc(src) : askUpgrade('home_image'))}
-                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-1 transition-colors ${selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:bg-muted'}`}
-                >
-                  <img src={thumbOf(src)} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
-                </button>
-              );
-            })}
-          </div>
-          {imageStatus === 'failed' && <p className="mt-2 text-xs text-destructive">{t('settings_home_image_failed')}</p>}
-        </CardContent>
-      </Card>
+      <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>
 
-      {!isDesktop && <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>}
-
-      {/* 點縮圖跳出完整圖案預覽,確認後才選用 */}
-      {previewSrc !== undefined && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => imageStatus !== 'saving' && setPreviewSrc(undefined)}>
-          <div className="w-full max-w-xs rounded-2xl bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex h-80 items-center justify-center rounded-xl bg-muted/40 p-3">
-              <img src={previewSrc || '/home-watermark-logo.png'} alt="" className="max-h-full max-w-full object-contain" />
-            </div>
-            {(profile?.home_image || null) === previewSrc && (
-              <p className="mt-2 text-center text-xs text-muted-foreground">{t('settings_home_image_current')}</p>
-            )}
-            <div className="mt-3 flex gap-2">
-              <Button className="flex-1" disabled={imageStatus === 'saving'} onClick={() => selectImage(previewSrc)}>
-                {imageStatus === 'saving' ? t('loading') : t('settings_home_image_use')}
-              </Button>
-              <Button variant="outline" className="flex-1" disabled={imageStatus === 'saving'} onClick={() => setPreviewSrc(undefined)}>{t('cancel')}</Button>
-            </div>
-          </div>
-        </div>
-      )}
 
 
       </div>
@@ -453,12 +379,6 @@ export default function Settings() {
 
       <DeleteAccountCard t={t} />
 
-      {/* 本日心情:網頁版在右欄最下面;手機版在首頁圖片下面 */}
-      {isDesktop && (
-        <div className="mt-3">
-          <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>
-        </div>
-      )}
 
       {clearOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => clearStatus !== 'clearing' && setClearOpen(false)}>
