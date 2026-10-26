@@ -11,7 +11,8 @@ import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
 import { useAnnStatus, dismissAnnBanner } from '../lib/annStatus';
-import { moodEmoji } from '../lib/moods';
+import { MOODS, moodEmoji } from '../lib/moods';
+import { CloudSun } from 'lucide-react';
 import { usePlan } from '../context/PlanContext';
 import { PlanBanner } from '../components/PlanNotice';
 import HomeNotesCard from '../components/HomeNotesCard';
@@ -57,6 +58,8 @@ export default function Home() {
   const { can } = usePlan();
   const [overview, setOverview] = useState(null); // { events, totals, budgets }
   const [mood, setMood] = useState(null);
+  // 本日心情:還沒選時直接展開九種天氣;選好後收成右上角的小圓圖示,點一下可以再改
+  const [moodOpen, setMoodOpen] = useState(false);
   const todayKey = ymd(new Date());
 
   // 今日總覽:今日行程、本月消費、預算;心情在設定頁選,首頁角色旁顯示
@@ -82,6 +85,7 @@ export default function Home() {
           budgets,
         });
         setMood(moods[0]?.mood || null);
+        setMoodOpen(!moods[0]?.mood);
       } catch (err) {
         console.error(err);
         setOverview({ events: [], totals: { expense: 0, income: 0, dayExpense: 0, byCategory: {} }, budgets: [] });
@@ -114,6 +118,13 @@ export default function Home() {
 
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
+
+  async function pickMood(key) {
+    const next = mood === key ? null : key;
+    setMood(next);
+    if (next) setMoodOpen(false);
+    try { await api.setMood(todayKey, next); } catch (err) { console.error(err); }
+  }
   return (
     <div className="relative mx-auto max-w-xl px-4 pt-4 pb-40 md:max-w-5xl md:px-8 md:py-10">
       {/* 浮水印插圖 — 放大 3 倍、更淡,拿掉外層 overflow-hidden 避免被裁切 */}
@@ -170,12 +181,38 @@ export default function Home() {
             <p className="mt-0.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
           )}
         </div>
-        {mood && can('mood') && (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-xl shadow-sm">
-            {moodEmoji(mood)}
-          </span>
+        {can('mood') && (
+          <button
+            type="button"
+            onClick={() => setMoodOpen((v) => !v)}
+            aria-label={t('home_mood')}
+            title={t('home_mood')}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-card text-xl shadow-sm ${mood ? 'border-border' : 'border-dashed border-muted-foreground/50 text-muted-foreground'}`}
+          >
+            {mood ? moodEmoji(mood) : <CloudSun className="h-5 w-5" />}
+          </button>
         )}
       </div>
+
+      {can('mood') && moodOpen && (
+        <div className="mb-3 rounded-xl border border-border bg-card p-2 shadow-sm md:mb-5">
+          <div className="flex items-center justify-between gap-1">
+            {MOODS.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                aria-label={t(`mood_${m.key}`)}
+                title={t(`mood_${m.key}`)}
+                onClick={() => pickMood(m.key)}
+                className={`flex-1 rounded-lg py-1.5 text-xl leading-none transition-all md:text-2xl ${mood === m.key ? 'scale-110 bg-muted' : 'opacity-60 hover:opacity-100'}`}
+              >
+                {m.emoji}
+              </button>
+            ))}
+          </div>
+          <Link to="/community/mood" className="mt-1.5 inline-block px-1 text-xs text-muted-foreground underline">{t('home_mood_share')}</Link>
+        </div>
+      )}
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-5">
         {/* 今日行程 */}

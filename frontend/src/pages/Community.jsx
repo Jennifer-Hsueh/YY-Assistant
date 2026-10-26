@@ -28,13 +28,8 @@ const MOODS = [
   { key: 'rainbow', emoji: '🌈' },
 ];
 const MOOD_EMOJI = Object.fromEntries(MOODS.map((m) => [m.key, m.emoji]));
-const MOOD_REACTIONS = [
-  { key: 'hug', emoji: '🫂' },
-  { key: 'cheer', emoji: '💪' },
-  { key: 'understand', emoji: '🤝' },
-  { key: 'laugh', emoji: '😆' },
-  { key: 'approve', emoji: '👍' },
-];
+// 心情回應:小河狸圖(public/reactions/*.webp)
+const MOOD_REACTIONS = ['hug', 'cheer', 'understand', 'laugh', 'approve'].map((key) => ({ key, src: `/reactions/${key}.webp` }));
 const WISH_STATUSES = ['considering', 'planned', 'done'];
 // 公開範圍三選一 → { visibility, anonymous }
 const SCOPES = [
@@ -55,7 +50,9 @@ const REPORT_REASONS = [
 ];
 const scopeOf = (p) => (p.visibility === 'private' ? 'private' : p.visibility === 'friends' ? 'friends' : p.anonymous ? 'anon' : 'named');
 
-const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', images: [] };
+const emptyDraft = { board: 'mood', mood: null, title: '', content: '', scope: 'private', hideFriends: false, images: [] };
+// 公開(匿名或具名)才能選「不讓好友看到」
+const canHideFriends = (scopeKey) => scopeKey === 'anon' || scopeKey === 'named';
 
 function pillClass(active) {
   return `rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${active ? 'border-foreground bg-muted font-medium text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`;
@@ -87,7 +84,6 @@ export default function Community() {
   const [mineFilter, setMineFilter] = useState('all');
   // 板上的「全部／好友」篩選;好友篩選可以隱藏特定好友
   const [feedScope, setFeedScope] = useState('all');
-  const [hideOpen, setHideOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -162,8 +158,9 @@ export default function Community() {
         content: draft.content,
         images: draft.images.map((i) => i.key),
         ...scope,
+        hide_friends: canHideFriends(draft.scope) && draft.hideFriends,
       });
-      setDraft({ ...emptyDraft, board: draftBoard, scope: draft.scope });
+      setDraft({ ...emptyDraft, board: draftBoard, scope: draft.scope, hideFriends: draft.hideFriends });
       setComposeOpen(false);
       // 公開文章出現在目前的板上;私人文章只出現在「我的」
       const showsHere = tab === 'mine'
@@ -278,6 +275,12 @@ export default function Community() {
                 </button>
               ))}
             </div>
+            {canHideFriends(draft.scope) && (
+              <label className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <input type="checkbox" checked={draft.hideFriends} onChange={(e) => setDraft({ ...draft, hideFriends: e.target.checked })} />
+                {t('cm_hide_friends')}
+              </label>
+            )}
           </div>
           <Button type="submit" className="w-full" disabled={posting || uploading || !draft.content.trim()}>{t('cm_publish')}</Button>
         </form>
@@ -358,12 +361,8 @@ export default function Community() {
               {[['all', 'cm_feed_all'], ['friends', 'cm_feed_friends']].map(([k, label]) => (
                 <button key={k} type="button" onClick={() => setFeedScope(k)} className={pillClass(feedScope === k)}>{t(label)}</button>
               ))}
-              {feedScope === 'friends' && (
-                <button type="button" onClick={() => setHideOpen(true)} className="ml-auto text-xs text-muted-foreground underline">{t('cm_feed_hide')}</button>
-              )}
             </div>
           )}
-          {hideOpen && <FeedHideDialog t={t} onClose={(changed) => { setHideOpen(false); if (changed) load(); }} />}
 
           {loading ? (
             <p className="text-sm text-muted-foreground">{t('loading')}</p>
@@ -384,47 +383,6 @@ export default function Community() {
         </div>
       </div>
       </>)}
-    </div>
-  );
-}
-
-// 好友篩選:勾選要顯示的好友(取消勾選 = 隱藏)
-function FeedHideDialog({ t, onClose }) {
-  const [friends, setFriends] = useState(null);
-  const [hidden, setHidden] = useState(new Set());
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    Promise.all([api.getFriends(), api.getFeedHidden()])
-      .then(([f, h]) => { setFriends(f.friends); setHidden(new Set(h.hidden)); })
-      .catch(() => setFriends([]));
-  }, []);
-  const toggle = (id) => setHidden((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  async function save() {
-    setBusy(true);
-    try { await api.setFeedHidden([...hidden]); onClose(true); } catch { setBusy(false); }
-  }
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 md:items-center" onClick={() => onClose(false)}>
-      <div className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-xl bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <p className="mb-1 text-sm font-medium">{t('cm_feed_hide')}</p>
-        <p className="mb-3 text-xs text-muted-foreground">{t('cm_feed_hide_hint')}</p>
-        {!friends ? <p className="text-sm text-muted-foreground">{t('loading')}</p> : friends.length === 0 ? <p className="text-sm text-muted-foreground">{t('cm_feed_no_friends')}</p> : (
-          <ul className="mb-3 space-y-1.5">
-            {friends.map((f) => (
-              <li key={f.id}>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={!hidden.has(f.id)} onChange={() => toggle(f.id)} />
-                  {f.name || '—'}
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="flex gap-2">
-          <Button className="flex-1" disabled={busy || !friends} onClick={save}>{t('save')}</Button>
-          <Button variant="outline" className="flex-1" onClick={() => onClose(false)}>{t('cancel')}</Button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -456,8 +414,8 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
   }
 
   const react = (type) => (!member ? askUpgrade('community') : run(async () => { const { post: p } = await api.reactToPost(post.id, type); onChange(p); }));
-  const changeScope = (key) => run(async () => {
-    const { post: p } = await api.updatePost(post.id, SCOPES.find((s) => s.key === key).value);
+  const changeScope = (key, extra = {}) => run(async () => {
+    const { post: p } = await api.updatePost(post.id, { ...SCOPES.find((s) => s.key === key).value, ...extra });
     setScopeOpen(false);
     // 在板上改成「僅自己」= 從板上收回
     if (inMine || p.visibility === 'public') onChange(p); else onRemove(post.id);
@@ -557,9 +515,10 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
               key={r.key}
               type="button"
               onClick={() => react(r.key)}
-              className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${post.my_reaction === r.key ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
+              title={t(`cm_r_${r.key}`)}
+              className={`inline-flex items-center gap-1 rounded-full border py-0.5 pl-1 pr-2.5 text-xs transition-colors ${post.my_reaction === r.key ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
             >
-              {r.emoji} {t(`cm_r_${r.key}`)} {post.reactions[r.key] || 0}
+              <img src={r.src} alt="" className="h-6 w-6" /> {t(`cm_r_${r.key}`)} {post.reactions[r.key] || 0}
             </button>
           ))}
           {!isPrivate && post.board !== 'mood' && (
@@ -618,6 +577,12 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
                 {t(s.label)}
               </button>
             ))}
+            {canHideFriends(scopeOf(post)) && (
+              <label className="flex w-full items-center gap-1.5 text-xs text-muted-foreground">
+                <input type="checkbox" checked={!!post.hide_friends} onChange={(e) => changeScope(scopeOf(post), { hide_friends: e.target.checked })} />
+                {t('cm_hide_friends')}
+              </label>
+            )}
           </div>
         )}
 

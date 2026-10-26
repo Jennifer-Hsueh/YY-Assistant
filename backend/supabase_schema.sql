@@ -473,11 +473,6 @@ alter table yy_budgets add constraint yy_budgets_user_id_fkey foreign key (user_
 alter table yy_posts drop constraint if exists yy_posts_visibility_check;
 alter table yy_posts add constraint yy_posts_visibility_check check (visibility in ('private', 'friends', 'public'));
 
--- 好友篩選中選擇不看的好友
-create table if not exists yy_feed_hidden (
-  user_id uuid not null references yy_users(id) on delete cascade,
-  hidden_id uuid not null references yy_users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  primary key (user_id, hidden_id)
-);
-alter table yy_feed_hidden enable row level security;
+-- 發文時可選「不讓好友看到」(公開文章才有效);原本的「隱藏好友」篩選已移除
+alter table yy_posts add column if not exists hide_friends boolean not null default false;
+drop table if exists yy_feed_hidden;

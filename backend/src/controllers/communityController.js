@@ -41,7 +41,10 @@ async function canRead(post, userId, admin) {
     return (await F.areFriends(userId, post.user_id)) && !(await F.isBlockedEither(userId, post.user_id));
   }
   if (post.visibility !== 'public') return false;
-  return !post.hidden || admin;
+  if (post.hidden && !admin) return false;
+  // 作者選擇「不讓好友看到」:作者的好友看不到這篇
+  if (post.hide_friends && !admin && (await F.areFriends(userId, post.user_id))) return false;
+  return true;
 }
 
 async function decorate(posts, userId) {
@@ -81,45 +84,6 @@ async function fetchPost(id) {
   return data;
 }
 
-// 好友篩選要顯示的好友(扣掉自己隱藏的)
-async function visibleFriendIds(userId) {
-  const ids = await F.friendIds(userId);
-  if (!ids.length) return [];
-  const { data, error } = await supabase.from('yy_feed_hidden').select('hidden_id').eq('user_id', userId);
-  if (error) throw error;
-  const hidden = new Set((data || []).map((r) => r.hidden_id));
-  return ids.filter((id) => !hidden.has(id));
-}
-
-// GET /community/feed-hidden:好友篩選中隱藏的好友
-async function getFeedHidden(req, res) {
-  try {
-    const { data, error } = await supabase.from('yy_feed_hidden').select('hidden_id').eq('user_id', req.user.id);
-    if (error) throw error;
-    return res.json({ hidden: (data || []).map((r) => r.hidden_id) });
-  } catch (err) {
-    console.error('[communityController.getFeedHidden]', err);
-    return res.status(500).json({ error: 'Failed to load settings' });
-  }
-}
-// PUT /community/feed-hidden { hidden: [userId...] }:整份取代
-async function setFeedHidden(req, res) {
-  try {
-    const friends = new Set(await F.friendIds(req.user.id));
-    const ids = [...new Set((Array.isArray(req.body?.hidden) ? req.body.hidden : []).map(String))].filter((id) => friends.has(id));
-    const { error: dErr } = await supabase.from('yy_feed_hidden').delete().eq('user_id', req.user.id);
-    if (dErr) throw dErr;
-    if (ids.length) {
-      const { error } = await supabase.from('yy_feed_hidden').insert(ids.map((id) => ({ user_id: req.user.id, hidden_id: id })));
-      if (error) throw error;
-    }
-    return res.json({ hidden: ids });
-  } catch (err) {
-    console.error('[communityController.setFeedHidden]', err);
-    return res.status(500).json({ error: 'Failed to save settings' });
-  }
-}
-
 // GET /community/posts?board=mood|finance|wish|mine&visibility=private|friends|public&scope=friends&before=ISO
 async function listPosts(req, res) {
   try {
@@ -129,10 +93,10 @@ async function listPosts(req, res) {
       q = q.eq('user_id', req.user.id);
       if (VISIBILITIES.includes(visibility)) q = q.eq('visibility', visibility);
     } else if (BOARDS.includes(board) && scope === 'friends') {
-      // 好友篩選:好友的公開(具名)文章+僅好友可見的文章;排除自己選擇隱藏的好友
-      const ids = await visibleFriendIds(req.user.id);
+      // 好友篩選:好友的公開(具名)文章+僅好友可見的文章;不含作者設定「不讓好友看到」的文章
+      const ids = await F.friendIds(req.user.id);
       if (!ids.length) return res.json({ posts: [] });
-      q = q.eq('board', board).eq('hidden', false).in('user_id', ids)
+      q = q.eq('board', board).eq('hidden', false).eq('hide_friends', false).in('user_id', ids)
         .or('visibility.eq.friends,and(visibility.eq.public,anonymous.eq.false)');
     } else if (BOARDS.includes(board)) {
       q = q.eq('board', board).eq('visibility', 'public').eq('hidden', false);
@@ -142,7 +106,13 @@ async function listPosts(req, res) {
     if (before) q = q.lt('created_at', before);
     const { data, error } = await q;
     if (error) throw error;
-    return res.json({ posts: await decorate(data, req.user.id) });
+    let rows = data || [];
+    // 公開板:作者設定「不讓好友看到」的文章,不給作者的好友看
+    if (board !== 'mine' && scope !== 'friends' && rows.some((p) => p.hide_friends && p.user_id !== req.user.id)) {
+      const friends = new Set(await F.friendIds(req.user.id));
+      rows = rows.filter((p) => !(p.hide_friends && friends.has(p.user_id)));
+    }
+    return res.json({ posts: await decorate(rows, req.user.id) });
   } catch (err) {
     console.error('[communityController.listPosts]', err);
     return res.status(500).json({ error: 'Failed to fetch posts' });
@@ -201,6 +171,7 @@ async function createPost(req, res) {
         board,
         visibility: vis,
         anonymous: vis === 'public' && !!anonymous,
+        hide_friends: vis === 'public' && !!req.body.hide_friends,
         mood: board === 'mood' ? mood || null : null,
         title: board === 'mood' ? null : clean(title, MAX_TITLE) || null,
         content,
@@ -232,6 +203,9 @@ async function updatePost(req, res) {
     if (anonymous !== undefined) updates.anonymous = !!anonymous;
     // 僅好友可見一定具名
     if ((updates.visibility || post.visibility) === 'friends') updates.anonymous = false;
+    if (req.body.hide_friends !== undefined) updates.hide_friends = !!req.body.hide_friends;
+    // 「不讓好友看到」只適用公開文章
+    if ((updates.visibility || post.visibility) !== 'public') updates.hide_friends = false;
     if (mood !== undefined && post.board === 'mood') {
       if (mood !== null && !MOODS.includes(mood)) return res.status(400).json({ error: 'Invalid mood' });
       updates.mood = mood;
@@ -443,7 +417,6 @@ async function uploadImage(req, res) {
 }
 
 module.exports = {
-  getFeedHidden, setFeedHidden,
   uploadImage,
   listPosts, myStats, createPost, updatePost, deletePost,
   listComments, createComment, deleteComment, react, report, setWishStatus,

@@ -13,7 +13,6 @@ import DataTransferCard from '../components/DataTransferCard';
 import BirthdayCard from '../components/BirthdayCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
 import DeleteAccountCard from '../components/DeleteAccountCard';
-import MoodCard from '../components/MoodCard';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { COUNTRY_CODES, countryName } from '../lib/helplines';
 import { usePlan } from '../context/PlanContext';
@@ -272,7 +271,6 @@ export default function Settings() {
 
       <PlanCard />
 
-      <LockedArea feature="mood"><MoodCard t={t} /></LockedArea>
 
 
 

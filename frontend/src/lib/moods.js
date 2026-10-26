@@ -1,4 +1,4 @@
-// 本日心情(九種);首頁角色旁的小圖示與設定頁的選擇共用
+// 本日心情(九種);首頁的心情選擇與小圓圖示共用
 export const MOODS = [
   { key: 'question', emoji: '❓' },
   { key: 'angry', emoji: '😠' },
