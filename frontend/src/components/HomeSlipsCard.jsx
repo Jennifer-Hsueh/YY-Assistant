@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { StickyNote, PenLine, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { Card, CardContent } from './ui/card';
@@ -21,6 +22,8 @@ export default function HomeSlipsCard({ t, style }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [unreadIds, setUnreadIds] = useState([]);
+  const [blocking, setBlocking] = useState(null); // 要封鎖的寄件人
+  const [params, setParams] = useSearchParams();
   // 新收到的紙條:進首頁時跳出來一張一張看
   const [popup, setPopup] = useState([]);
   const [popIdx, setPopIdx] = useState(0);
@@ -42,6 +45,22 @@ export default function HomeSlipsCard({ t, style }) {
     }
   }
   useEffect(() => { load(); }, []);
+  // 小河狸提示「傳張小紙條祝福吧」:帶著 ?slipTo= 進首頁,直接打開寫紙條
+  useEffect(() => {
+    const to = params.get('slipTo');
+    if (to) {
+      startCompose(to);
+      params.delete('slipTo');
+      setParams(params, { replace: true });
+    }
+  }, [params]);
+
+  async function block(user) {
+    setBlocking(null);
+    setOpen(null);
+    setData((d) => ({ ...d, received: d.received.filter((s) => s.from?.id !== user.id) }));
+    try { await api.blockUser(user.id); } catch (err) { console.error(err); load(); }
+  }
 
   async function startCompose(to = '') {
     setError('');
@@ -208,6 +227,7 @@ export default function HomeSlipsCard({ t, style }) {
                         <>
                           {s.from && <button type="button" onClick={() => startCompose(s.from.id)} className="underline">{t('slip_reply')}</button>}
                           <button type="button" onClick={() => remove(s)} className="underline">{t('slip_tear')}</button>
+                          {s.from && <button type="button" onClick={() => setBlocking(s.from)} className="ml-auto underline">{t('slip_block')}</button>}
                         </>
                       ) : (
                         <button type="button" onClick={() => remove(s)} className="underline">{s.read_at ? t('slip_remove') : t('slip_recall')}</button>
@@ -217,6 +237,15 @@ export default function HomeSlipsCard({ t, style }) {
                 </div>
               );
             })}
+          </div>
+        )}
+        {blocking && (
+          <div className="mt-3 space-y-2 rounded-md border border-border bg-card p-3 text-xs">
+            <p>{t('slip_block_confirm').replace('{name}', nameOf(blocking))}</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="destructive" className="flex-1" onClick={() => block(blocking)}>{t('slip_block_ok')}</Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => setBlocking(null)}>{t('cancel')}</Button>
+            </div>
           </div>
         )}
         {list.length > SHOW && (

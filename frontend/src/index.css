@@ -413,3 +413,11 @@ input[type="time"] {
   100% { opacity: 1; transform: none; }
 }
 .slip-pop { animation: slip-pop 0.5s ease-out; }
+
+/* 小河狸提示泡泡冒出來 */
+@keyframes beaver-pop {
+  0% { opacity: 0; transform: translateY(30px); }
+  70% { opacity: 1; transform: translateY(-4px); }
+  100% { opacity: 1; transform: none; }
+}
+.beaver-bubble { animation: beaver-pop 0.45s ease-out; }

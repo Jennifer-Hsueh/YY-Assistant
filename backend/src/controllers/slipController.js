@@ -91,12 +91,17 @@ async function contacts(req, res) {
 async function list(req, res) {
   try {
     const uid = req.user.id;
-    const [{ data: received, error: e1 }, { data: sent, error: e2 }] = await Promise.all([
+    let [{ data: received, error: e1 }, { data: sent, error: e2 }] = await Promise.all([
       supabase.from('yy_slips').select('*').eq('recipient_id', uid).order('created_at', { ascending: false }),
       supabase.from('yy_slips').select('*').eq('sender_id', uid).eq('sender_hidden', false).order('created_at', { ascending: false }).limit(100),
     ]);
     if (e1) throw e1;
     if (e2) throw e2;
+    // 我封鎖的人傳來的紙條不顯示
+    const { data: blocks, error: e3 } = await supabase.from('yy_user_blocks').select('blocked_id').eq('blocker_id', uid);
+    if (e3) throw e3;
+    const blocked = new Set((blocks || []).map((b) => b.blocked_id));
+    received = (received || []).filter((s) => !blocked.has(s.sender_id));
     const users = await usersByIds([...new Set([...(received || []).map((s) => s.sender_id), ...(sent || []).map((s) => s.recipient_id)].filter(Boolean))]);
     const nameOf = (id) => (id ? users.get(id)?.username || null : null);
     return res.json({
@@ -135,9 +140,14 @@ async function send(req, res) {
 // GET /slips/unread:未讀數(選單上的紅點)
 async function unread(req, res) {
   try {
-    const { count, error } = await supabase.from('yy_slips').select('id', { count: 'exact', head: true }).eq('recipient_id', req.user.id).is('read_at', null);
+    const [{ data: rows, error }, { data: blocks, error: bErr }] = await Promise.all([
+      supabase.from('yy_slips').select('sender_id').eq('recipient_id', req.user.id).is('read_at', null),
+      supabase.from('yy_user_blocks').select('blocked_id').eq('blocker_id', req.user.id),
+    ]);
     if (error) throw error;
-    return res.json({ count: count || 0 });
+    if (bErr) throw bErr;
+    const blocked = new Set((blocks || []).map((b) => b.blocked_id));
+    return res.json({ count: (rows || []).filter((r) => !blocked.has(r.sender_id)).length });
   } catch (err) {
     return fail(res, 'unread', err, '讀取小紙條失敗');
   }
