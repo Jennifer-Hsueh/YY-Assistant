@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { setSlipUnread } from '../lib/slipStatus';
 
 const MAX = 25;
 const SHOW = 6;
@@ -20,16 +21,20 @@ export default function HomeSlipsCard({ t, style }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [unreadIds, setUnreadIds] = useState([]);
+  // 新收到的紙條:進首頁時跳出來一張一張看
+  const [popup, setPopup] = useState([]);
+  const [popIdx, setPopIdx] = useState(0);
 
   async function load() {
     try {
       const d = await api.listSlips();
       setData(d);
-      // 首頁看到了就算已讀;這次畫面上仍標示「新」
-      const fresh = d.received.filter((s) => !s.read_at).map((s) => s.id);
+      // 新紙條先跳出來;看完(收下或回一張)才算已讀,卡片上這次仍標示「新」
+      const fresh = d.received.filter((s) => !s.read_at);
       if (fresh.length) {
-        setUnreadIds((ids) => [...new Set([...ids, ...fresh])]);
-        api.readSlips(fresh).catch(() => {});
+        setUnreadIds((ids) => [...new Set([...ids, ...fresh.map((s) => s.id)])]);
+        setPopup([...fresh].reverse());
+        setPopIdx(0);
       }
     } catch (err) {
       console.error(err);
@@ -65,6 +70,18 @@ export default function HomeSlipsCard({ t, style }) {
     }
   }
 
+  function closePopup(replyTo) {
+    const ids = popup.map((s) => s.id);
+    setPopup([]);
+    setSlipUnread(0);
+    api.readSlips(ids).catch(() => {});
+    if (replyTo) startCompose(replyTo);
+  }
+  function nextPopup() {
+    if (popIdx + 1 < popup.length) setPopIdx(popIdx + 1);
+    else closePopup();
+  }
+
   async function remove(slip) {
     setOpen(null);
     setData((d) => ({ received: d.received.filter((s) => s.id !== slip.id), sent: d.sent.filter((s) => s.id !== slip.id) }));
@@ -75,7 +92,28 @@ export default function HomeSlipsCard({ t, style }) {
   const shown = all ? list : list.slice(0, SHOW);
   const nameOf = (u) => (u ? u.name || '—' : t('slip_deleted_user'));
 
+  const pop = popup[popIdx];
+
   return (
+    <>
+    {pop && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={() => closePopup()}>
+        <div key={pop.id} className="slip-pop w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
+          <p className="mb-2 text-center text-sm font-medium text-white drop-shadow">
+            📝 {t('slip_new_from').replace('{name}', nameOf(pop.from))}
+            {popup.length > 1 && <span className="ml-1 opacity-80">({popIdx + 1}/{popup.length})</span>}
+          </p>
+          <div className="rounded-md p-5 shadow-xl" style={{ background: 'color-mix(in srgb, var(--highlight) 30%, var(--card))', transform: 'rotate(-2deg)' }}>
+            <p className="min-h-16 break-words text-lg leading-relaxed">{pop.content}</p>
+            <p className="mt-3 text-right text-xs text-muted-foreground">— {nameOf(pop.from)}</p>
+          </div>
+          <div className="mt-4 flex gap-2">
+            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => closePopup(pop.from.id)}>{t('slip_reply')}</Button>}
+            <Button className="flex-1" onClick={nextPopup}>{popIdx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
+          </div>
+        </div>
+      </div>
+    )}
     <Card className="relative z-10 border-none" style={style}>
       <CardContent className="p-4 md:p-5">
         <div className="mb-3 flex items-center gap-1.5 text-base font-medium" style={{ color: 'var(--module-recurring)' }}>
@@ -181,5 +219,6 @@ export default function HomeSlipsCard({ t, style }) {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }

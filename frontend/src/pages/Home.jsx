@@ -196,8 +196,9 @@ export default function Home() {
       </div>
 
       {can('mood') && moodOpen && (
-        <div className="mb-3 rounded-xl border border-border bg-card p-2 shadow-sm md:mb-5">
-          <div className="flex items-center justify-between gap-1">
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border bg-card px-3 py-1.5 shadow-sm md:mb-5">
+          <span className="text-xs text-muted-foreground">{t('home_mood_hint')}</span>
+          <div className="flex flex-1 items-center gap-0.5">
             {MOODS.map((m) => (
               <button
                 key={m.key}
@@ -205,13 +206,13 @@ export default function Home() {
                 aria-label={t(`mood_${m.key}`)}
                 title={t(`mood_${m.key}`)}
                 onClick={() => pickMood(m.key)}
-                className={`flex-1 rounded-lg py-1.5 text-xl leading-none transition-all md:text-2xl ${mood === m.key ? 'scale-110 bg-muted' : 'opacity-60 hover:opacity-100'}`}
+                className={`rounded-md px-1 py-0.5 text-base leading-none transition-all hover:scale-110 hover:opacity-100 md:text-lg ${mood === m.key ? 'scale-110 bg-muted' : 'opacity-70'}`}
               >
                 {m.emoji}
               </button>
             ))}
           </div>
-          <Link to="/community/mood" className="mt-1.5 inline-block px-1 text-xs text-muted-foreground underline">{t('home_mood_share')}</Link>
+          <Link to="/community/mood" className="text-[11px] text-muted-foreground underline">{t('home_mood_share')}</Link>
         </div>
       )}
 

@@ -132,6 +132,17 @@ async function send(req, res) {
   }
 }
 
+// GET /slips/unread:未讀數(選單上的紅點)
+async function unread(req, res) {
+  try {
+    const { count, error } = await supabase.from('yy_slips').select('id', { count: 'exact', head: true }).eq('recipient_id', req.user.id).is('read_at', null);
+    if (error) throw error;
+    return res.json({ count: count || 0 });
+  } catch (err) {
+    return fail(res, 'unread', err, '讀取小紙條失敗');
+  }
+}
+
 // POST /slips/read { ids }:收件人看過了
 async function markRead(req, res) {
   try {
@@ -167,4 +178,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { contacts, list, send, markRead, remove, contactIds, MAX_LEN, DAILY_MAX };
+module.exports = { contacts, list, unread, send, markRead, remove, contactIds, MAX_LEN, DAILY_MAX };

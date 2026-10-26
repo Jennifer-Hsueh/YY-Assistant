@@ -1,10 +1,15 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useEffect } from 'react';
 import { navTabs, isTabActive } from './navTabs';
+import { UnreadBadge } from './AnnouncementBell';
+import { useSlipUnread, refreshSlipStatus } from '../lib/slipStatus';
 
 export default function BottomNav() {
   const { t } = useLanguage();
   const { pathname } = useLocation();
+  const slipUnread = useSlipUnread();
+  useEffect(() => { refreshSlipStatus(); }, [pathname]);
 
   return (
     <nav data-slot="bottom-nav" className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
@@ -22,7 +27,10 @@ export default function BottomNav() {
                   fontWeight: active ? 500 : 400,
                 }}
               >
-                <Icon className="h-6 w-6" />
+                <span className="relative">
+                  <Icon className="h-6 w-6" />
+                  {to === '/' && <UnreadBadge count={slipUnread} className="absolute -right-2.5 -top-1" />}
+                </span>
                 {t(key)}
               </NavLink>
             </li>

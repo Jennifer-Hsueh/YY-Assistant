@@ -9,6 +9,7 @@ import { UnreadBadge } from './AnnouncementBell';
 import { useAnnStatus } from '../lib/annStatus';
 import { BetaTag } from './BrandMark';
 import { useBeta } from '../lib/useBeta';
+import { useSlipUnread, refreshSlipStatus } from '../lib/slipStatus';
 
 export default function Sidebar() {
   const { logout } = useAuth();
@@ -17,6 +18,8 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { unread } = useAnnStatus();
   const beta = useBeta();
+  const slipUnread = useSlipUnread();
+  useEffect(() => { refreshSlipStatus(); }, [pathname]);
   const groupOf = (path) => navTabs.find((tb) => tb.children && isTabActive(tb, path))?.to || null;
   const [openGroup, setOpenGroup] = useState(() => groupOf(pathname));
 
@@ -63,7 +66,8 @@ export default function Sidebar() {
                     }}
                   >
                     <Icon className="h-5 w-5" />
-                    {t(key)}
+                    <span className="flex-1">{t(key)}</span>
+                    {to === '/' && <UnreadBadge count={slipUnread} />}
                   </NavLink>
                 </li>
               );

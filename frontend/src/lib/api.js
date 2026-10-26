@@ -162,6 +162,7 @@ getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
   // 紀念日、好友生日
   listSlips: () => request('/slips'),
   slipContacts: () => request('/slips/contacts'),
+  slipUnread: () => request('/slips/unread'),
   sendSlip: (body) => request('/slips', { method: 'POST', body }),
   readSlips: (ids) => request('/slips/read', { method: 'POST', body: { ids } }),
   deleteSlip: (id) => request(`/slips/${id}`, { method: 'DELETE' }),
