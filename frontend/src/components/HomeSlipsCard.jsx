@@ -162,11 +162,18 @@ export default function HomeSlipsCard({ t, style }) {
           </form>
         )}
 
-        {data && (data.received.length > 0 || data.sent.length > 0) && (
-          <div className="mb-2 flex gap-1.5 text-xs">
+        {data && (
+          <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card/60 p-1 text-sm">
             {['received', 'sent'].map((v) => (
-              <button key={v} type="button" onClick={() => { setView(v); setOpen(null); setAll(false); }} className={`rounded-full px-2.5 py-0.5 ${view === v ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'}`}>
+              <button
+                key={v}
+                type="button"
+                onClick={() => { setView(v); setOpen(null); setAll(false); }}
+                className={`rounded-md py-1.5 transition-colors ${view === v ? 'font-medium text-white shadow-sm' : 'text-muted-foreground hover:bg-muted/60'}`}
+                style={view === v ? { background: 'var(--module-recurring)' } : undefined}
+              >
                 {t(`slip_${v}`)}
+                {v === 'received' && data.received.some((s) => unreadIds.includes(s.id)) && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: view === v ? '#fff' : 'var(--expense)' }} />}
               </button>
             ))}
           </div>

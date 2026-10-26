@@ -167,7 +167,7 @@ export default function FloatingAddButton() {
                     placeholder={`${t('tx_amount')} (${currency})`}
                     value={tx.amount}
                     onChange={(e) => setTx({ ...tx, amount: e.target.value })}
-                    className="min-w-0 flex-1 text-lg font-semibold"
+                    className="min-w-0 flex-1"
                     required
                   />
                 </div>

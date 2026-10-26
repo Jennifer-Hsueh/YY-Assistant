@@ -120,6 +120,18 @@ export default function Home() {
   const displayName = profile?.username || profile?.email?.split('@')[0] || '';
 
 
+  const moodBtn = can('mood') ? (
+    <button
+      type="button"
+      onClick={() => setMoodOpen((v) => !v)}
+      aria-label={t('home_mood')}
+      title={t('home_mood')}
+      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-card text-base leading-none shadow-sm ${mood ? 'border-border' : 'border-dashed border-muted-foreground/50 text-muted-foreground'}`}
+    >
+      {mood ? moodEmoji(mood) : <CloudSun className="h-4 w-4" />}
+    </button>
+  ) : null;
+
   async function pickMood(key) {
     const next = mood === key ? null : key;
     setMood(next);
@@ -172,26 +184,17 @@ export default function Home() {
         </div>
       )}
 
-      {/* 日期、招呼語;右邊是今天的心情 */}
-      <div className="mb-3 mt-1 flex items-end justify-between gap-3 md:mb-5">
-        <div className="min-w-0">
-          <p className="text-muted-foreground" style={{ fontSize: '15.4px' }}>
-            {new Intl.DateTimeFormat(t('home_date_locale'), { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())}
+      {/* 日期、招呼語;名字後面是今天的心情(點一下可以選或改) */}
+      <div className="mb-3 mt-1 md:mb-5">
+        <p className="flex items-center gap-1.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>
+          {new Intl.DateTimeFormat(t('home_date_locale'), { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())}
+          {!displayName && moodBtn}
+        </p>
+        {displayName && (
+          <p className="mt-0.5 flex items-center gap-1.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>
+            <span className="min-w-0 truncate">{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</span>
+            {moodBtn}
           </p>
-          {displayName && (
-            <p className="mt-0.5 text-muted-foreground" style={{ fontSize: '15.4px' }}>{t('home_welcome_prefix')}{displayName}{t('home_welcome_suffix')}</p>
-          )}
-        </div>
-        {can('mood') && (
-          <button
-            type="button"
-            onClick={() => setMoodOpen((v) => !v)}
-            aria-label={t('home_mood')}
-            title={t('home_mood')}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-card text-xl shadow-sm ${mood ? 'border-border' : 'border-dashed border-muted-foreground/50 text-muted-foreground'}`}
-          >
-            {mood ? moodEmoji(mood) : <CloudSun className="h-5 w-5" />}
-          </button>
         )}
       </div>
 
