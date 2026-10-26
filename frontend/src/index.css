@@ -159,93 +159,126 @@
 }
 
 /* ───────── 莫蘭迪主題 ─────────
-   低飽和、帶灰的柔和色:霧玫瑰、鼠尾草綠、灰藍、燕麥 */
+   明亮的燕麥底,搭配霧感的鼠尾草綠、薰衣草紫、奶油黃 */
 :root[data-theme="morandi"] {
-  --background: #E8E2DA;
-  --foreground: #4A4542;
-  --card: #F6F2ED;
-  --card-foreground: #4A4542;
-  --primary: #A88782;
-  --primary-foreground: #FAF7F3;
-  --secondary: #DCE0E2;
-  --secondary-foreground: #5D6B74;
-  --muted: #E3DCD3;
-  --muted-foreground: #8E8781;
-  --accent: #EBE5DD;
-  --accent-foreground: #5D6B74;
-  --destructive: #A0605C;
-  --destructive-foreground: #FAF7F3;
-  --border: rgba(93, 107, 116, 0.18);
-  --input: rgba(93, 107, 116, 0.2);
-  --ring: #5D6B74;
+  --background: #F3F0EA;
+  --foreground: #4F4B47;
+  --card: #FDFBF8;
+  --card-foreground: #4F4B47;
+  --primary: #8AA58A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E7E2EF;
+  --secondary-foreground: #6F6488;
+  --muted: #ECE7DF;
+  --muted-foreground: #958E86;
+  --accent: #F1ECE4;
+  --accent-foreground: #6F6488;
+  --destructive: #C07A74;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(111, 100, 136, 0.16);
+  --input: rgba(111, 100, 136, 0.2);
+  --ring: #8AA58A;
 
-  --ink: #5D6B74;
-  --income: #8C9C86;
-  --expense: #A88782;
-  --highlight: #B3A07E;
-  --module-notes: #8F7E87;
+  --ink: #7A6F93;
+  --income: #8AA58A;
+  --expense: #B49AC4;
+  --highlight: #D9B44A;
+  --module-notes: #C99AB4;
+  /* 各模組:行事曆鼠尾草綠、記帳薰衣草紫、預算奶油黃、墨箋玫瑰紫 */
+  --module-calendar: #7FA27F;
+  --module-calendar-bg: color-mix(in srgb, #7FA27F 10%, white);
 
-  --acc-1: #8C9C86;
-  --acc-2: #7F8FA6;
-  --acc-3: #A88782;
-  --acc-4: #B3A07E;
-  --acc-5: #9A8BA6;
+  --acc-1: #8AA58A;
+  --acc-2: #A99BC9;
+  --acc-3: #D6B860;
+  --acc-4: #8FB0B8;
+  --acc-5: #D19A92;
 
-  --pastel-1: #DDE1E6;
-  --pastel-2: #E1E5DC;
-  --pastel-3: #EAE1D8;
-  --pastel-4: #E4DDE6;
-  --pastel-5: #DCE4E4;
-  --pastel-6: #EADDDA;
+  --pastel-1: #E9F0E6;
+  --pastel-2: #EEEAF5;
+  --pastel-3: #F7F0D9;
+  --pastel-4: #E6EFF1;
+  --pastel-5: #F5E6E3;
+  --pastel-6: #EFEBF5;
 
-  --dot-pattern: rgba(93, 107, 116, 0.09);
-  --color-green-600: #7E8F78;
-  --color-red-500: #A0605C;
-  --color-red-600: #A0605C;
+  --dot-pattern: rgba(122, 111, 147, 0.08);
+  --color-green-600: #6F9170;
+  --color-red-500: #C07A74;
+  --color-red-600: #C07A74;
 }
 
 /* ───────── 運動風主題 ─────────
-   明亮、對比強:海軍藍＋活力橘,搭配螢光綠與天空藍 */
+   藍＋白為主,紅色當線條與色塊(像球衣的條紋) */
 :root[data-theme="sport"] {
-  --background: #EEF2F6;
-  --foreground: #14213D;
+  --sport-blue: #1D4ED8;
+  --sport-navy: #0B2A6B;
+  --sport-red: #E11D2E;
+
+  --background: #F4F7FC;
+  --foreground: #0B2A6B;
   --card: #FFFFFF;
-  --card-foreground: #14213D;
-  --primary: #FF6B1A;
+  --card-foreground: #0B2A6B;
+  --primary: var(--sport-blue);
   --primary-foreground: #FFFFFF;
-  --secondary: #DCE6F2;
-  --secondary-foreground: #14213D;
-  --muted: #E3E9F0;
-  --muted-foreground: #66748A;
-  --accent: #E8EEF5;
-  --accent-foreground: #14213D;
-  --destructive: #E5383B;
+  --secondary: #E3ECFB;
+  --secondary-foreground: var(--sport-navy);
+  --muted: #E9EFF8;
+  --muted-foreground: #5A6B8C;
+  --accent: #EEF3FB;
+  --accent-foreground: var(--sport-navy);
+  --destructive: var(--sport-red);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(20, 33, 61, 0.14);
-  --input: rgba(20, 33, 61, 0.18);
-  --ring: #14213D;
-  --radius: 0.6rem;
+  --border: rgba(11, 42, 107, 0.14);
+  --input: rgba(11, 42, 107, 0.2);
+  --ring: var(--sport-blue);
+  --radius: 0.5rem;
 
-  --ink: #14213D;
-  --income: #16A34A;
-  --expense: #FF6B1A;
-  --highlight: #0EA5E9;
-  --module-notes: #6D5DD3;
+  --ink: var(--sport-navy);
+  --income: var(--sport-blue);
+  --expense: var(--sport-red);
+  --highlight: #2563EB;
+  --module-notes: #3B82F6;
 
-  --acc-1: #16A34A;
-  --acc-2: #2563EB;
-  --acc-3: #FF6B1A;
-  --acc-4: #0EA5E9;
-  --acc-5: #E5383B;
+  --acc-1: var(--sport-blue);
+  --acc-2: var(--sport-red);
+  --acc-3: var(--sport-navy);
+  --acc-4: #3B82F6;
+  --acc-5: #F43F5E;
 
-  --pastel-1: #DBEAFE;
-  --pastel-2: #DCFCE7;
-  --pastel-3: #FFEDD5;
-  --pastel-4: #EDE9FE;
-  --pastel-5: #CFFAFE;
-  --pastel-6: #FEE2E2;
+  --pastel-1: #DBE7FD;
+  --pastel-2: #FDE2E4;
+  --pastel-3: #E8EFFC;
+  --pastel-4: #FFEFF0;
+  --pastel-5: #D6E4FB;
+  --pastel-6: #F9E3E5;
 
-  --dot-pattern: rgba(20, 33, 61, 0.07);
+  --color-green-600: var(--sport-blue);
+  --color-red-500: var(--sport-red);
+  --color-red-600: var(--sport-red);
+}
+/* 運動風:背景用斜條紋取代點點,卡片上緣一條紅線,標題下方紅藍雙線,導覽列紅色色塊 */
+:root[data-theme="sport"] body {
+  background-image: repeating-linear-gradient(135deg, rgba(29, 78, 216, 0.035) 0 14px, transparent 14px 28px);
+  background-size: auto;
+}
+:root[data-theme="sport"] [data-slot="card"] {
+  border-top: 3px solid var(--sport-red);
+}
+:root[data-theme="sport"] .page-title-row {
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--sport-blue);
+  box-shadow: 0 3px 0 var(--sport-red);
+  margin-bottom: 1.25rem;
+}
+:root[data-theme="sport"] [data-slot="sidebar"] {
+  border-right: 4px solid var(--sport-red);
+  background: linear-gradient(180deg, var(--sport-navy) 0 110px, #FFFFFF 110px);
+}
+:root[data-theme="sport"] [data-slot="sidebar"] > div:first-child span {
+  color: #FFFFFF !important;
+}
+:root[data-theme="sport"] [data-slot="bottom-nav"] {
+  border-top: 3px solid var(--sport-red);
 }
 
 html {

@@ -35,7 +35,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-border bg-card/95 backdrop-blur md:flex">
+    <aside data-slot="sidebar" className="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-border bg-card/95 backdrop-blur md:flex">
       <div className="flex items-end gap-3 px-5 pt-5 pb-5">
         <img src="/round-logo-192.png" srcSet={ROUND_SRCSET} sizes="72px" alt={t('appName')} className="rounded-full" style={{ width: '72px', height: '72px', opacity: 0.6, marginBottom: '-14px' }} />
         <div className="flex flex-col items-center gap-1 leading-none">
