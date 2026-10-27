@@ -363,26 +363,23 @@ input[type="time"] {
   opacity: 0.88;
   clip-path: polygon(0 10%, 3% 0, 97% 6%, 100% 0, 98% 50%, 100% 100%, 97% 92%, 3% 100%, 0 90%, 2% 50%);
 }
-/* 入口頁功能介紹:左右滑動 */
-.landing-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; outline: none; }
-.landing-track::-webkit-scrollbar { display: none; }
-.landing-track:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
-.landing-slide { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; }
-/* 入口頁整頁左右滑動 */
-.landing-page { flex: 0 0 100%; height: 100%; overflow-y: auto; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
-.landing-inner { margin: auto; width: 100%; max-width: 64rem; display: grid; align-items: center; gap: 1.5rem; padding: 1rem 1.25rem 1.5rem; }
-.landing-inner-text { display: block; max-width: 48rem; }
-.landing-deck-phone { height: min(36svh, 330px); width: auto; }
 .landing-hero-title-en { font-size: clamp(28px, 6vw, 46px); line-height: 1.2; letter-spacing: 0; }
 .landing-hero-title { font-size: clamp(30px, 7vw, 54px); }
+/* 入口頁:由上往下捲動 */
+.landing-header { background: color-mix(in srgb, var(--background) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px dashed rgba(51, 65, 92, 0.15); }
+.landing-band { background: color-mix(in srgb, var(--card) 55%, transparent); border-block: 1px dashed rgba(51, 65, 92, 0.15); }
+.landing-card { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(51, 65, 92, 0.12); box-shadow: 0 6px 16px -12px rgba(51, 65, 92, 0.4); }
+/* 兩支手機一前一後疊著放 */
+.landing-pair { position: relative; height: 470px; max-width: 420px; width: 100%; margin: 0 auto; }
+.landing-pair .landing-phone { position: absolute; width: 200px; }
+.landing-pair-back { left: 4%; top: 0; transform: rotate(-4deg); }
+.landing-pair-front { right: 4%; top: 40px; transform: rotate(3deg); }
 @media (min-width: 768px) {
-  .landing-inner { gap: 4rem; padding: 1.5rem 2rem; }
-  .landing-deck-phone { height: min(calc(100svh - 230px), 600px); }
+  .landing-pair { height: 590px; max-width: 480px; }
+  .landing-pair .landing-phone { width: 250px; }
 }
-.landing-arrow { display: inline-flex; height: 40px; width: 40px; align-items: center; justify-content: center; border-radius: 9999px; border: 1px solid rgba(51, 65, 92, 0.25); color: var(--ink); background: rgba(255, 255, 255, 0.6); }
-.landing-arrow:hover:not(:disabled) { background: #fff; }
-.landing-arrow:disabled { opacity: 0.35; }
-.landing-arrow:focus-visible, .landing [role="tab"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.landing-theme { border-radius: 20px; overflow: hidden; border: 6px solid #2A2622; box-shadow: 0 16px 30px -20px rgba(51, 65, 92, 0.55); aspect-ratio: 390 / 520; }
+.landing-theme img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 
 /* 登入／註冊頁 LOGO:進場跳一下＋對話泡泡 */
 .brand-hop { animation: brand-hop 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) both; transform-origin: 50% 90%; }
