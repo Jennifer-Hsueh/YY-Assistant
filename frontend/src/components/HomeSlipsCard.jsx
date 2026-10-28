@@ -21,7 +21,6 @@ export default function HomeSlipsCard({ t, style }) {
   const [contacts, setContacts] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [unreadIds, setUnreadIds] = useState([]);
   const [blocking, setBlocking] = useState(null); // 要封鎖的寄件人
   const [params, setParams] = useSearchParams();
   // 新收到的紙條:進首頁時跳出來一張一張看
@@ -32,10 +31,9 @@ export default function HomeSlipsCard({ t, style }) {
     try {
       const d = await api.listSlips();
       setData(d);
-      // 新紙條先跳出來;看完(收下或回一張)才算已讀,卡片上這次仍標示「新」
+      // 新紙條先跳出來;看過(收下、回一張或在卡片上點開)才算已讀
       const fresh = d.received.filter((s) => !s.read_at);
       if (fresh.length) {
-        setUnreadIds((ids) => [...new Set([...ids, ...fresh.map((s) => s.id)])]);
         setPopup([...fresh].reverse());
         setPopIdx(0);
       }
@@ -89,16 +87,34 @@ export default function HomeSlipsCard({ t, style }) {
     }
   }
 
-  function closePopup(replyTo) {
-    const ids = popup.map((s) => s.id);
-    setPopup([]);
-    setSlipUnread(0);
+  // 標成已讀:卡片上的便利貼與選單紅點跟著更新
+  function markRead(ids) {
+    if (!ids.length) return;
+    const now = new Date().toISOString();
+    setData((d) => {
+      const received = d.received.map((x) => (ids.includes(x.id) && !x.read_at ? { ...x, read_at: now } : x));
+      setSlipUnread(received.filter((x) => !x.read_at).length);
+      return { ...d, received };
+    });
     api.readSlips(ids).catch(() => {});
-    if (replyTo) startCompose(replyTo);
+  }
+  // 點旁邊關掉:還沒看的紙條留著(卡片上會有便利貼)
+  const dismissPopup = () => setPopup([]);
+  function replyFromPopup(slip) {
+    markRead([slip.id]);
+    setPopup([]);
+    startCompose(slip.from.id);
   }
   function nextPopup() {
+    markRead([popup[popIdx].id]);
     if (popIdx + 1 < popup.length) setPopIdx(popIdx + 1);
-    else closePopup();
+    else setPopup([]);
+  }
+  function showUnread() {
+    const fresh = data.received.filter((x) => !x.read_at);
+    if (!fresh.length) return;
+    setPopup([...fresh].reverse());
+    setPopIdx(0);
   }
 
   async function remove(slip) {
@@ -112,11 +128,12 @@ export default function HomeSlipsCard({ t, style }) {
   const nameOf = (u) => (u ? u.name || '—' : t('slip_deleted_user'));
 
   const pop = popup[popIdx];
+  const unread = data ? data.received.filter((x) => !x.read_at) : [];
 
   return (
     <>
     {pop && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={() => closePopup()}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={dismissPopup}>
         <div key={pop.id} className="slip-pop w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
           <p className="mb-2 text-center text-sm font-medium text-white drop-shadow">
             📝 {t('slip_new_from').replace('{name}', nameOf(pop.from))}
@@ -127,13 +144,19 @@ export default function HomeSlipsCard({ t, style }) {
             <p className="mt-3 text-right text-xs text-muted-foreground">— {nameOf(pop.from)}</p>
           </div>
           <div className="mt-4 flex gap-2">
-            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => closePopup(pop.from.id)}>{t('slip_reply')}</Button>}
+            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => replyFromPopup(pop)}>{t('slip_reply')}</Button>}
             <Button className="flex-1" onClick={nextPopup}>{popIdx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
           </div>
         </div>
       </div>
     )}
     <Card className="relative z-10 border-none" style={style}>
+      {/* 有還沒看的紙條:卡片上方貼一張摺角便利貼,點一下打開;看過就消失 */}
+      {unread.length > 0 && !pop && (
+        <button type="button" onClick={showUnread} aria-label={t('slip_new_badge')} title={t('slip_new_badge')} className="slip-sticky">
+          <span className="slip-sticky-fold" />
+        </button>
+      )}
       <CardContent className="p-4 md:p-5">
         <div className="mb-3 flex items-center gap-1.5 text-base font-medium" style={{ color: 'var(--module-recurring)' }}>
           <StickyNote className="h-4 w-4" />
@@ -192,7 +215,7 @@ export default function HomeSlipsCard({ t, style }) {
                 style={view === v ? { background: 'var(--module-recurring)' } : undefined}
               >
                 {t(`slip_${v}`)}
-                {v === 'received' && data.received.some((s) => unreadIds.includes(s.id)) && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: view === v ? '#fff' : 'var(--expense)' }} />}
+                {v === 'received' && unread.length > 0 && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ background: view === v ? '#fff' : 'var(--expense)' }} />}
               </button>
             ))}
           </div>
@@ -206,14 +229,14 @@ export default function HomeSlipsCard({ t, style }) {
           <div className="grid grid-cols-2 gap-2">
             {shown.map((s, i) => {
               const isOpen = open === s.id;
-              const isNew = view === 'received' && unreadIds.includes(s.id);
+              const isNew = view === 'received' && !s.read_at;
               return (
                 <div
                   key={s.id}
                   className="relative rounded-md p-2.5 text-sm shadow-sm transition-transform"
                   style={{ background: 'color-mix(in srgb, var(--highlight) 22%, var(--card))', transform: isOpen ? 'none' : `rotate(${i % 2 ? 1 : -1}deg)` }}
                 >
-                  <button type="button" onClick={() => setOpen(isOpen ? null : s.id)} className="block w-full text-left">
+                  <button type="button" onClick={() => { setOpen(isOpen ? null : s.id); if (isNew) markRead([s.id]); }} className="block w-full text-left">
                     <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                       {isNew && <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--expense)' }} />}
                       <span className="truncate">{view === 'received' ? nameOf(s.from) : `→ ${nameOf(s.to)}`}</span>

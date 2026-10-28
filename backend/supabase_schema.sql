@@ -493,3 +493,32 @@ create table if not exists yy_slips (
 create index if not exists idx_slips_recipient on yy_slips (recipient_id, created_at desc);
 create index if not exists idx_slips_sender on yy_slips (sender_id, created_at desc);
 alter table yy_slips enable row level security;
+
+-- ---------- 匯款回報與入帳核對(2026-10-28) ----------
+-- 使用者在網頁版回報匯款 → 待核對 → 管理員核對無誤後入帳(寫入 yy_payments)並開通
+create table if not exists yy_payment_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references yy_users(id) on delete set null,
+  user_email text,
+  paid_on date not null,
+  amount numeric not null check (amount > 0),
+  account_last5 text not null check (account_last5 ~ '^[0-9]{5}$'),
+  plan text not null,
+  addon_community boolean not null default false,
+  months int not null,
+  proof_key text,
+  note text,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  reject_reason text,
+  reviewed_by uuid references yy_users(id) on delete set null,
+  reviewed_at timestamptz,
+  payment_id uuid references yy_payments(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_payment_reports_status on yy_payment_reports (status, created_at);
+create index if not exists idx_payment_reports_user on yy_payment_reports (user_id, created_at desc);
+alter table yy_payment_reports enable row level security;
+-- 收款紀錄:對應的回報、帳號末 5 碼、核對時間(核對人沿用 created_by)
+alter table yy_payments add column if not exists report_id uuid references yy_payment_reports(id) on delete set null;
+alter table yy_payments add column if not exists account_last5 text;
+alter table yy_payments add column if not exists verified_at timestamptz;

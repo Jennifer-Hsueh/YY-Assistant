@@ -8,6 +8,7 @@ import { planText } from '../lib/planText';
 import { FEATURE_KEYS } from '../lib/plans';
 import { Card, CardContent } from './ui/card';
 import { hidePricing } from '../lib/platform';
+import PaymentReport from './PaymentReport';
 
 const fmt = (ymd) => (ymd ? `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}` : '');
 
@@ -194,6 +195,8 @@ export function PlanCard() {
             <p className="pt-1 text-xs text-muted-foreground">{T.contact}</p>
           </div>
         )}
+        {/* 回報匯款:只在網頁版(App 內不能出現 App 外的付款方式) */}
+        {ent.status !== 'staff' && !hidePricing && <PaymentReport />}
       </CardContent>
     </Card>
   );

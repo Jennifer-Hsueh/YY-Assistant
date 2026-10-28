@@ -11,7 +11,8 @@
   "dependencies": {
     "lucide-react": "^1.27.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "write-excel-file": "^2.3.10"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -4,6 +4,8 @@ const { forgetUserStatus } = require('../middleware/auth');
 const { BUCKET } = require('../services/backupService');
 const R = require('../services/restoreService');
 const communityImages = require('../services/communityImages');
+const paymentProofs = require('../services/paymentProofs');
+const { sendPushToUser } = require('../services/fcmService');
 const E = require('../lib/entitlements');
 const M = require('../services/moderation');
 const { sendEmail } = require('../services/emailService');
@@ -478,48 +480,55 @@ async function listPayments(req, res) {
 
 // 登記一筆繳費:同時更新使用者的方案、最近付款日,並把權限截止日往後延
 // 起算日:目前截止日還沒過寬限期就從截止日接續,否則從繳費日起算
+// 回傳 { error } 或 { payment, updated }
+async function recordPayment(user, b, adminId, extra = {}) {
+  if (!E.PAID_PLANS.includes(b.plan)) return { error: '請選擇付費方案' };
+  const months = parseInt(b.months, 10);
+  if (!(months >= 1 && months <= 36)) return { error: '月數不正確' };
+  if (!DATE_RE.test(b.paid_at || '')) return { error: '繳費日期格式不正確' };
+  const addon = !!b.addon_community && E.ADDON_PLANS.includes(b.plan);
+  const amount = b.amount === undefined || b.amount === '' || b.amount === null ? E.priceFor(b.plan, addon, months) : Number(b.amount);
+  if (!Number.isFinite(amount) || amount < 0) return { error: '金額不正確' };
+
+  const cur = user.plan_expires_at;
+  const start = cur && E.addDays(cur, E.GRACE_DAYS) >= b.paid_at ? cur : b.paid_at;
+  const newExpiry = E.addMonths(start, months);
+
+  const { data: payment, error: pErr } = await supabase.from('yy_payments').insert({
+    user_id: user.id,
+    user_email: user.email,
+    paid_at: b.paid_at,
+    plan: b.plan,
+    addon_community: addon,
+    months,
+    amount,
+    period_start: start,
+    period_end: newExpiry,
+    note: String(b.note || '').trim().slice(0, 300) || null,
+    created_by: adminId,
+    ...extra,
+  }).select().single();
+  if (pErr) throw pErr;
+
+  const { data: updated, error: upErr } = await supabase.from('yy_users').update({
+    plan: b.plan,
+    addon_community: addon,
+    last_payment_date: b.paid_at,
+    plan_expires_at: newExpiry,
+  }).eq('id', user.id).select(USER_COLUMNS).single();
+  if (upErr) throw upErr;
+  forgetUserStatus(user.id);
+  return { payment, updated };
+}
+
 async function createPayment(req, res) {
   try {
-    const b = req.body || {};
     const { data: user, error: uErr } = await supabase.from('yy_users').select(USER_COLUMNS).eq('id', req.params.id).maybeSingle();
     if (uErr) throw uErr;
     if (!user) return res.status(404).json({ error: '找不到這位使用者' });
-    if (!E.PAID_PLANS.includes(b.plan)) return res.status(400).json({ error: '請選擇付費方案' });
-    const months = parseInt(b.months, 10);
-    if (!(months >= 1 && months <= 36)) return res.status(400).json({ error: '月數不正確' });
-    if (!DATE_RE.test(b.paid_at || '')) return res.status(400).json({ error: '繳費日期格式不正確' });
-    const addon = !!b.addon_community && E.ADDON_PLANS.includes(b.plan);
-    const amount = b.amount === undefined || b.amount === '' || b.amount === null ? E.priceFor(b.plan, addon, months) : Number(b.amount);
-    if (!Number.isFinite(amount) || amount < 0) return res.status(400).json({ error: '金額不正確' });
-
-    const cur = user.plan_expires_at;
-    const start = cur && E.addDays(cur, E.GRACE_DAYS) >= b.paid_at ? cur : b.paid_at;
-    const newExpiry = E.addMonths(start, months);
-
-    const { data: payment, error: pErr } = await supabase.from('yy_payments').insert({
-      user_id: user.id,
-      user_email: user.email,
-      paid_at: b.paid_at,
-      plan: b.plan,
-      addon_community: addon,
-      months,
-      amount,
-      period_start: start,
-      period_end: newExpiry,
-      note: String(b.note || '').trim().slice(0, 300) || null,
-      created_by: req.user.id,
-    }).select().single();
-    if (pErr) throw pErr;
-
-    const { data: updated, error: upErr } = await supabase.from('yy_users').update({
-      plan: b.plan,
-      addon_community: addon,
-      last_payment_date: b.paid_at,
-      plan_expires_at: newExpiry,
-    }).eq('id', user.id).select(USER_COLUMNS).single();
-    if (upErr) throw upErr;
-    forgetUserStatus(user.id);
-    return res.status(201).json({ payment, user: publicUser(updated, taipeiToday()) });
+    const r = await recordPayment(user, req.body || {}, req.user.id, { verified_at: new Date().toISOString() });
+    if (r.error) return res.status(400).json({ error: r.error });
+    return res.status(201).json({ payment: r.payment, user: publicUser(r.updated, taipeiToday()) });
   } catch (err) {
     return fail(res, 'createPayment', err, 'Failed to record payment');
   }
@@ -533,6 +542,131 @@ async function deletePayment(req, res) {
     return res.json({ ok: true });
   } catch (err) {
     return fail(res, 'deletePayment', err, 'Failed to delete payment');
+  }
+}
+
+// ---------- 入帳核對與收款紀錄 ----------
+const PLAN_NAME = { adv_a: '進階 A', adv_b: '進階 B', adv_c: '進階 C', full: '完整版' };
+const fmtDay = (d) => String(d || '').replace(/-/g, '/');
+
+// GET /admin/payment-reports?status=pending|approved|rejected|all
+async function listPaymentReports(req, res) {
+  try {
+    const status = ['pending', 'approved', 'rejected'].includes(req.query.status) ? req.query.status : req.query.status === 'all' ? null : 'pending';
+    let q = supabase.from('yy_payment_reports').select('*').order('created_at', { ascending: status === 'pending' }).limit(200);
+    if (status) q = q.eq('status', status);
+    const { data, error } = await q;
+    if (error) throw error;
+    const ids = [...new Set((data || []).map((r) => r.user_id).filter(Boolean))];
+    const users = new Map();
+    if (ids.length) {
+      const { data: us, error: uErr } = await supabase.from('yy_users').select('id, email, username, plan, plan_expires_at').in('id', ids);
+      if (uErr) throw uErr;
+      (us || []).forEach((u) => users.set(u.id, u));
+    }
+    const { count: pending } = await supabase.from('yy_payment_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    const reports = await Promise.all((data || []).map(async (r) => ({
+      ...r,
+      proof_url: await paymentProofs.signedUrl(r.proof_key),
+      expected_amount: E.priceFor(r.plan, r.addon_community, r.months),
+      user: users.get(r.user_id) || null,
+    })));
+    return res.json({ reports, pending: pending || 0 });
+  } catch (err) {
+    return fail(res, 'listPaymentReports', err, '讀取匯款回報失敗');
+  }
+}
+
+async function reportFor(req, res) {
+  const { data: r, error } = await supabase.from('yy_payment_reports').select('*').eq('id', req.params.id).maybeSingle();
+  if (error) throw error;
+  if (!r) { res.status(404).json({ error: '找不到這筆回報' }); return null; }
+  if (r.status !== 'pending') { res.status(400).json({ error: '這筆回報已經處理過了' }); return null; }
+  return r;
+}
+
+// POST /admin/payment-reports/:id/approve { plan, addon_community, months, amount, paid_at, note }:核對無誤 → 入帳並開通
+async function approvePaymentReport(req, res) {
+  try {
+    const r = await reportFor(req, res);
+    if (!r) return undefined;
+    if (!r.user_id) return res.status(400).json({ error: '這位使用者已刪除帳號' });
+    const { data: user, error: uErr } = await supabase.from('yy_users').select(USER_COLUMNS).eq('id', r.user_id).maybeSingle();
+    if (uErr) throw uErr;
+    if (!user) return res.status(400).json({ error: '這位使用者已刪除帳號' });
+    const b = req.body || {};
+    const out = await recordPayment(user, {
+      plan: b.plan || r.plan,
+      addon_community: b.addon_community ?? r.addon_community,
+      months: b.months || r.months,
+      amount: b.amount ?? r.amount,
+      paid_at: b.paid_at || r.paid_on,
+      note: b.note ?? r.note,
+    }, req.user.id, { report_id: r.id, account_last5: r.account_last5, verified_at: new Date().toISOString() });
+    if (out.error) return res.status(400).json({ error: out.error });
+    const now = new Date().toISOString();
+    const { data: done, error: rErr } = await supabase.from('yy_payment_reports')
+      .update({ status: 'approved', reviewed_by: req.user.id, reviewed_at: now, payment_id: out.payment.id }).eq('id', r.id).select().single();
+    if (rErr) throw rErr;
+    // App 內也會看到:只寫方案和期限,不提金額與付款方式
+    const until = fmtDay(out.updated.plan_expires_at);
+    const name = `${PLAN_NAME[out.payment.plan] || out.payment.plan}${out.payment.addon_community ? '＋社群' : ''}`;
+    await M.notifyUser(user.id, '方案已更新', `您的方案已更新為「${name}」，使用期限到 ${until}。謝謝您的支持！`);
+    sendPushToUser(user.id, { title: '方案已更新 🦫', body: `您的方案已更新，使用期限到 ${until}`, data: { url: '/settings#plan' } }).catch(() => {});
+    return res.json({ report: done, payment: out.payment, user: publicUser(out.updated, taipeiToday()) });
+  } catch (err) {
+    return fail(res, 'approvePaymentReport', err, '入帳失敗');
+  }
+}
+
+// POST /admin/payment-reports/:id/reject { reason }:對不上 → 退回並通知
+async function rejectPaymentReport(req, res) {
+  try {
+    const r = await reportFor(req, res);
+    if (!r) return undefined;
+    const reason = String(req.body?.reason || '').trim().slice(0, 200);
+    if (!reason) return res.status(400).json({ error: '請寫退回原因' });
+    const { data: done, error } = await supabase.from('yy_payment_reports')
+      .update({ status: 'rejected', reject_reason: reason, reviewed_by: req.user.id, reviewed_at: new Date().toISOString() }).eq('id', r.id).select().single();
+    if (error) throw error;
+    if (r.user_id) {
+      await M.notifyUser(r.user_id, '回報的資料需要再確認', `您在 ${fmtDay(r.paid_on)} 回報的資料需要再確認：${reason}`);
+      sendPushToUser(r.user_id, { title: '回報的資料需要再確認', body: reason, data: { url: '/settings#plan' } }).catch(() => {});
+    }
+    return res.json({ report: done });
+  } catch (err) {
+    return fail(res, 'rejectPaymentReport', err, '退回失敗');
+  }
+}
+
+// GET /admin/payments?month=YYYY-MM:收款紀錄(全部使用者),依繳費日;不給月份就是最近 500 筆
+async function listAllPayments(req, res) {
+  try {
+    let q = supabase.from('yy_payments').select('*').order('paid_at', { ascending: false }).limit(500);
+    const m = /^(\d{4})-(\d{2})$/.exec(String(req.query.month || ''));
+    if (m) {
+      const next = new Date(Date.UTC(+m[1], +m[2], 1)).toISOString().slice(0, 10);
+      q = q.gte('paid_at', `${m[1]}-${m[2]}-01`).lt('paid_at', next);
+    }
+    const { data, error } = await q;
+    if (error) throw error;
+    const ids = [...new Set((data || []).flatMap((p) => [p.user_id, p.created_by]).filter(Boolean))];
+    const names = new Map();
+    if (ids.length) {
+      const { data: us, error: uErr } = await supabase.from('yy_users').select('id, email, username').in('id', ids);
+      if (uErr) throw uErr;
+      (us || []).forEach((u) => names.set(u.id, u));
+    }
+    const payments = (data || []).map((p) => ({
+      ...p,
+      user_name: names.get(p.user_id)?.username || null,
+      email: names.get(p.user_id)?.email || p.user_email || null,
+      verified_by_name: names.get(p.created_by)?.username || names.get(p.created_by)?.email || null,
+    }));
+    const total = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+    return res.json({ payments, total, count: payments.length });
+  } catch (err) {
+    return fail(res, 'listAllPayments', err, '讀取收款紀錄失敗');
   }
 }
 
@@ -841,6 +975,7 @@ module.exports = {
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
   getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding, listUserReports, updateUserReport,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
+  listPaymentReports, approvePaymentReport, rejectPaymentReport, listAllPayments,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
   listReports, setPostHidden, deletePost, listWishes, setWishStatus,
 };

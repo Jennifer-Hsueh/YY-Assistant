@@ -6,9 +6,10 @@ const supabase = require('../config/supabase');
 const REQUIRED = {
   yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at, friend_code, birthday_md, birthday_visible, notify_birthdays',
   yy_slips: 'id, sender_id, recipient_id, content, read_at, sender_hidden',
+  yy_payment_reports: 'id, user_id, paid_on, amount, account_last5, plan, months, proof_key, status, reject_reason, payment_id',
   yy_posts: 'id, images, edited_at, hide_friends, hidden_from',
   yy_announcements: 'id, target_user_id',
-  yy_payments: 'id, user_email',
+  yy_payments: 'id, user_email, report_id, account_last5, verified_at',
   yy_plan_notices: 'id',
   yy_bug_reports: 'id',
   yy_moderation_actions: 'id',

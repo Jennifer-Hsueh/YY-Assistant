@@ -32,6 +32,7 @@ app.use(cors());
 app.use('/api/data', express.json({ limit: '15mb' }));
 // 社群照片以 base64 上傳(前端已壓縮,單張約 0.2–1.5MB)
 app.use('/api/community', express.json({ limit: '4mb' }));
+app.use('/api/payment-reports', express.json({ limit: '3mb' }));
 app.use(express.json({ limit: '2mb' }));
 // 英文介面:錯誤訊息換成英文(前端送 X-Lang: en)
 app.use(require('./lib/i18n').langMiddleware);
@@ -126,6 +127,7 @@ app.use('/api/friends', require('./routes/friendRoutes'));
 app.use('/api/ledgers', require('./routes/ledgerRoutes'));
 app.use('/api/anniversaries', require('./routes/anniversaryRoutes'));
 app.use('/api/slips', require('./routes/slipRoutes'));
+app.use('/api/payment-reports', require('./routes/paymentReportRoutes'));
 app.use('/api/admin', adminRoutes);
 
 // 404 fallback

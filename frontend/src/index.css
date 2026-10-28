@@ -418,3 +418,18 @@ input[type="time"] {
   100% { opacity: 1; transform: none; }
 }
 .beaver-bubble { animation: beaver-pop 0.45s ease-out; }
+
+/* 首頁小紙條卡片:有新紙條時貼一張摺角便利貼 */
+.slip-sticky {
+  position: absolute; top: -16px; right: 104px; z-index: 20; width: 46px; height: 46px;
+  background: linear-gradient(160deg, #FCE9A0, #F6D86B);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+  transform: rotate(7deg); box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.35);
+  animation: slip-sticky-in 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.slip-sticky::before { content: ''; position: absolute; left: 9px; right: 12px; top: 14px; height: 1px; background: rgba(140, 105, 30, 0.35); box-shadow: 0 7px 0 rgba(140, 105, 30, 0.35), 0 14px 0 rgba(140, 105, 30, 0.25); }
+.slip-sticky-fold { position: absolute; right: 0; bottom: 0; width: 28%; height: 28%; background: linear-gradient(135deg, #E2C35A 50%, transparent 50%); }
+@keyframes slip-sticky-in {
+  0% { opacity: 0; transform: translateY(-12px) rotate(-10deg) scale(0.7); }
+  100% { opacity: 1; transform: rotate(7deg); }
+}
