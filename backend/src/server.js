@@ -1,4 +1,6 @@
 require('dotenv').config();
+// 錯誤通知(Sentry)要最先載入
+require('./instrument');
 const express = require('express');
 const cors = require('cors');
 
