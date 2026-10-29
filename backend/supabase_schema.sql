@@ -522,3 +522,5 @@ alter table yy_payment_reports enable row level security;
 alter table yy_payments add column if not exists report_id uuid references yy_payment_reports(id) on delete set null;
 alter table yy_payments add column if not exists account_last5 text;
 alter table yy_payments add column if not exists verified_at timestamptz;
+-- 回報匯款時同意退費規則(條款第 8 條:數位服務不適用七日猶豫期)的時間
+alter table yy_payment_reports add column if not exists refund_terms_agreed_at timestamptz;

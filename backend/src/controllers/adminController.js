@@ -23,6 +23,17 @@ const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_ch
 const USER_PAGE = 50;
 const EXPIRING_DAYS = 30;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// 網路銷售勞務每月銷售額未達 5 萬元可暫免稅籍登記(2025-01-01 起);超過 4 萬元先提醒
+const REVENUE_LIMIT = 50000;
+const REVENUE_WARN = 40000;
+async function monthRevenue(month) {
+  const [y, m] = month.split('-').map(Number);
+  const next = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+  const { data, error } = await supabase.from('yy_payments').select('amount').gte('paid_at', `${month}-01`).lt('paid_at', next);
+  if (error) throw error;
+  return (data || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+}
+const revenueInfo = (month, total) => ({ month, total, warn: REVENUE_WARN, limit: REVENUE_LIMIT, level: total >= REVENUE_LIMIT ? 'over' : total >= REVENUE_WARN ? 'warn' : 'ok' });
 
 const DAY = 24 * 60 * 60 * 1000;
 const taipeiToday = () => E.taipeiDate();
@@ -103,7 +114,12 @@ async function overview(req, res) {
     sums.filter((x) => x.e.status === 'basic').forEach((x) => { basicChoice[x.u.basic_choice || 'none'] += 1; });
     const hiddenIds = new Set(posts.filter((p) => p.hidden).map((p) => p.id));
     const reportedIds = new Set(reports.map((r) => r.post_id));
+    const curMonth = taipeiToday().slice(0, 7);
+    const revenue = revenueInfo(curMonth, await monthRevenue(curMonth).catch(() => 0));
+    const { count: payPending } = await supabase.from('yy_payment_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending');
     return res.json({
+      revenue,
+      paymentReportsPending: payPending || 0,
       users: {
         total: users.length,
         active7: users.filter((u) => u.last_active_at && u.last_active_at >= since(7)).length,
@@ -664,7 +680,7 @@ async function listAllPayments(req, res) {
       verified_by_name: names.get(p.created_by)?.username || names.get(p.created_by)?.email || null,
     }));
     const total = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
-    return res.json({ payments, total, count: payments.length });
+    return res.json({ payments, total, count: payments.length, revenue: m ? revenueInfo(`${m[1]}-${m[2]}`, total) : null });
   } catch (err) {
     return fail(res, 'listAllPayments', err, '讀取收款紀錄失敗');
   }

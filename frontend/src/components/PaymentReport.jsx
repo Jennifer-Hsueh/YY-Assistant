@@ -6,6 +6,7 @@ import { planText } from '../lib/planText';
 import { compressImage } from '../lib/imageCompress';
 import { ymd } from '../lib/budget';
 import { Button } from './ui/button';
+import { LegalOverlay } from '../pages/Legal';
 
 // 網頁版「我的方案」:回報匯款 → 管理員核對後開通(App 內不顯示,見 PlanCard)
 const MONTHLY = { adv_a: 69, adv_b: 69, adv_c: 69, full: 109 };
@@ -25,6 +26,7 @@ const TEXT = {
     done: '已送出，核對完成後會通知您。', history: '匯款回報紀錄', withdraw: '取消這筆',
     status: { pending: '待核對', approved: '已開通', rejected: '需要再確認' }, months: (m) => (m === 12 ? '年繳' : '月繳'),
     photoFail: '照片無法讀取，請換一張', yuan: '元',
+    agree: ['我已閱讀並同意', '退費規則', '（數位服務不適用七日猶豫期）'],
   },
   en: {
     open: "I've paid. Report my transfer", title: 'Report a transfer', plan: 'Plan', addon: 'Add community', monthly: 'Monthly', yearly: 'Yearly',
@@ -33,6 +35,7 @@ const TEXT = {
     done: "Submitted. We'll let you know once it's checked.", history: 'Your reports', withdraw: 'Cancel',
     status: { pending: 'Waiting', approved: 'Activated', rejected: 'Needs a check' }, months: (m) => (m === 12 ? 'yearly' : 'monthly'),
     photoFail: "Couldn't read this photo. Try another one.", yuan: '',
+    agree: ['I have read and agree to the ', 'refund policy', ' (the 7-day cooling-off period does not apply to this digital service)'],
   },
 };
 
@@ -53,6 +56,7 @@ export default function PaymentReport() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const fileRef = useRef(null);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const load = () => api.listPaymentReports().then(({ reports }) => setReports(reports)).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -60,7 +64,7 @@ export default function PaymentReport() {
   function open() {
     setMsg('');
     setError('');
-    setForm({ plan: 'adv_a', addon: false, months: 12, paid_on: ymd(new Date()), amount: String(priceOf('adv_a', false, 12)), last5: '', proof: null, note: '' });
+    setForm({ plan: 'adv_a', addon: false, months: 12, paid_on: ymd(new Date()), amount: String(priceOf('adv_a', false, 12)), last5: '', proof: null, note: '', agree: false });
   }
   // 換方案時,金額跟著換成應付金額
   const setPlan = (patch) => setForm((f) => { const n = { ...f, ...patch }; return { ...n, amount: String(priceOf(n.plan, n.addon, n.months)) }; });
@@ -89,7 +93,7 @@ export default function PaymentReport() {
     try {
       await api.createPaymentReport({
         plan: form.plan, addon_community: form.addon, months: form.months, paid_on: form.paid_on,
-        amount: Number(form.amount), account_last5: form.last5, proof_key: form.proof?.key || null, note: form.note,
+        amount: Number(form.amount), account_last5: form.last5, proof_key: form.proof?.key || null, note: form.note, agree_refund_terms: form.agree,
       });
       setForm(null);
       setMsg(T.done);
@@ -157,14 +161,19 @@ export default function PaymentReport() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickProof} />
           </div>
           <input maxLength={200} placeholder={T.note} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className={input} />
+          <label className="flex items-start gap-1.5 text-xs">
+            <input type="checkbox" className="mt-0.5" checked={form.agree} onChange={(e) => setForm({ ...form, agree: e.target.checked })} />
+            <span>{T.agree[0]}<button type="button" onClick={() => setTermsOpen(true)} className="underline">{T.agree[1]}</button>{T.agree[2]}</span>
+          </label>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={busy || uploading || form.last5.length !== 5}>{busy ? T.sending : T.submit}</Button>
+            <Button type="submit" className="flex-1" disabled={busy || uploading || form.last5.length !== 5 || !form.agree}>{busy ? T.sending : T.submit}</Button>
             <Button type="button" variant="outline" className="flex-1" onClick={() => setForm(null)}>{T.cancel}</Button>
           </div>
         </form>
       )}
       {msg && <p className="text-xs" style={{ color: 'var(--income)' }}>{msg}</p>}
+      <LegalOverlay doc={termsOpen ? 'terms' : null} anchor="refund" onClose={() => setTermsOpen(false)} />
 
       {reports.length > 0 && (
         <div className="space-y-1.5 pt-1">

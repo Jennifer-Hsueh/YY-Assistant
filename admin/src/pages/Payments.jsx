@@ -3,6 +3,7 @@ import { Download, Image as ImageIcon } from 'lucide-react';
 import { api } from '../api';
 import { fmtDateTime, PLAN_LABEL, PAID_PLANS, ADDON_PLANS } from '../labels';
 import { Badge, Button, Card, DateInput, Field, Notice, PageTitle, Segmented, inputCls } from '../ui';
+import { RevenueNotice } from './Overview';
 
 // 收款管理:入帳核對(使用者回報的匯款 → 對照網銀明細 → 核對無誤就入帳開通/對不上就退回)與收款紀錄(依月份、可匯出 Excel)
 const STATUS = { pending: ['待核對', 'amber'], approved: ['已入帳', 'green'], rejected: ['已退回', 'red'] };
@@ -151,6 +152,7 @@ function Ledger() {
         <Button className="ml-auto" disabled={!data?.payments.length} onClick={exportXlsx}><Download className="h-4 w-4" />匯出 Excel</Button>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
+      {data?.revenue && data.revenue.level !== 'ok' && <RevenueNotice revenue={data.revenue} />}
       {!data ? <p className="text-sm text-muted-foreground">載入中…</p> : (
         <Card className="overflow-x-auto">
           <div className="flex items-baseline gap-4 border-b border-border px-5 py-3">

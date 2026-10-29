@@ -11,6 +11,7 @@ const EN = {
   '照片太大': 'Photo is too large',
   '待核對的回報最多 3 筆，請等核對完成': 'You can have up to 3 reports waiting. Please wait until they are checked',
   '送出失敗': 'Could not submit',
+  '請先閱讀並同意退費規則': 'Please read and agree to the refund policy first',
   '找不到這筆回報': 'Report not found',
   '已核對的回報不能取消': 'Checked reports cannot be cancelled',
   '取消失敗': 'Could not cancel',

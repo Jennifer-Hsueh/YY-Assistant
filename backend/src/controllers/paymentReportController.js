@@ -50,6 +50,8 @@ async function create(req, res) {
     const months = parseInt(b.months, 10);
     if (![1, 12].includes(months)) return res.status(400).json({ error: '請選擇月繳或年繳' });
     if (b.proof_key && !proofs.validKey(req.user.id, b.proof_key)) return res.status(400).json({ error: '照片格式不正確' });
+    // 使用條款第 8 條:數位服務經同意後不適用七日猶豫期,回報時須勾選同意
+    if (b.agree_refund_terms !== true) return res.status(400).json({ error: '請先閱讀並同意退費規則' });
     const { count, error: cErr } = await supabase.from('yy_payment_reports').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id).eq('status', 'pending');
     if (cErr) throw cErr;
     if ((count || 0) >= MAX_PENDING) return res.status(400).json({ error: `待核對的回報最多 ${MAX_PENDING} 筆，請等核對完成` });
@@ -66,6 +68,7 @@ async function create(req, res) {
       proof_key: b.proof_key || null,
       note: String(b.note || '').trim().slice(0, 200) || null,
       status: 'pending',
+      refund_terms_agreed_at: new Date().toISOString(),
     }).select(COLS).single();
     if (error) throw error;
     // 通知管理員有新的匯款回報

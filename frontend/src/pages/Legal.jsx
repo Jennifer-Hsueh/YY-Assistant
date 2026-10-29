@@ -11,7 +11,7 @@ const show = (b) => !(hidePricing && b?.noIOS);
 
 function Block({ b }) {
   if (b.part) return <h2 id={b.id} className="scroll-mt-4 pt-4 text-base font-semibold">{b.part}</h2>;
-  if (b.h) return <h3 className="pt-2 text-sm font-semibold">{b.h}</h3>;
+  if (b.h) return <h3 id={b.id} className="scroll-mt-4 pt-2 text-sm font-semibold">{b.h}</h3>;
   if (b.p) return <p>{b.p}</p>;
   if (b.ol || b.ul) {
     const items = (b.ol || b.ul).filter(show).map((i) => (typeof i === 'string' ? i : i.text));

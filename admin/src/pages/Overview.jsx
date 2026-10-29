@@ -17,6 +17,25 @@ function Stat({ label, value, hint, onClick, tone }) {
 }
 
 // 測試版:名額、開放註冊、結束日(設定後自動發公告、App 顯示提醒)、結束測試、備份並清空測試資料
+// 每月收款提醒:網路銷售勞務每月未達 5 萬元可暫免稅籍登記;超過 4 萬元先提醒
+export function RevenueNotice({ revenue }) {
+  if (!revenue) return null;
+  const pct = Math.min(100, Math.round((revenue.total / revenue.limit) * 100));
+  const tone = revenue.level === 'over' ? 'text-danger' : revenue.level === 'warn' ? 'text-warn' : 'text-muted-foreground';
+  const bar = revenue.level === 'over' ? 'bg-danger' : revenue.level === 'warn' ? 'bg-warn' : 'bg-ok';
+  return (
+    <Card className="p-5">
+      <p className="text-sm font-medium">免稅籍門檻（每月 {revenue.limit.toLocaleString()} 元）</p>
+      <div className="mt-2 h-1.5 rounded-full bg-muted"><div className={`h-1.5 rounded-full ${bar}`} style={{ width: `${pct}%` }} /></div>
+      <p className={`mt-1.5 text-xs ${tone}`}>
+        {revenue.level === 'over' ? `${revenue.month} 收款已超過 ${revenue.limit.toLocaleString()} 元，請洽國稅局或會計師辦理稅籍登記`
+          : revenue.level === 'warn' ? `${revenue.month} 收款已超過 ${revenue.warn.toLocaleString()} 元，接近門檻，請開始準備稅籍登記`
+            : `${revenue.month} 已收 ${pct}%，超過 ${revenue.warn.toLocaleString()} 元時會提醒`}
+      </p>
+    </Card>
+  );
+}
+
 function BetaCard() {
   const [b, setB] = useState(null);
   const [limit, setLimit] = useState('');
@@ -167,6 +186,13 @@ export default function Overview({ go }) {
       <PageTitle right={<Button variant="outline" onClick={load}><RefreshCw className="h-4 w-4" />重新整理</Button>}>總覽</PageTitle>
 
       <BetaCard />
+
+      <p className="mb-2 text-sm font-medium text-muted-foreground">收款</p>
+      <div className="mb-8 grid grid-cols-[1fr_1fr_2fr] gap-3">
+        <Stat label="本月收款" value={`${Number(data.revenue?.total || 0).toLocaleString()} 元`} tone={data.revenue?.level === 'over' ? 'red' : data.revenue?.level === 'warn' ? 'amber' : undefined} onClick={() => go('payments', { tab: 'ledger' })} />
+        <Stat label="待核對匯款" value={data.paymentReportsPending ?? 0} tone={data.paymentReportsPending ? 'amber' : undefined} onClick={() => go('payments')} />
+        <RevenueNotice revenue={data.revenue} />
+      </div>
 
       <p className="mb-2 text-sm font-medium text-muted-foreground">使用者</p>
       <div className="mb-4 grid grid-cols-4 gap-3">
