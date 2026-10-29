@@ -241,16 +241,17 @@ export default function Community() {
     if (tab === 'mine') refreshStats();
   }
 
+  // 版別列:手機版排兩排(第一排三個公開版,第二排微光拾憶、好友),每個版名是獨立的小方塊;網頁版維持一排
   const tabBar = (
-    <div className="mb-3 flex overflow-x-auto rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-      {TABS.map(({ key, emoji }) => (
+    <div className="mb-3 grid grid-cols-6 gap-2 md:flex md:gap-0 md:rounded-lg md:border md:border-border md:bg-card md:p-1 md:shadow-sm">
+      {TABS.map(({ key, emoji }, i) => (
         <button
           key={key}
           type="button"
           onClick={() => switchTab(key)}
-          className={`flex-1 whitespace-nowrap rounded-md px-1 py-1.5 text-[13px] transition-colors md:px-2.5 md:text-sm ${tab === key ? 'bg-muted font-medium' : 'text-muted-foreground'}`}
+          className={`${i < 3 ? 'col-span-2' : 'col-span-3'} flex items-center justify-center gap-1 whitespace-nowrap rounded-lg border px-1 py-2 text-[13px] shadow-sm transition-colors md:flex-1 md:rounded-md md:border-0 md:px-2.5 md:py-1.5 md:text-sm md:shadow-none ${tab === key ? 'border-[var(--module-accounts)] bg-muted font-medium text-foreground' : 'border-border bg-card text-muted-foreground md:bg-transparent'}`}
         >
-          <span className="hidden md:inline">{emoji} </span>{key === 'mine' ? t('cm_mine') : key === 'friends' ? t('cm_friends') : t(`cm_board_${key}`)}
+          <span>{emoji}</span>{key === 'mine' ? t('cm_mine') : key === 'friends' ? t('cm_friends') : t(`cm_board_${key}`)}
         </button>
       ))}
     </div>

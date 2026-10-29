@@ -64,7 +64,8 @@ export default function HomeNotesCard({ t, style }) {
       <CardContent className="p-4 md:p-5">
         <Link to="/notes" className="mb-3 flex items-center gap-1.5 text-base font-medium" style={{ color: 'var(--module-notes)' }}>
           <NotebookPen className="h-4 w-4" />
-          <span className="flex-1">{t('nav_notes')}</span>
+          <span>{t('nav_notes')}</span>
+          <span className="flex-1 text-xs font-normal text-muted-foreground">{t('notes_enter_hint')}</span>
           <ChevronRight className="h-4 w-4" />
         </Link>
 
