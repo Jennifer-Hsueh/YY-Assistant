@@ -320,7 +320,7 @@ export default function Transactions() {
     return acc;
   }, {});
 
-  const catColor = (name) => categories.find((c) => c.name === name)?.color || null;
+  const catColor = (name) => categories.find((c) => c.name.trim() === (name || '').trim())?.color || null;
 
   function renderTxRow(tx) {
     const canCheck = actionMode === 'edit' && editSub === 'delete' && ledger?.can_write !== false;
@@ -343,8 +343,8 @@ export default function Transactions() {
           />
         )}
         <div className="min-w-0 flex-1 truncate">
-          {catColor(tx.category) && (
-            <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) }} />
+          {tx.category && (
+            <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) || '#9CA3AF' }} />
           )}
           <span className="text-muted-foreground">
             {[accountName(tx.account_id) || t('tx_unspecified_account'), tx.category].filter(Boolean).join(' · ')}
