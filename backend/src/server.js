@@ -80,7 +80,15 @@ app.get('/cron/recurring', async (req, res) => {
       console.error('[cron/planNotices]', err);
       notices = { error: true };
     }
-    return res.json({ status: 'ok', ...result, notices });
+    // 月刊書櫃:1 號產生上個月的草稿、8 號起把沒按完成的草稿定稿
+    let books;
+    try {
+      books = await require('./services/monthlyBook').runMonthlyBooks();
+    } catch (err) {
+      console.error('[cron/monthlyBooks]', err);
+      books = { error: true };
+    }
+    return res.json({ status: 'ok', ...result, notices, books });
   } catch (err) {
     console.error('[cron/recurring]', err);
     return res.status(500).json({ error: 'Scan failed' });
@@ -149,6 +157,7 @@ app.use('/api/ledgers', require('./routes/ledgerRoutes'));
 app.use('/api/anniversaries', require('./routes/anniversaryRoutes'));
 app.use('/api/slips', require('./routes/slipRoutes'));
 app.use('/api/payment-reports', require('./routes/paymentReportRoutes'));
+app.use('/api/books', require('./routes/bookRoutes'));
 app.use('/api/admin', adminRoutes);
 
 // 404 fallback

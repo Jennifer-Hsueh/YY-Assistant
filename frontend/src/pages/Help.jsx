@@ -60,6 +60,12 @@ const SECTIONS = {
       '隨手記下待辦事項，完成後打勾。首頁只顯示還沒完成的項目。',
       '在首頁的墨箋絮語卡片輸入文字後，按 Enter 就會新增。',
     ] },
+    { title: '月刊書櫃', items: [
+      '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。網頁版在左側選單，手機版點右上角的書櫃圖示。',
+      '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
+      { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
+      '右上角可以換書櫃樣式；有兩年以上的書時，可以切換年份。',
+    ] },
     { title: '好友', items: [
       '到「社群 → 好友」查看自己的好友碼，可以複製、出示 QR Code 或分享邀請連結。',
       '輸入對方的好友碼送出邀請，對方接受後就成為好友。',
@@ -160,6 +166,12 @@ const SECTIONS = {
     { title: 'Ink Notes', items: [
       'Jot down to-dos and check them off when done. Home shows only what’s left.',
       'On the Ink Notes card on Home, type and press Enter to add.',
+    ] },
+    { title: 'Monthly Bookshelf', items: [
+      'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. On the web it’s in the left menu; on mobile, tap the bookshelf icon at the top right.',
+      'Until the 7th it’s a draft: pick a cover, write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
+      { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
+      'Use the icons at the top right to change the shelf style, and switch years once you have books from more than one year.',
     ] },
     { title: 'Friends', items: [
       'Go to Community → Friends to see your friend code. Copy it, show a QR code or share an invite link.',

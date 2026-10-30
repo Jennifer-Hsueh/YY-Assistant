@@ -524,3 +524,19 @@ alter table yy_payments add column if not exists account_last5 text;
 alter table yy_payments add column if not exists verified_at timestamptz;
 -- 回報匯款時同意退費規則(條款第 8 條:數位服務不適用七日猶豫期)的時間
 alter table yy_payment_reports add column if not exists refund_terms_agreed_at timestamptz;
+
+-- ---------- 月刊書櫃(2026-10-30) ----------
+-- 每月 1 號產生上個月的草稿;7 號以前可換封面、寫一句話、按完成;8 號起自動定稿,data 存定稿時的內容快照
+create table if not exists yy_monthly_books (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  ym text not null check (ym ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+  status text not null default 'draft' check (status in ('draft', 'final')),
+  cover int check (cover between 1 and 3),
+  message text,
+  data jsonb,
+  created_at timestamptz not null default now(),
+  finalized_at timestamptz,
+  unique (user_id, ym)
+);
+alter table yy_monthly_books enable row level security;

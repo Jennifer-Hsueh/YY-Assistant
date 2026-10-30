@@ -1,5 +1,6 @@
 import { ROUND_SRCSET } from './BrandMark';
-import { LogOut, Languages } from 'lucide-react';
+import { LogOut, Languages, LibraryBig } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import AnnouncementBell from './AnnouncementBell';
@@ -23,6 +24,7 @@ export default function TopBar() {
           {beta?.active && <span className="mb-1"><BetaTag lang={language} /></span>}
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/bookshelf" aria-label={t('nav_bookshelf')} className="flex items-center text-muted-foreground"><LibraryBig className="h-5 w-5" /></Link>
           <AnnouncementBell />
           <button
             type="button"

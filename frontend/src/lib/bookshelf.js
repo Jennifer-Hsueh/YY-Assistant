@@ -49,14 +49,14 @@ export function cellCapacity(cell, bookW) {
 }
 
 // 把 n 本書依序排進書櫃,回傳每本書的位置(圖片像素);放不下的不回傳
-// 書的大小依格子高度:高約格子的 80%,寬依封面比例 1:1.41 的書背(約高的 28%)
+// 書的大小依格子高度:高約格子的 86%,書背寬約高的 32%
 export function layoutBooks(shelf, n) {
   const out = [];
   let left = n;
   for (const cell of shelf.cells) {
     if (left <= 0) break;
-    const h = Math.round(cell.h * 0.8);
-    const w = Math.round(h * 0.28);
+    const h = Math.round(cell.h * 0.86);
+    const w = Math.round(h * 0.32);
     const take = Math.min(left, cellCapacity(cell, w + 4));
     for (let i = 0; i < take; i += 1) {
       out.push({ x: cell.x + i * (w + 4), y: cell.floor - h, w, h });
