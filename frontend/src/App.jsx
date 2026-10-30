@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -11,33 +11,47 @@ import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
 import TermsConsentModal from './components/TermsConsentModal';
-import Legal from './pages/Legal';
-import Help from './pages/Help';
-import Landing from './pages/Landing';
 import { isNative } from './lib/platform';
 import UpdatePrompt from './components/UpdatePrompt';
-import AddFriend from './pages/AddFriend';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
 import BetaEndBanner from './components/BetaEndBanner';
 import { initNativeApp } from './lib/nativeApp';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Home from './pages/Home';
-import Transactions from './pages/Transactions';
-import CalendarPage from './pages/CalendarPage';
-import Accounts from './pages/Accounts';
-import RecurringMoney from './pages/RecurringMoney';
-import LedgerStats from './pages/LedgerStats';
-import RecurringEvents from './pages/RecurringEvents';
-import Anniversaries from './pages/Anniversaries';
-import CalendarStats from './pages/CalendarStats';
-import Categories from './pages/Categories';
-import Announcements from './pages/Announcements';
-import Notes from './pages/Notes';
-import Community from './pages/Community';
-import Settings from './pages/Settings';
+
+// 各頁面用到時才載入,第一次打開比較快。
+// 網站更新後,舊版頁面檔可能已不存在 → 自動重新整理一次載入新版
+function page(load) {
+  return lazy(() => load().then((m) => { sessionStorage.removeItem('yy_chunk_reload'); return m; }).catch((err) => {
+    const key = 'yy_chunk_reload';
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+      return new Promise(() => {});
+    }
+    throw err;
+  }));
+}
+const Legal = page(() => import('./pages/Legal'));
+const Help = page(() => import('./pages/Help'));
+const Landing = page(() => import('./pages/Landing'));
+const AddFriend = page(() => import('./pages/AddFriend'));
+const Login = page(() => import('./pages/Login'));
+const Register = page(() => import('./pages/Register'));
+const ForgotPassword = page(() => import('./pages/ForgotPassword'));
+const ResetPassword = page(() => import('./pages/ResetPassword'));
+const Home = page(() => import('./pages/Home'));
+const Transactions = page(() => import('./pages/Transactions'));
+const CalendarPage = page(() => import('./pages/CalendarPage'));
+const Accounts = page(() => import('./pages/Accounts'));
+const RecurringMoney = page(() => import('./pages/RecurringMoney'));
+const LedgerStats = page(() => import('./pages/LedgerStats'));
+const RecurringEvents = page(() => import('./pages/RecurringEvents'));
+const Anniversaries = page(() => import('./pages/Anniversaries'));
+const CalendarStats = page(() => import('./pages/CalendarStats'));
+const Categories = page(() => import('./pages/Categories'));
+const Announcements = page(() => import('./pages/Announcements'));
+const Notes = page(() => import('./pages/Notes'));
+const Community = page(() => import('./pages/Community'));
+const Settings = page(() => import('./pages/Settings'));
 
 function ProtectedLayout({ children }) {
   const { user } = useAuth();
@@ -55,7 +69,8 @@ function ProtectedLayout({ children }) {
         <TopBar />
         <ProfileErrorBanner />
         <BetaEndBanner />
-        {children}
+        {/* 頁面載入中時,側邊選單與頂部列先顯示 */}
+        <Suspense fallback={<div className="min-h-[60vh]" />}>{children}</Suspense>
       </div>
       <BottomNav />
       <FloatingAddButton />
@@ -102,6 +117,7 @@ export default function App() {
         <BrowserRouter>
           <NativeBridge />
           {!isNative && <UpdatePrompt />}
+          <Suspense fallback={null}>
           <LedgerRoutes>
             <Route path="/terms" element={<Legal doc="terms" />} />
             <Route path="/privacy" element={<Legal doc="privacy" />} />
@@ -133,6 +149,7 @@ export default function App() {
             <Route path="/categories" element={<ProtectedLayout><Categories /></ProtectedLayout>} />
             <Route path="/calendar-categories" element={<ProtectedLayout><Categories scope="calendar" /></ProtectedLayout>} />
           </LedgerRoutes>
+          </Suspense>
         </BrowserRouter>
         </LedgerProvider>
         </PlanProvider>
