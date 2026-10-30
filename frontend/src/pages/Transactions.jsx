@@ -57,6 +57,10 @@ export default function Transactions() {
   // 桌機版預設「新增」;手機版一進來不選任何功能,直接顯示帳務資料
   const [actionMode, setActionMode] = useState(() => (window.matchMedia(DESKTOP_QUERY).matches ? 'add' : null));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // 編輯模式下勾選多筆,一次刪除
+  const [checked, setChecked] = useState([]);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [month, setMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const [activeId, setActiveId] = useState(null);
 
@@ -147,6 +151,8 @@ export default function Transactions() {
     if (panel === 'categories') setPanel('list');
     setActiveId(null);
     setConfirmDelete(false);
+    setChecked([]);
+    setBulkConfirm(false);
     setForm(emptyForm);
     setTransfer(emptyTransfer);
     setTransferError('');
@@ -194,6 +200,23 @@ export default function Transactions() {
     }
     resetAfterAction();
     load();
+  }
+
+  const toggleChecked = (id) => { setBulkConfirm(false); setChecked((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])); };
+  // 一筆一筆依序刪除(每筆都會把帳戶餘額調回來)
+  async function handleBulkDelete() {
+    setBulkBusy(true);
+    try {
+      for (const id of checked) await api.deleteTransaction(id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkBusy(false);
+      setChecked([]);
+      setBulkConfirm(false);
+      if (checked.includes(activeId)) { setActiveId(null); setForm(emptyForm); }
+      load();
+    }
   }
 
   async function handleConfirmDelete() {
@@ -291,12 +314,23 @@ export default function Transactions() {
   function renderTxRow(tx) {
     const selectable = actionMode === 'edit';
     const isActive = activeId === tx.id;
+    const canCheck = selectable && ledger?.can_write !== false;
     return (
       <div
         key={tx.id}
         onClick={selectable ? () => pickTransaction(tx) : undefined}
         className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
       >
+        {canCheck && (
+          <input
+            type="checkbox"
+            aria-label={t('bulk_select')}
+            className="mr-2.5 h-4 w-4 shrink-0 accent-[var(--module-transactions)]"
+            checked={checked.includes(tx.id)}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => toggleChecked(tx.id)}
+          />
+        )}
         <div className="min-w-0 flex-1 truncate">
           {catColor(tx.category) && (
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ backgroundColor: catColor(tx.category) }} />
@@ -369,6 +403,38 @@ export default function Transactions() {
       {pickingMode && canLedger && (
         <p className="mb-3 px-1 text-sm text-muted-foreground">{t('tx_pick_edit')}</p>
       )}
+
+      {/* 編輯模式:勾選多筆一次刪除 */}
+      {actionMode === 'edit' && canLedger && panel === 'list' && ledger?.can_write !== false && (() => {
+        const visible = view === 'calendar' ? (selectedDay ? grouped[selectedDay] || [] : []) : filteredTransactions;
+        const allOn = visible.length > 0 && visible.every((tx) => checked.includes(tx.id));
+        return (
+          <div className="mb-3 space-y-2 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground">{checked.length ? t('bulk_count').replace('{n}', checked.length) : t('bulk_hint')}</span>
+              <span className="ml-auto flex gap-2">
+                {visible.length > 0 && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => { setBulkConfirm(false); setChecked(allOn ? checked.filter((id) => !visible.some((tx) => tx.id === id)) : [...new Set([...checked, ...visible.map((tx) => tx.id)])]); }}>
+                    {allOn ? t('bulk_none') : t('bulk_all')}
+                  </Button>
+                )}
+                {checked.length > 0 && !bulkConfirm && (
+                  <Button type="button" size="sm" variant="destructive" onClick={() => setBulkConfirm(true)}>{t('bulk_delete').replace('{n}', checked.length)}</Button>
+                )}
+              </span>
+            </div>
+            {bulkConfirm && (
+              <div className="space-y-2 rounded-md border border-destructive/40 p-2">
+                <p>{t('bulk_confirm').replace('{n}', checked.length)}</p>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="destructive" className="flex-1" disabled={bulkBusy} onClick={handleBulkDelete}>{bulkBusy ? t('loading') : t('tx_confirm_delete')}</Button>
+                  <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setBulkConfirm(false)}>{t('cancel')}</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
       <Card className={`mb-3 ${!canLedger || pickingMode || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>

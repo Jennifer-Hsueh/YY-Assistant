@@ -58,6 +58,10 @@ export default function CalendarPage() {
   const [activeId, setActiveId] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // 編輯模式下勾選當天多個行程,一次刪除
+  const [checked, setChecked] = useState([]);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -163,6 +167,23 @@ export default function CalendarPage() {
 
   const activeEvent = events.find((e) => e.id === activeId) || null;
   const isMember = !!activeEvent && activeEvent.is_owner === false;
+
+  // 換日或離開編輯時清掉勾選
+  useEffect(() => { setChecked([]); setBulkConfirm(false); }, [selectedDay, actionMode]);
+  const toggleChecked = (id) => { setBulkConfirm(false); setChecked((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])); };
+  async function handleBulkDelete() {
+    setBulkBusy(true);
+    try {
+      for (const id of checked) await api.deleteEvent(id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkBusy(false);
+      setChecked([]);
+      setBulkConfirm(false);
+      load();
+    }
+  }
 
   async function handleConfirmDelete() {
     await api.deleteEvent(activeId);
@@ -634,23 +655,57 @@ export default function CalendarPage() {
               {selectedDayEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
               ) : (
-                selectedDayEvents
+                <>
+                {selectedDayEvents
                   .slice()
                   .sort((a, b) => a.start_at.localeCompare(b.start_at))
                   .map((ev) => (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      onClick={() => pickEvent(ev)}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
-                    >
-                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
-                      <span>{ev.title}</span>
-                      {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                    {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
-                      {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
-                    </button>
-                  ))
+                    <div key={ev.id} className="flex items-center gap-1 rounded-md hover:bg-muted">
+                      <input
+                        type="checkbox"
+                        aria-label={t('bulk_select')}
+                        className="ml-2 h-4 w-4 shrink-0 accent-[var(--module-calendar)]"
+                        checked={checked.includes(ev.id)}
+                        onChange={() => toggleChecked(ev.id)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => pickEvent(ev)}
+                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm"
+                      >
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                        <span className="truncate">{ev.title}</span>
+                        {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                        {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
+                        {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
+                      </button>
+                    </div>
+                  ))}
+                {/* 勾選多個行程一次刪除 */}
+                <div className="mt-2 space-y-2 border-t border-dashed border-border pt-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{checked.length ? t('bulk_count').replace('{n}', checked.length) : t('bulk_hint')}</span>
+                    <span className="ml-auto flex gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => { setBulkConfirm(false); setChecked(checked.length === selectedDayEvents.length ? [] : selectedDayEvents.map((ev) => ev.id)); }}>
+                        {checked.length === selectedDayEvents.length ? t('bulk_none') : t('bulk_all')}
+                      </Button>
+                      {checked.length > 0 && !bulkConfirm && (
+                        <Button type="button" size="sm" variant="destructive" onClick={() => setBulkConfirm(true)}>{t('bulk_delete').replace('{n}', checked.length)}</Button>
+                      )}
+                    </span>
+                  </div>
+                  {bulkConfirm && (
+                    <div className="space-y-2 rounded-md border border-destructive/40 p-2">
+                      <p>{t('bulk_confirm').replace('{n}', checked.length)}</p>
+                      {selectedDayEvents.some((ev) => ev.shared && checked.includes(ev.id)) && <p className="text-xs text-muted-foreground">{t('bulk_shared_note')}</p>}
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" variant="destructive" className="flex-1" disabled={bulkBusy} onClick={handleBulkDelete}>{bulkBusy ? t('loading') : t('tx_confirm_delete')}</Button>
+                        <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setBulkConfirm(false)}>{t('cancel')}</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                </>
               )}
             </CardContent>
           </Card>
