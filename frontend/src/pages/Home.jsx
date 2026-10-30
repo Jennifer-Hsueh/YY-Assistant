@@ -5,6 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { LedgerInvites } from '../components/LedgerSwitcher';
 import { CalendarInvites } from '../components/CalendarSwitcher';
+import { BetaTag } from '../components/BrandMark';
+import { useBeta } from '../lib/useBeta';
 import { EventInvites } from '../components/EventPeople';
 import { AnnivIcon } from './Anniversaries';
 import { api } from '../lib/api';
@@ -37,7 +39,8 @@ function CardTitle({ Icon, color, title, to }) {
 }
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const beta = useBeta();
   const { ledgers, current } = useLedger();
   // 有多本帳本時,標題加上目前的帳本名稱
   const ledgerTag = ledgers.length > 1 && current ? `・${current.name}` : '';
@@ -152,7 +155,11 @@ export default function Home() {
   />
 )}
 
-      <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
+      <h1 className="page-title-row page-title mb-1 flex items-center gap-2 font-semibold" style={{ fontSize: '18.5px' }}>
+        {t('nav_home')}
+        {/* 手機版:測試版標籤放在「首頁」旁邊(頂部列空間不夠,有些機型會換行) */}
+        {beta?.active && <span className="md:hidden"><BetaTag lang={language} /></span>}
+      </h1>
       <LedgerInvites />
       <EventInvites />
       <CalendarInvites />

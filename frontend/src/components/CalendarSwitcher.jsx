@@ -72,7 +72,7 @@ function Members({ c, run, busy }) {
   );
 }
 
-function ColorDots({ value, onPick }) {
+export function ColorDots({ value, onPick }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {CAL_COLORS.map((col) => (

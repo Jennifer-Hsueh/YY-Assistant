@@ -12,7 +12,7 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
 import EventPeople, { EventInvites } from '../components/EventPeople';
-import CalendarSwitcher, { CalendarInvites } from '../components/CalendarSwitcher';
+import CalendarSwitcher, { CalendarInvites, ColorDots, CAL_COLORS } from '../components/CalendarSwitcher';
 import { AnnivIcon } from './Anniversaries';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
@@ -55,6 +55,29 @@ export default function CalendarPage() {
   const [calCurrent, setCalCurrentState] = useState(() => readLS('yy_cal_current', ''));
   const setCalMode = (m) => { setCalModeState(m); writeLS('yy_cal_mode', m); setSelectedDay(null); setActiveId(null); };
   const setCalCurrent = (id) => { setCalCurrentState(id || ''); writeLS('yy_cal_current', id || ''); setSelectedDay(null); setActiveId(null); };
+  // 右邊「新增」底下:新增行程 / 新增行事曆
+  const [addSub, setAddSub] = useState('event');
+  const [newCal, setNewCal] = useState({ name: '', color: CAL_COLORS[0] });
+  const [calBusy, setCalBusy] = useState(false);
+  const [calMsg, setCalMsg] = useState('');
+  async function createCalendar(e) {
+    e.preventDefault();
+    if (!newCal.name.trim()) return;
+    setCalBusy(true); setCalMsg('');
+    try {
+      const { calendar } = await api.createCalendar({ name: newCal.name.trim(), color: newCal.color });
+      await loadCalendars();
+      setNewCal({ name: '', color: CAL_COLORS[(calendars.length + 1) % CAL_COLORS.length] });
+      if (calMode === 'switch') setCalCurrent(calendar.id);
+      setForm((f) => ({ ...f, calendar_id: calendar.id }));
+      setCalMsg(t('cal_created').replace('{n}', calendar.name));
+      setAddSub('event');
+    } catch (err) {
+      setCalMsg(err.message);
+    } finally {
+      setCalBusy(false);
+    }
+  }
   const loadCalendars = () => api.listCalendars().then((d) => {
     setCalendars(d.calendars || []);
     setCalInvites(d.invites || []);
@@ -634,6 +657,27 @@ export default function CalendarPage() {
 
       {/* 選了新增模式:直接顯示新增表單 */}
       {actionMode === 'add' && (
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+          {[['event', t('cal_add_event')], ['calendar', t('cal_add_calendar')]].map(([k, label]) => (
+            <button key={k} type="button" onClick={() => { setAddSub(k); setCalMsg(''); }} className={`rounded-md px-2 py-1.5 transition-colors ${addSub === k ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{label}</button>
+          ))}
+        </div>
+      )}
+      {actionMode === 'add' && calMsg && addSub === 'event' && <p className="mb-2 px-1 text-xs text-muted-foreground">{calMsg}</p>}
+      {actionMode === 'add' && addSub === 'calendar' && (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <form onSubmit={createCalendar} className="space-y-3">
+              <Input maxLength={20} placeholder={t('cal_new_calendar_ph')} value={newCal.name} onChange={(e) => setNewCal({ ...newCal, name: e.target.value })} />
+              <ColorDots value={newCal.color} onPick={(c) => setNewCal({ ...newCal, color: c })} />
+              <p className="text-xs text-muted-foreground">{t('cal_new_calendar_hint')}</p>
+              {calMsg && <p className="text-xs text-destructive">{calMsg}</p>}
+              <Button type="submit" className="w-full" disabled={calBusy || !newCal.name.trim()}>{t('cal_add_calendar')}</Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+      {actionMode === 'add' && addSub === 'event' && (
         <Card>
           <CardContent className="space-y-3 p-4">
             <form onSubmit={handleSubmit} className="space-y-2">
