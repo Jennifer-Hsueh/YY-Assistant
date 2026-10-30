@@ -40,7 +40,7 @@ const deadlineLabel = (iso, lang) => {
   return lang === 'en' ? d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
-const readShelf = () => { try { return Number(localStorage.getItem('yy_shelf')) || 2; } catch { return 2; } };
+const readShelf = () => { try { return Number(localStorage.getItem('yy_shelf')) || 1; } catch { return 1; } };
 
 export default function Bookshelf() {
   const { language } = useLanguage();
@@ -118,8 +118,9 @@ export default function Bookshelf() {
           return (
             <button key={b.ym} type="button" onClick={() => setOpenYm(b.ym)} title={T.bookTitle(b.ym)}
               className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''}`}
-              style={{ left: s.x * k, top: s.y * k, width: s.w * k, height: s.h * k, background: spineColor(b.cover || ((Number(b.ym.slice(5, 7)) - 1) % 3) + 1) }}>
-              <span style={{ fontSize: Math.max(6, s.w * k * 0.62) }}>{ymLabel(b.ym)}</span>
+              style={{ left: s.x * k, top: s.y * k, width: s.w * k, height: s.h * k }}>
+              <img src={`/bookshelf/book-${b.cover || ((Number(b.ym.slice(5, 7)) - 1) % 3) + 1}.webp`} alt="" draggable={false} />
+              <span style={{ fontSize: Math.max(5, Math.min(s.w * k * 0.55, (s.h * k * 0.5) / 3.7)) }}>{ymLabel(b.ym)}</span>
             </button>
           );
         })}
