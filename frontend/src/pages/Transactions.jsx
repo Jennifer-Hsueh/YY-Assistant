@@ -58,6 +58,8 @@ export default function Transactions() {
   const [actionMode, setActionMode] = useState(() => (window.matchMedia(DESKTOP_QUERY).matches ? 'add' : null));
   const [confirmDelete, setConfirmDelete] = useState(false);
   // 編輯模式下勾選多筆,一次刪除
+  // 編輯 → 先選「刪除」(勾選多筆) 或「修改」(點一筆)
+  const [editSub, setEditSub] = useState(null);
   const [checked, setChecked] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -148,6 +150,7 @@ export default function Transactions() {
 
   function switchActionMode(newMode) {
     setActionMode(newMode);
+    setEditSub(null);
     if (panel === 'categories') setPanel('list');
     setActiveId(null);
     setConfirmDelete(false);
@@ -176,6 +179,7 @@ export default function Transactions() {
     const next = actionMode === 'add' || isDesktop ? 'add' : null;
     setForm(emptyForm);
     setActionMode(next);
+    setEditSub(null);
     setActiveId(null);
     setConfirmDelete(false);
   }
@@ -202,6 +206,13 @@ export default function Transactions() {
     load();
   }
 
+  function chooseEditSub(sub) {
+    setEditSub(sub);
+    setActiveId(null);
+    setForm(emptyForm);
+    setChecked([]);
+    setBulkConfirm(false);
+  }
   const toggleChecked = (id) => { setBulkConfirm(false); setChecked((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])); };
   // 一筆一筆依序刪除(每筆都會把帳戶餘額調回來)
   async function handleBulkDelete() {
@@ -278,7 +289,7 @@ export default function Transactions() {
     return accounts.find((a) => a.id === id)?.currency || 'TWD';
   }
 
-  const pickingMode = actionMode === 'edit' && !activeId;
+  const pickingMode = actionMode === 'edit' && editSub === 'modify' && !activeId;
   const relevantCategories = categories.filter((c) => c.type === form.type || c.type === 'general');
 
   const [filters, setFilters] = useState(emptyFilters);
@@ -312,13 +323,13 @@ export default function Transactions() {
   const catColor = (name) => categories.find((c) => c.name === name)?.color || null;
 
   function renderTxRow(tx) {
-    const selectable = actionMode === 'edit';
+    const canCheck = actionMode === 'edit' && editSub === 'delete' && ledger?.can_write !== false;
+    const selectable = (actionMode === 'edit' && editSub === 'modify') || canCheck;
     const isActive = activeId === tx.id;
-    const canCheck = selectable && ledger?.can_write !== false;
     return (
       <div
         key={tx.id}
-        onClick={selectable ? () => pickTransaction(tx) : undefined}
+        onClick={canCheck ? () => toggleChecked(tx.id) : selectable ? () => pickTransaction(tx) : undefined}
         className={`flex items-center justify-between px-4 py-2 text-sm ${selectable ? 'cursor-pointer' : ''} ${isActive ? 'bg-muted' : selectable ? 'hover:bg-muted/50' : ''}`}
       >
         {canCheck && (
@@ -400,12 +411,22 @@ export default function Transactions() {
       {/* 網頁版:查詢條件放在右側功能列下方,左側顯示查詢結果 */}
       {panel === 'search' && isDesktop && <div className="mb-3">{searchBlock}</div>}
 
+      {/* 編輯 → 刪除 / 修改 */}
+      {actionMode === 'edit' && canLedger && panel === 'list' && (
+        <div className={`mb-3 grid ${ledger?.can_write !== false ? 'grid-cols-2' : 'grid-cols-1'} gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm`}>
+          {ledger?.can_write !== false && (
+            <button type="button" onClick={() => chooseEditSub('delete')} className={`px-2 py-1.5 ${segBtn(editSub === 'delete')}`}>{t('mode_delete')}</button>
+          )}
+          <button type="button" onClick={() => chooseEditSub('modify')} className={`px-2 py-1.5 ${segBtn(editSub === 'modify')}`}>{t('edit_sub_modify')}</button>
+        </div>
+      )}
+
       {pickingMode && canLedger && (
         <p className="mb-3 px-1 text-sm text-muted-foreground">{t('tx_pick_edit')}</p>
       )}
 
-      {/* 編輯模式:勾選多筆一次刪除 */}
-      {actionMode === 'edit' && canLedger && panel === 'list' && ledger?.can_write !== false && (() => {
+      {/* 刪除:勾選多筆一次刪除 */}
+      {actionMode === 'edit' && editSub === 'delete' && canLedger && panel === 'list' && ledger?.can_write !== false && (() => {
         const visible = view === 'calendar' ? (selectedDay ? grouped[selectedDay] || [] : []) : filteredTransactions;
         const allOn = visible.length > 0 && visible.every((tx) => checked.includes(tx.id));
         return (
@@ -437,7 +458,7 @@ export default function Transactions() {
       })()}
 
       {/* 手機版:沒選功能、或選了查詢/管理分類時,收起表單;點選資料前也不顯示表單 */}
-      <Card className={`mb-3 ${!canLedger || pickingMode || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>
+      <Card className={`mb-3 ${!canLedger || (actionMode === 'edit' && !activeId) || !actionMode || panel !== 'list' ? 'hidden' : ''}`}>
         <CardContent className="space-y-2 p-4">
           {actionMode === 'transfer' ? (
             <form onSubmit={handleTransfer} className="space-y-2">
@@ -545,21 +566,10 @@ export default function Transactions() {
                 <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required className="min-w-0 flex-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
               {actionMode === 'edit' && activeId ? (
-                confirmDelete ? (
-                  <div className="space-y-2 rounded-md border border-border p-2">
-                    <p className="text-sm">{t('tx_confirm_delete_title')}</p>
-                    <div className="flex gap-2">
-                      <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
-                    <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{t('mode_delete')}</Button>
-                    <Button type="button" variant="outline" onClick={() => { setActiveId(null); setForm(emptyForm); }}>{t('reselect')}</Button>
-                  </div>
-                )
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
+                  <Button type="button" variant="outline" onClick={() => { setActiveId(null); setForm(emptyForm); }}>{t('reselect')}</Button>
+                </div>
               ) : (
                 <Button type="submit" className="w-full">{t('tx_add_record')}</Button>
               )}

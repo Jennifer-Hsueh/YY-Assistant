@@ -10,11 +10,11 @@ export default function DateInputSegmented({ value, onChange, required }) {
   const dayRef = useRef(null);
 
   useEffect(() => {
-    if (!value) {
-      setYear('');
-      setMonth('');
-      setDay('');
-    }
+    // 編輯既有資料時,把原本的日期帶進三個欄位
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+    setYear(m ? m[1] : '');
+    setMonth(m ? m[2] : '');
+    setDay(m ? m[3] : '');
   }, [value]);
 
   function emit(y, m, d) {

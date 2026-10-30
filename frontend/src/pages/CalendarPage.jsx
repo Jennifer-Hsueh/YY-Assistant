@@ -59,6 +59,8 @@ export default function CalendarPage() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // 編輯模式下勾選當天多個行程,一次刪除
+  // 編輯 → 先選「刪除」(勾選多筆) 或「修改」(點一筆)
+  const [editSub, setEditSub] = useState(null);
   const [checked, setChecked] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -96,6 +98,7 @@ export default function CalendarPage() {
 
   function switchActionMode(newMode) {
     setActionMode(newMode);
+    setEditSub(null);
     setActiveId(null);
     setForm({ ...emptyForm, date: selectedDay || '' });
   }
@@ -169,7 +172,8 @@ export default function CalendarPage() {
   const isMember = !!activeEvent && activeEvent.is_owner === false;
 
   // 換日或離開編輯時清掉勾選
-  useEffect(() => { setChecked([]); setBulkConfirm(false); }, [selectedDay, actionMode]);
+  useEffect(() => { setChecked([]); setBulkConfirm(false); }, [selectedDay, actionMode, editSub]);
+  useEffect(() => { setEditSub(null); }, [actionMode]);
   const toggleChecked = (id) => { setBulkConfirm(false); setChecked((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])); };
   async function handleBulkDelete() {
     setBulkBusy(true);
@@ -646,6 +650,13 @@ export default function CalendarPage() {
 
       {/* 選了編輯模式:先選日期,再選當日行程(刪除在編輯表單內) */}
       {actionMode === 'edit' && !activeId && (
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+          {[['delete', t('mode_delete')], ['modify', t('edit_sub_modify')]].map(([k, label]) => (
+            <button key={k} type="button" onClick={() => { setEditSub(k); setActiveId(null); }} className={`rounded-md px-2 py-1.5 transition-colors ${editSub === k ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{label}</button>
+          ))}
+        </div>
+      )}
+      {actionMode === 'edit' && !activeId && editSub && (
         !selectedDay ? (
           <p className="px-1 text-sm text-muted-foreground">{t('cal_pick_day_edit')}</p>
         ) : (
@@ -660,29 +671,31 @@ export default function CalendarPage() {
                   .slice()
                   .sort((a, b) => a.start_at.localeCompare(b.start_at))
                   .map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-1 rounded-md hover:bg-muted">
-                      <input
-                        type="checkbox"
-                        aria-label={t('bulk_select')}
-                        className="ml-2 h-4 w-4 shrink-0 accent-[var(--module-calendar)]"
-                        checked={checked.includes(ev.id)}
-                        onChange={() => toggleChecked(ev.id)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => pickEvent(ev)}
-                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm"
-                      >
-                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
-                        <span className="truncate">{ev.title}</span>
-                        {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
-                        {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
-                        {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
-                      </button>
-                    </div>
+                    <button
+                      key={ev.id}
+                      type="button"
+                      onClick={() => (editSub === 'delete' ? toggleChecked(ev.id) : pickEvent(ev))}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                    >
+                      {editSub === 'delete' && (
+                        <input
+                          type="checkbox"
+                          aria-label={t('bulk_select')}
+                          className="pointer-events-none h-4 w-4 shrink-0 accent-[var(--module-calendar)]"
+                          checked={checked.includes(ev.id)}
+                          readOnly
+                          tabIndex={-1}
+                        />
+                      )}
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                      <span className="truncate">{ev.title}</span>
+                      {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                      {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
+                      {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
+                    </button>
                   ))}
                 {/* 勾選多個行程一次刪除 */}
-                <div className="mt-2 space-y-2 border-t border-dashed border-border pt-2 text-sm">
+                {editSub === 'delete' && <div className="mt-2 space-y-2 border-t border-dashed border-border pt-2 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">{checked.length ? t('bulk_count').replace('{n}', checked.length) : t('bulk_hint')}</span>
                     <span className="ml-auto flex gap-2">
@@ -704,7 +717,7 @@ export default function CalendarPage() {
                       </div>
                     </div>
                   )}
-                </div>
+                </div>}
                 </>
               )}
             </CardContent>
@@ -763,7 +776,6 @@ export default function CalendarPage() {
                 {activeEvent && <EventPeople event={activeEvent} selected={inviteIds} onChange={setInviteIds} onRemoved={load} />}
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
-                  <Button type="button" variant="outline" onClick={() => setConfirmDelete(true)}>{isMember ? (language === 'en' ? 'Leave' : '不參加') : t('mode_delete')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>
                 </div>
                 {confirmDelete && (
