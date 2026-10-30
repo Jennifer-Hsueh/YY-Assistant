@@ -3,6 +3,7 @@ require('dotenv').config();
 require('./instrument');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const authRoutes = require('./routes/authRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
@@ -29,7 +30,25 @@ const { runPlanNotices } = require('./services/planNoticeService');
 const { checkSchema, schemaStatus } = require('./lib/schemaCheck');
 // Render 前面有一層代理,讓 req.ip 取得使用者真正的 IP(次數限制會用到)
 app.set('trust proxy', 1);
-app.use(cors());
+// 安全標頭(API 只回 JSON;允許其他網域讀取回應,前端與後台在不同網址)
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+// CORS:只允許自己的前端、後台、APP 與本機開發呼叫;沒有 Origin 的請求(cron-job.org、伺服器對伺服器)照常
+const ALLOWED_ORIGINS = new Set([
+  'https://yy-assistant-front.onrender.com',
+  process.env.APP_URL,
+  process.env.ADMIN_URL,
+  ...(process.env.CORS_ORIGINS || '').split(','),
+  'capacitor://localhost', 'https://localhost', 'http://localhost',
+  'http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173',
+].map((o) => (o || '').trim().replace(/\/$/, '')).filter(Boolean));
+const OWN_RENDER = /^https:\/\/yy-assistant[a-z0-9-]*\.onrender\.com$/;
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.has(origin) || OWN_RENDER.test(origin)) return cb(null, true);
+    console.warn(`[cors] blocked origin ${origin}`);
+    return cb(null, false);
+  },
+}));
 // 匯入備份檔可能比較大,這個路徑放寬上限(要放在全域 json 解析之前)
 app.use('/api/data', express.json({ limit: '15mb' }));
 // 社群照片以 base64 上傳(前端已壓縮,單張約 0.2–1.5MB)
