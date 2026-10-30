@@ -12,6 +12,7 @@ import DateInputSegmented from '../components/DateInputSegmented';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
 import EventPeople, { EventInvites } from '../components/EventPeople';
+import CalendarSwitcher, { CalendarInvites } from '../components/CalendarSwitcher';
 import { AnnivIcon } from './Anniversaries';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
@@ -33,7 +34,9 @@ function pastelForDate(dateKey) {
 
 const emptyFilters = { from: '', to: '', category: '', keyword: '' };
 
-const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', note: '', category: '', color: '#4F46E5', remind: 'none' };
+const emptyForm = { title: '', date: '', time: '', end_date: '', end_time: '', note: '', category: '', color: '#4F46E5', remind: 'none', calendar_id: '' };
+const readLS = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+const writeLS = (k, v) => { try { localStorage.setItem(k, v); } catch { /* 無痕模式 */ } };
 
 // 提醒選項(分鐘,存在 remind_before_minutes):有時間的行程 / 全天行程各一組
 export default function CalendarPage() {
@@ -45,6 +48,22 @@ export default function CalendarPage() {
   const canCal = can('calendar');
   const [events, setEvents] = useState([]);
   const [categories, setCategories] = useState([]);
+  // 共用行事曆:顯示方式(overlay 疊在一起 / switch 分開切換)與目前看的那本('' = 我的行事曆)
+  const [calendars, setCalendars] = useState([]);
+  const [calInvites, setCalInvites] = useState([]);
+  const [calMode, setCalModeState] = useState(() => (readLS('yy_cal_mode', 'overlay') === 'switch' ? 'switch' : 'overlay'));
+  const [calCurrent, setCalCurrentState] = useState(() => readLS('yy_cal_current', ''));
+  const setCalMode = (m) => { setCalModeState(m); writeLS('yy_cal_mode', m); setSelectedDay(null); setActiveId(null); };
+  const setCalCurrent = (id) => { setCalCurrentState(id || ''); writeLS('yy_cal_current', id || ''); setSelectedDay(null); setActiveId(null); };
+  const loadCalendars = () => api.listCalendars().then((d) => {
+    setCalendars(d.calendars || []);
+    setCalInvites(d.invites || []);
+    if (calCurrent && !(d.calendars || []).some((c) => c.id === calCurrent)) setCalCurrent('');
+  }).catch(() => {});
+  useEffect(() => { loadCalendars(); }, []);
+  const calOf = (ev) => (ev.calendar_id ? calendars.find((c) => c.id === ev.calendar_id) : null);
+  // 分開切換時只看目前那本;疊在一起時全部顯示
+  const inView = (ev) => calMode === 'overlay' || (ev.calendar_id || '') === (calCurrent || '');
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   // 月檢視 / 週檢視
@@ -76,6 +95,7 @@ export default function CalendarPage() {
       ]);
       setEvents(events);
       setCategories(categories.filter((c) => c.type === 'event'));
+      loadCalendars();
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,7 +120,7 @@ export default function CalendarPage() {
     setActionMode(newMode);
     setEditSub(null);
     setActiveId(null);
-    setForm({ ...emptyForm, date: selectedDay || '' });
+    setForm({ ...emptyForm, date: selectedDay || '', calendar_id: calMode === 'switch' ? calCurrent : '' });
   }
 
   function toDateInputValue(isoString) {
@@ -134,11 +154,13 @@ export default function CalendarPage() {
   }
 
   function resetAfterAction() {
-    setForm({ ...emptyForm, date: selectedDay || '' });
+    setForm({ ...emptyForm, date: selectedDay || '', calendar_id: form.calendar_id });
     setActiveId(null);
     setInviteIds([]);
   }
 
+  // 新增到哪一本:分開切換時是目前那本;疊在一起時由表單選
+  const targetCal = actionMode === 'edit' ? '' : calMode === 'switch' ? calCurrent : form.calendar_id;
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title || !form.date) return;
@@ -157,7 +179,8 @@ export default function CalendarPage() {
         const r = normalizeRemind(form.remind, !!form.time);
         return r === 'none' ? null : Number(r);
       })(),
-      ...(inviteIds.length ? { invite_ids: inviteIds } : {}),
+      ...(inviteIds.length && !targetCal ? { invite_ids: inviteIds } : {}),
+      ...(targetCal && !(actionMode === 'edit' && activeId) ? { calendar_id: targetCal } : {}),
     };
     if (actionMode === 'edit' && activeId) {
       await api.updateEvent(activeId, payload);
@@ -196,7 +219,7 @@ export default function CalendarPage() {
   }
 
   // 跨日行程會出現在開始到結束的每一天
-  const eventsByDay = events.reduce((acc, ev) => {
+  const eventsByDay = events.filter(inView).reduce((acc, ev) => {
     const start = new Date(localKey(ev.start_at) + 'T00:00:00');
     const endKey = ev.end_at && ev.end_at > ev.start_at ? localKey(ev.end_at) : localKey(ev.start_at);
     for (let d = new Date(start), i = 0; ymd(d) <= endKey && i < 62; d.setDate(d.getDate() + 1), i += 1) {
@@ -221,7 +244,7 @@ export default function CalendarPage() {
   function handleDayClick(dateKey) {
     setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
     setActiveId(null);
-    setForm({ ...emptyForm, date: dateKey });
+    setForm({ ...emptyForm, date: dateKey, calendar_id: form.calendar_id });
   }
 
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
@@ -249,7 +272,19 @@ export default function CalendarPage() {
   const selectedDayAnnivs = selectedDay ? (annivByDay[selectedDay] || []) : [];
   const weekdays = t('cal_weekdays');
   const categoryColor = (name) => categories.find((c) => c.name === name)?.color || '#9CA3AF';
-  const eventColor = (ev) => (ev.category ? categoryColor(ev.category) : '#9CA3AF');
+  // 共用行事曆的行程:疊在一起時用那本的顏色;分開切換時用分類顏色(沒有這個分類就用那本的顏色)
+  const eventColor = (ev) => {
+    const cal = calOf(ev);
+    if (cal) {
+      if (calMode === 'overlay') return cal.color;
+      return (ev.category && categories.find((c) => c.name === ev.category)?.color) || ev.color || cal.color;
+    }
+    return ev.category ? categoryColor(ev.category) : '#9CA3AF';
+  };
+  const CalTag = ({ ev }) => {
+    const cal = calMode === 'overlay' ? calOf(ev) : null;
+    return cal ? <span className="shrink-0 rounded px-1 text-[10px] text-white" style={{ backgroundColor: cal.color }}>{cal.name}</span> : null;
+  };
 
   const [filters, setFilters] = useState(emptyFilters);
   // 桌機版:查詢 / 管理分類 點選後才展開
@@ -306,6 +341,7 @@ export default function CalendarPage() {
         };
         const matched = allEvents
           .filter((ev) => {
+            if (!inView(ev)) return false;
             const day = localDay(ev.start_at);
             if (filters.from && day < filters.from) return false;
             if (filters.to && day > filters.to) return false;
@@ -402,6 +438,8 @@ export default function CalendarPage() {
       <h1 className="page-title-row page-title mb-3 text-lg font-semibold">{t('cal_pageTitle')}<span className="ml-3">{year}.{String(month + 1).padStart(2, '0')}</span></h1>
       <CalendarSubNav />
       <EventInvites onChanged={load} />
+      <CalendarInvites invites={calInvites} onChanged={(joinedId) => { if (joinedId && calMode === 'switch') setCalCurrent(joinedId); load(); }} />
+      <CalendarSwitcher calendars={calendars} mode={calMode} setMode={setCalMode} current={calCurrent} setCurrent={setCalCurrent} reload={() => { loadCalendars(); load(); }} canEdit={canCal} />
 
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
       <div className="md:col-start-2 md:row-start-1">
@@ -582,6 +620,8 @@ export default function CalendarPage() {
                     <span className="shrink-0 font-amount text-xs text-muted-foreground">{timeRange(ev)}</span>
                     <span>{ev.title}</span>
                     {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                    <CalTag ev={ev} />
+                    {ev.calendar_id && !ev.is_owner && ev.owner?.name && <span className="text-xs text-muted-foreground">· {ev.owner.name}</span>}
                     {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
                     {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
                   </div>
@@ -638,7 +678,22 @@ export default function CalendarPage() {
                 rows={2}
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               />
-              <EventPeople selected={inviteIds} onChange={setInviteIds} />
+              {calMode === 'overlay' && calendars.length > 0 && (
+                <Select value={form.calendar_id || 'mine'} onValueChange={(v) => setForm({ ...form, calendar_id: v === 'mine' ? '' : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mine">{t('cal_my_calendar')}</SelectItem>
+                    {calendars.map((c) => (
+                      <SelectItem key={c.id} value={c.id}><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />{c.name}</span></SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {targetCal ? (
+                <p className="text-xs text-muted-foreground">{t('cal_shared_cal_hint')}</p>
+              ) : (
+                <EventPeople selected={inviteIds} onChange={setInviteIds} />
+              )}
               <Link to="/calendar-categories" className="block text-right text-xs text-muted-foreground underline">
                 {t('tx_manage_categories')}
               </Link>
@@ -773,7 +828,8 @@ export default function CalendarPage() {
                   rows={2}
                   className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                 />
-                {activeEvent && <EventPeople event={activeEvent} selected={inviteIds} onChange={setInviteIds} onRemoved={load} />}
+                {activeEvent && !activeEvent.calendar_id && <EventPeople event={activeEvent} selected={inviteIds} onChange={setInviteIds} onRemoved={load} />}
+                {activeEvent?.calendar_id && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: calOf(activeEvent)?.color }} />{calOf(activeEvent)?.name}・{t('cal_shared_cal_hint')}</p>}
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">{t('tx_save_edit')}</Button>
                   <Button type="button" variant="outline" onClick={() => setActiveId(null)}>{t('reselect')}</Button>

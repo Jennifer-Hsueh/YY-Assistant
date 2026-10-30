@@ -9,7 +9,7 @@ const FOLDERS = ['weekly', 'pre-restore', 'beta-end'];
 const PRE_KEEP = 5;
 const CHUNK = 500;
 // 刪除全部資料時要用一個一定有值的欄位當條件
-const KEY_COL = { yy_moods: 'user_id', yy_post_reactions: 'post_id', yy_user_blocks: 'blocker_id', yy_active_days: 'user_id', yy_ledger_members: 'ledger_id', yy_event_members: 'event_id', yy_anniversary_members: 'anniversary_id' };
+const KEY_COL = { yy_moods: 'user_id', yy_post_reactions: 'post_id', yy_user_blocks: 'blocker_id', yy_active_days: 'user_id', yy_ledger_members: 'ledger_id', yy_event_members: 'event_id', yy_anniversary_members: 'anniversary_id', yy_calendar_members: 'calendar_id' };
 // 單一使用者還原會處理的表(帳號本身、繳費、通知紀錄、故障通報、公告不動)
 const USER_TABLES = [
   'yy_ledgers', 'yy_accounts', 'yy_categories', 'yy_transactions', 'yy_recurring_items', 'yy_events',

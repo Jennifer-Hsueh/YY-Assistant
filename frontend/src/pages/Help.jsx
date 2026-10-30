@@ -60,6 +60,11 @@ const SECTIONS = {
       '隨手記下待辦事項，完成後打勾。首頁只顯示還沒完成的項目。',
       '在首頁的墨箋絮語卡片輸入文字後，按 Enter 就會新增。',
     ] },
+    { title: '共用行事曆', items: [
+      '在行事曆頁上方的選單點「管理共用行事曆」，建立一本（例如：家庭），再邀請好友加入。成員都能看到、新增、修改和刪除裡面的行程，有變動會推播通知其他成員。',
+      '顯示方式可以選「疊在一起」（所有行事曆顯示在同一個月曆，用顏色區分）或「分開切換」（一次看一本）。',
+      '建立者可以刪除整本或移出成員；成員可以退出。只想約一次的話，用新增行程時的「邀請好友」就好。',
+    ] },
     { title: '月刊書櫃', items: [
       '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。網頁版在左側選單，手機版點右上角的書櫃圖示。',
       '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
@@ -166,6 +171,11 @@ const SECTIONS = {
     { title: 'Ink Notes', items: [
       'Jot down to-dos and check them off when done. Home shows only what’s left.',
       'On the Ink Notes card on Home, type and press Enter to add.',
+    ] },
+    { title: 'Shared calendars', items: [
+      'Open the menu at the top of the Calendar page, tap “Manage shared calendars”, create one (e.g. Family) and invite friends. Members can see, add, edit and delete its events, and others get a notification when something changes.',
+      'Choose “Combined” to see every calendar on one month view (told apart by color), or “One at a time” to switch between them.',
+      'The creator can delete the calendar or remove members; members can leave. For a one-off plan, just invite friends to a single event.',
     ] },
     { title: 'Monthly Bookshelf', items: [
       'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. On the web it’s in the left menu; on mobile, tap the bookshelf icon at the top right.',

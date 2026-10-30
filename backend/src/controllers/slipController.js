@@ -52,6 +52,7 @@ async function contactIds(userId) {
     coMembers(userId, { table: 'yy_ledgers', memberTable: 'yy_ledger_members', fk: 'ledger_id', ownerFilter: (q) => q.is('archived_at', null) }),
     coMembers(userId, { table: 'yy_events', memberTable: 'yy_event_members', fk: 'event_id' }),
     coMembers(userId, { table: 'yy_anniversaries', memberTable: 'yy_anniversary_members', fk: 'anniversary_id' }),
+    coMembers(userId, { table: 'yy_calendars', memberTable: 'yy_calendar_members', fk: 'calendar_id' }),
   ]);
   groups.forEach((g) => g.forEach((id) => ids.add(id)));
   ids.delete(userId);

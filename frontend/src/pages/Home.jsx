@@ -4,6 +4,7 @@ import { Wallet, Calendar, Megaphone, PiggyBank, ChevronRight, X, HelpCircle, He
 import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { LedgerInvites } from '../components/LedgerSwitcher';
+import { CalendarInvites } from '../components/CalendarSwitcher';
 import { EventInvites } from '../components/EventPeople';
 import { AnnivIcon } from './Anniversaries';
 import { api } from '../lib/api';
@@ -154,6 +155,7 @@ export default function Home() {
       <h1 className="page-title-row page-title mb-1 font-semibold" style={{ fontSize: '18.5px' }}>{t('nav_home')}</h1>
       <LedgerInvites />
       <EventInvites />
+      <CalendarInvites />
       {/* 重要公告橫幅:點進公告頁或按 ✕ 就不再出現 */}
       {banner && (
         <div

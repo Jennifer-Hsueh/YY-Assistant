@@ -272,6 +272,7 @@ async function deleteAccount(req, res) {
     await supabase.from('yy_payments').update({ user_email: user.email }).eq('user_id', user.id);
 
     await handOverShared(user.id);
+    await require('../lib/calendars').handOverAll(user.id);
     const { error: delErr } = await supabase.from('yy_users').delete().eq('id', user.id);
     if (delErr) throw delErr;
     forgetUserStatus(user.id);

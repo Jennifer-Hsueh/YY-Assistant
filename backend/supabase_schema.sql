@@ -540,3 +540,28 @@ create table if not exists yy_monthly_books (
   unique (user_id, ym)
 );
 alter table yy_monthly_books enable row level security;
+
+-- ---------- 共用行事曆(2026-10-30) ----------
+-- 建立者+已加入的成員都能看、新增、修改、刪除裡面的行程;邀請好友加入
+create table if not exists yy_calendars (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade, -- 建立者
+  name text not null,
+  color text,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_calendars_user on yy_calendars (user_id);
+alter table yy_calendars enable row level security;
+create table if not exists yy_calendar_members (
+  calendar_id uuid not null references yy_calendars(id) on delete cascade,
+  user_id uuid not null references yy_users(id) on delete cascade,
+  status text not null default 'invited' check (status in ('invited', 'active')),
+  invited_by uuid references yy_users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  joined_at timestamptz,
+  primary key (calendar_id, user_id)
+);
+create index if not exists idx_calendar_members_user on yy_calendar_members (user_id);
+alter table yy_calendar_members enable row level security;
+alter table yy_events add column if not exists calendar_id uuid references yy_calendars(id) on delete cascade;
+create index if not exists idx_events_calendar on yy_events (calendar_id, start_at) where calendar_id is not null;

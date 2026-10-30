@@ -158,6 +158,7 @@ app.use('/api/anniversaries', require('./routes/anniversaryRoutes'));
 app.use('/api/slips', require('./routes/slipRoutes'));
 app.use('/api/payment-reports', require('./routes/paymentReportRoutes'));
 app.use('/api/books', require('./routes/bookRoutes'));
+app.use('/api/calendars', require('./routes/calendarRoutes'));
 app.use('/api/admin', adminRoutes);
 
 // 404 fallback

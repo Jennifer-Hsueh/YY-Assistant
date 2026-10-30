@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 const F = require('../lib/friends');
+const C = require('../lib/calendars');
 const { sendPushToUser } = require('../services/fcmService');
 
 // 提醒選項(分鐘):null 不提醒、0 準時、10/30/60 分鐘前、1440 一天前;
@@ -33,17 +34,28 @@ function dateLabel(ev) {
 
 // 行程的參與者:建立者+已參加的成員
 async function participantIds(ev) {
+  // 共用行事曆的行程:行事曆的所有成員
+  if (ev.calendar_id) {
+    const { data: cal } = await supabase.from('yy_calendars').select('id, user_id').eq('id', ev.calendar_id).maybeSingle();
+    if (cal) return C.activeUserIds(cal);
+  }
   const { data, error } = await supabase.from('yy_event_members').select('user_id').eq('event_id', ev.id).eq('status', 'active');
   if (error) throw error;
   return [ev.user_id, ...(data || []).map((m) => m.user_id)];
 }
 const notify = (ids, title, body) => Promise.all(ids.map((id) => sendPushToUser(id, { title, body, data: { url: '/calendar' } }).catch(() => {})));
 
-// 可以看/改的行程:自己建立的,或已參加的共同行程
+// 可以看/改的行程:自己建立的、已參加的共同行程,或共用行事曆裡的行程
 async function accessible(userId, id) {
   const { data: ev, error } = await supabase.from('yy_events').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!ev) return null;
+  if (ev.calendar_id) {
+    // 共用行事曆:還在這本行事曆裡才能看/改(建立者退出後也一樣)
+    const acc = await C.accessOf(userId, ev.calendar_id);
+    if (!acc) return null;
+    return { ev, role: ev.user_id === userId ? 'owner' : 'calendar', cal: acc.cal };
+  }
   if (ev.user_id === userId) return { ev, role: 'owner' };
   const { data: m } = await supabase.from('yy_event_members').select('status').eq('event_id', id).eq('user_id', userId).maybeSingle();
   return m?.status === 'active' ? { ev, role: 'member' } : null;
@@ -75,12 +87,16 @@ async function listEvents(req, res) {
     const { data: mine, error: mErr } = await supabase.from('yy_event_members').select('event_id').eq('user_id', uid).eq('status', 'active');
     if (mErr) throw mErr;
     const joined = (mine || []).map((m) => m.event_id);
+    const cals = await C.myCalendarIds(uid);
+    const ors = [`user_id.eq.${uid}`];
+    if (joined.length) ors.push(`id.in.(${joined.join(',')})`);
+    if (cals.length) ors.push(`calendar_id.in.(${cals.join(',')})`);
 
     let query = supabase
       .from('yy_events')
       .select('*')
-      // 自己的行程+已參加的共同行程
-      .or(joined.length ? `user_id.eq.${uid},id.in.(${joined.join(',')})` : `user_id.eq.${uid}`)
+      // 自己的行程+已參加的共同行程+共用行事曆的行程
+      .or(ors.join(','))
       .order('start_at', { ascending: true });
 
     // 跨日行程:只要和查詢區間有重疊就列出(結束時間在 from 之後、開始時間在 to 之前)
@@ -93,7 +109,9 @@ async function listEvents(req, res) {
 
     const { data, error } = await query;
     if (error) throw error;
-    return res.json({ events: await decorate(data || [], uid) });
+    // 已經退出的共用行事曆:裡面自己建立的行程也不再顯示
+    const rows = (data || []).filter((e) => !e.calendar_id || cals.includes(e.calendar_id));
+    return res.json({ events: await decorate(rows, uid) });
   } catch (err) {
     return fail(res, 'listEvents', err, 'Failed to fetch events');
   }
@@ -129,6 +147,13 @@ async function createEvent(req, res) {
       return res.status(400).json({ error: 'title and start_at are required' });
     }
     if (!validRemind(remind_before_minutes)) return res.status(400).json({ error: 'Invalid reminder' });
+    // 放進共用行事曆:要是那本的成員
+    let cal = null;
+    if (req.body.calendar_id) {
+      const acc = await C.accessOf(req.user.id, String(req.body.calendar_id));
+      if (!acc) return res.status(404).json({ error: '找不到這本行事曆', code: 'CALENDAR_NOT_FOUND' });
+      cal = acc.cal;
+    }
 
     const { data, error } = await supabase
       .from('yy_events')
@@ -143,10 +168,17 @@ async function createEvent(req, res) {
         note: note || null,
         source: 'app', // vs 'google' once phase-2 sync lands
         remind_before_minutes: remind_before_minutes ?? null,
+        ...(cal ? { calendar_id: cal.id } : {}),
       })
       .select()
       .single();
     if (error) throw error;
+    if (cal) {
+      // 共用行事曆不另外邀請,直接通知其他成員
+      const others = (await C.activeUserIds(cal)).filter((x) => x !== req.user.id);
+      if (others.length) await notify(others, `${cal.name} 📅`, `${await myName(req.user.id)} 新增了「${data.title}」（${dateLabel(data)}）`);
+      return res.status(201).json({ event: data, invited: 0 });
+    }
     const invited = await inviteFriends(data, req.user.id, req.body.invite_ids);
     return res.status(201).json({ event: data, invited });
   } catch (err) {
@@ -178,12 +210,12 @@ async function updateEvent(req, res) {
       if (r.error) throw r.error;
       data = r.data;
     }
-    const invited = await inviteFriends(data, req.user.id, req.body.invite_ids);
+    const invited = data.calendar_id ? 0 : await inviteFriends(data, req.user.id, req.body.invite_ids);
     // 內容有改:通知其他參與者
     const changed = ['title', 'start_at', 'end_at', 'note'].some((k) => updates[k] !== undefined && String(updates[k] ?? '') !== String(acc.ev[k] ?? ''));
     if (changed) {
       const others = (await participantIds(data)).filter((x) => x !== req.user.id);
-      if (others.length) await notify(others, '行程更新 📅', `${await myName(req.user.id)} 修改了「${data.title}」（${dateLabel(data)}）`);
+      if (others.length) await notify(others, acc.cal ? `${acc.cal.name} 📅` : '行程更新 📅', `${await myName(req.user.id)} 修改了「${data.title}」（${dateLabel(data)}）`);
     }
     return res.json({ event: data, invited });
   } catch (err) {
@@ -198,11 +230,12 @@ async function deleteEvent(req, res) {
     const { id } = req.params;
     const acc = await accessible(req.user.id, id);
     if (!acc) return res.status(204).send();
-    if (acc.role === 'owner') {
+    if (acc.role === 'owner' || acc.role === 'calendar') {
+      // 共用行事曆的行程:成員都可以刪除
       const others = (await participantIds(acc.ev)).filter((x) => x !== req.user.id);
       const { error } = await supabase.from('yy_events').delete().eq('id', id);
       if (error) throw error;
-      if (others.length) await notify(others, '行程取消 📅', `${await myName(req.user.id)} 取消了「${acc.ev.title}」（${dateLabel(acc.ev)}）`);
+      if (others.length) await notify(others, acc.cal ? `${acc.cal.name} 📅` : '行程取消 📅', `${await myName(req.user.id)} ${acc.cal ? '刪除' : '取消'}了「${acc.ev.title}」（${dateLabel(acc.ev)}）`);
     } else {
       const { error } = await supabase.from('yy_event_members').delete().eq('event_id', id).eq('user_id', req.user.id);
       if (error) throw error;

@@ -103,11 +103,15 @@ async function eventsOf(uid, from, to) {
   const { data: mine, error } = await supabase.from('yy_event_members').select('event_id').eq('user_id', uid).eq('status', 'active');
   if (error) throw error;
   const joined = (mine || []).map((m) => m.event_id);
+  const calIds = await require('../lib/calendars').myCalendarIds(uid);
+  const ors = [`user_id.eq.${uid}`];
+  if (joined.length) ors.push(`id.in.(${joined.join(',')})`);
+  if (calIds.length) ors.push(`calendar_id.in.(${calIds.join(',')})`);
   const cats = await fetchAll(() => supabase.from('yy_categories').select('name, color').eq('user_id', uid).eq('type', 'event'));
   const color = (name) => (name && cats.find((c) => c.name === name)?.color) || null;
-  const rows = await fetchAll(() => supabase.from('yy_events').select('id, title, start_at, category, user_id')
-    .or(joined.length ? `user_id.eq.${uid},id.in.(${joined.join(',')})` : `user_id.eq.${uid}`)
-    .gte('start_at', from).lt('start_at', to).order('start_at'));
+  const rows = (await fetchAll(() => supabase.from('yy_events').select('id, title, start_at, category, user_id, calendar_id')
+    .or(ors.join(','))
+    .gte('start_at', from).lt('start_at', to).order('start_at'))).filter((e) => !e.calendar_id || calIds.includes(e.calendar_id));
   return rows.map((e) => ({ date: localDate(e.start_at), title: e.title, color: color(e.category), shared: e.user_id !== uid || undefined }));
 }
 
