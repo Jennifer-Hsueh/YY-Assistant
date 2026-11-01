@@ -210,6 +210,7 @@ async function runMonthlyBooks(now = new Date()) {
   const ym = previousYm(now);
   let created = 0;
   let finalized = 0;
+  const pushes = []; // 推播結果:統計在排程回應裡,方便從 cron-job.org 查
   const users = await fetchAll(() => supabase.from('yy_users').select('id, created_at, is_disabled').order('created_at'));
   for (const u of users) {
     if (u.is_disabled) continue;
@@ -218,7 +219,8 @@ async function runMonthlyBooks(now = new Date()) {
       if (row) {
         created += 1;
         const m = Number(ym.slice(5, 7));
-        sendPushToUser(u.id, { title: '📚 月刊書櫃', body: `你的 ${m} 月月刊整理好了，7 號以前可以挑封面、寫一句話`, data: { url: '/bookshelf' } }).catch(() => {});
+        pushes.push(sendPushToUser(u.id, { title: '📚 月刊書櫃', body: `你的 ${m} 月月刊整理好了，7 號以前可以挑封面、寫一句話`, data: { url: '/bookshelf' } })
+          .catch((err) => ({ sent: false, reason: err.message })));
       }
     } catch (err) {
       console.error('[monthlyBook.create]', u.id, err.message);
@@ -234,7 +236,14 @@ async function runMonthlyBooks(now = new Date()) {
       console.error('[monthlyBook.finalize]', d.id, err.message);
     }
   }
-  return { created, finalized };
+  const results = await Promise.all(pushes);
+  const push = {
+    sent: results.filter((r) => r?.sent && r.successCount > 0).length,
+    no_device: results.filter((r) => r?.reason === 'user has no registered devices').length,
+    failed: results.filter((r) => r && !(r.sent && r.successCount > 0) && r.reason !== 'user has no registered devices').length,
+  };
+  if (created) console.log(`[monthlyBook] ${ym}: created ${created}, push`, push);
+  return { created, finalized, push };
 }
 
 module.exports = {
