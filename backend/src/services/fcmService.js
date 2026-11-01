@@ -69,9 +69,11 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
     // Clean up tokens that are no longer valid (app uninstalled, token
     // rotated, etc.) so future sends don't keep retrying them.
     const deadTokenIds = [];
+    const errors = [];
     response.responses.forEach((res, idx) => {
       if (!res.success) {
         const code = res.error?.code;
+        errors.push(code || res.error?.message || 'unknown');
         if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token') {
           deadTokenIds.push(subs[idx].id);
         }
@@ -81,10 +83,11 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
       await supabase.from('yy_push_subscriptions').delete().in('id', deadTokenIds);
     }
 
-    return { sent: true, successCount: response.successCount, failureCount: response.failureCount };
+    if (errors.length) console.error('[fcmService] some sends failed', userId, errors);
+    return { sent: true, successCount: response.successCount, failureCount: response.failureCount, errors };
   } catch (err) {
     console.error('[fcmService] sendEachForMulticast failed', err);
-    return { sent: false, reason: 'FCM send failed' };
+    return { sent: false, reason: `FCM send failed: ${err.code || err.message}` };
   }
 }
 
