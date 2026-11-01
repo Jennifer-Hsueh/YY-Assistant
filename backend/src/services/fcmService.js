@@ -36,7 +36,7 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
 
   const { data: subs, error } = await supabase
     .from('yy_push_subscriptions')
-    .select('id, fcm_token')
+    .select('id, fcm_token, device')
     .eq('user_id', userId);
 
   if (error) {
@@ -84,7 +84,8 @@ async function sendPushToUser(userId, { title, body, data = {}, channel } = {}) 
     }
 
     if (errors.length) console.error('[fcmService] some sends failed', userId, errors);
-    return { sent: true, successCount: response.successCount, failureCount: response.failureCount, errors };
+    const devices = response.responses.map((r, idx) => ({ device: subs[idx].device || null, ok: r.success, error: r.success ? null : (r.error?.code || 'unknown') }));
+    return { sent: true, successCount: response.successCount, failureCount: response.failureCount, errors, devices };
   } catch (err) {
     console.error('[fcmService] sendEachForMulticast failed', err);
     return { sent: false, reason: `FCM send failed: ${err.code || err.message}` };

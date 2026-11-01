@@ -14,7 +14,7 @@ async function registerSubscription(req, res) {
     const { error } = await supabase
       .from('yy_push_subscriptions')
       .upsert(
-        { user_id: req.user.id, fcm_token },
+        { user_id: req.user.id, fcm_token, device: String(req.body.device || '').slice(0, 60) || null },
         { onConflict: 'fcm_token' }
       );
     if (error) throw error;

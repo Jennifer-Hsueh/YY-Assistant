@@ -1,3 +1,14 @@
+// 推播裝置的名稱(例如 Windows・Chrome、Android・App),讓測試通知看得出是哪一台
+function deviceLabel() {
+  if (typeof navigator === 'undefined') return '';
+  const ua = navigator.userAgent || '';
+  const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iPhone' : /Windows/i.test(ua) ? 'Windows' : /Mac/i.test(ua) ? 'Mac' : '其他';
+  const native = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+  const app = native ? 'App' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '瀏覽器';
+  const home = !native && typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches ? '（主畫面）' : '';
+  return `${os}・${app}${home}`;
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // 登入過期(或 token 無效)時:清掉登入資料,通知 AuthContext 導回登入頁
@@ -117,7 +128,7 @@ deleteAccount: (id) => request(`/accounts/${id}`, { method: 'DELETE' }),
   updateRecurringItem: (id, payload) => request(`/recurring-items/${id}`, { method: 'PUT', body: payload }),
   deleteRecurringItem: (id) => request(`/recurring-items/${id}`, { method: 'DELETE' }),
 
-  registerPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'POST', body: { fcm_token } }),
+  registerPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'POST', body: { fcm_token, device: deviceLabel() } }),
   unregisterPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'DELETE', body: { fcm_token } }),
   testPush: () => request('/push-subscriptions/test', { method: 'POST' }),
   listCategories: () => request('/categories'),

@@ -565,3 +565,6 @@ create index if not exists idx_calendar_members_user on yy_calendar_members (use
 alter table yy_calendar_members enable row level security;
 alter table yy_events add column if not exists calendar_id uuid references yy_calendars(id) on delete cascade;
 create index if not exists idx_events_calendar on yy_events (calendar_id, start_at) where calendar_id is not null;
+
+-- 推播裝置名稱(例如 Windows・Chrome、Android・App),測試通知時顯示(2026-11-01)
+alter table yy_push_subscriptions add column if not exists device text;

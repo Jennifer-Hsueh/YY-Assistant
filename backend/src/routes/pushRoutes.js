@@ -24,7 +24,7 @@ router.post('/test', async (req, res) => {
       data: { url: '/settings' },
     });
     // 失敗原因(不含裝置代碼)一併回傳,方便判斷是哪裡的問題
-    return res.json({ sent: !!r.sent && (r.successCount || 0) > 0, devices: (r.successCount || 0) + (r.failureCount || 0), success: r.successCount || 0, reason: r.reason || null, errors: [...new Set(r.errors || [])] });
+    return res.json({ sent: !!r.sent && (r.successCount || 0) > 0, devices: (r.successCount || 0) + (r.failureCount || 0), success: r.successCount || 0, reason: r.reason || null, errors: [...new Set(r.errors || [])], list: r.devices || [] });
   } catch (err) {
     console.error('[push.test]', err);
     return res.status(500).json({ error: '測試通知失敗' });

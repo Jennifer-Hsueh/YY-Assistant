@@ -38,7 +38,8 @@ export default function Settings() {
       if (!ok) { setTestMsg(t('push_test_denied')); return; }
       const r = await api.testPush();
       const why = [r.reason, ...(r.errors || [])].filter(Boolean).join('、');
-      setTestMsg(r.sent ? t('push_test_sent').replace('{n}', r.success) : r.reason === 'user has no registered devices' ? t('push_test_nodevice') : `${t('push_test_failed')}${why ? `（${why}）` : ''}`);
+      const list = (r.list || []).map((d) => `${d.device || t('push_test_unknown')} ${d.ok ? '✓' : `✗（${d.error}）`}`).join('、');
+      setTestMsg(r.sent ? `${t('push_test_sent').replace('{n}', r.success)}${list ? `　${list}` : ''}` : r.reason === 'user has no registered devices' ? t('push_test_nodevice') : `${t('push_test_failed')}${why ? `（${why}）` : ''}${list ? `　${list}` : ''}`);
     } catch (err) {
       setTestMsg(err.message || t('push_test_failed'));
     } finally {
