@@ -28,6 +28,22 @@ export default function Settings() {
   // 通知偏好存在伺服器(換手機或重新安裝也會保留)
   const [ledgerPref, setLedgerPref] = useState(false);
   const [calendarPref, setCalendarPref] = useState(false);
+  const [testMsg, setTestMsg] = useState('');
+  const [testing, setTesting] = useState(false);
+  // 傳一則測試通知給自己:先確定這台裝置已開啟通知,再請後端發送
+  async function sendTestPush() {
+    setTesting(true); setTestMsg('');
+    try {
+      const ok = await ensurePushRegistered();
+      if (!ok) { setTestMsg(t('push_test_denied')); return; }
+      const r = await api.testPush();
+      setTestMsg(r.sent ? t('push_test_sent').replace('{n}', r.success) : r.reason === 'user has no registered devices' ? t('push_test_nodevice') : t('push_test_failed'));
+    } catch (err) {
+      setTestMsg(err.message || t('push_test_failed'));
+    } finally {
+      setTesting(false);
+    }
+  }
 
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -302,6 +318,10 @@ export default function Settings() {
           </div>
 
           {pushStatus === 'failed' && <p className="text-xs text-destructive">{t('rec_push_failed')}</p>}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" disabled={testing || pushStatus === 'enabling'} onClick={sendTestPush}>{t('push_test')}</Button>
+            {testMsg && <span className="text-xs text-muted-foreground">{testMsg}</span>}
+          </div>
         </CardContent>
       </Card>
 

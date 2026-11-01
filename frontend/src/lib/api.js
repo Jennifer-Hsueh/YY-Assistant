@@ -119,6 +119,7 @@ deleteAccount: (id) => request(`/accounts/${id}`, { method: 'DELETE' }),
 
   registerPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'POST', body: { fcm_token } }),
   unregisterPushSubscription: (fcm_token) => request('/push-subscriptions', { method: 'DELETE', body: { fcm_token } }),
+  testPush: () => request('/push-subscriptions/test', { method: 'POST' }),
   listCategories: () => request('/categories'),
 createCategory: (payload) => request('/categories', { method: 'POST', body: payload }),
 updateCategory: (id, payload) => request(`/categories/${id}`, { method: 'PUT', body: payload }),

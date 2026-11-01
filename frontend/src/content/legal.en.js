@@ -107,6 +107,8 @@ export const TERMS_EN = {
     { h: 'Article 14  Data and backups' },
     { ol: [
       'The budget entries, events, notes, posts, and photos you record belong to you. You allow us to store, back up, and display them as needed to provide the Service.',
+      'Whatever you put in a shared ledger, shared event, shared calendar, or shared anniversary can be seen by its members, and members of a shared calendar can also edit or delete its events. If you leave or delete your account, the entries you made in a shared ledger stay for the other members (shown as "deleted member"); events you created in a shared calendar are deleted along with your account.',
+      'The monthly bookshelf turns each month of your data into a book. When a book is finalized we keep a copy of that month’s content, so later edits or deletions of the original records do not change it (deleted photos are no longer shown). Your books are deleted when you delete your account.',
       'We back up automatically once a week and keep the 8 most recent backups to recover from system failures. These backups are not a restore service for individual data.',
       'Paid plans include data export and backup. We recommend downloading your own copy regularly.',
     ] },
@@ -140,8 +142,8 @@ export const PRIVACY_EN = {
     { table: {
       head: ['Category', 'What', 'Why'],
       rows: [
-        ['Account data', 'Email, password (stored with one-way encryption), display name, country, sign-up and last active time', 'Logging in, password resets, customer support, showing the helpline for your country'],
-        ['Your content', 'Accounts, budget entries, categories, budgets, recurring items, events, notes, mood, community posts, photos, and comments', 'Providing the features of the Service'],
+        ['Account data', 'Email, password (stored with one-way encryption), display name, country, birthday (optional, month and day only), sign-up and last active time', 'Logging in, password resets, customer support, showing the helpline for your country'],
+        ['Your content', 'Accounts, budget entries, categories, budgets, recurring items, events, anniversaries, notes, mood, community posts, photos and comments, friends, little notes, memberships of shared ledgers, events and calendars, and monthly books (a copy of the content when finalized)', 'Providing the features of the Service'],
         ['Plans and payments', 'Plan, plan period, payment date, amount, last five digits of the paying account, transfer screenshot (optional), notes', 'Activating plans, confirming payments, expiry reminders, accounting and tax'],
         ['Notification settings', 'Push device token, notification switches', 'Sending event, budget, and plan notifications'],
         ['Bug reports', 'Report content, device and browser version', 'Finding and fixing problems, replying to you'],
@@ -169,6 +171,7 @@ export const PRIVACY_EN = {
       'We keep your data while your account exists. Data you delete is removed from the database immediately.',
       'We keep 8 weekly backups, so deleted data disappears from backups within about 8 weeks.',
       'Payment records are kept for 3 years for account inquiries and disputes, or longer where the law requires.',
+      'Finalized monthly books are kept while your account exists and deleted with it.',
     ] },
     { h: '4. Storage on your device' },
     { p: 'Your login token, language, and theme are stored locally in your browser or the app so you stay logged in and your settings are remembered. They are not used for ad tracking.' },
