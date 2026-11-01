@@ -6,6 +6,10 @@ import { applyTheme, getStoredTheme } from './lib/theme'
 import { initSentry, Sentry } from './lib/sentry'
 
 initSentry()
+// 網頁開著時收到推播也要跳出通知
+if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+  import('./lib/firebase').then((m) => m.initForegroundPush()).catch(() => {})
+}
 
 applyTheme(getStoredTheme())
 

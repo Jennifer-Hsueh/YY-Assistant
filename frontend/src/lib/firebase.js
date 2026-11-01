@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
 import { isNative } from './platform';
 import { requestNativePushToken, nativePushGranted } from './nativePush';
 
@@ -31,6 +31,31 @@ async function getMessagingIfSupported() {
   return messagingInstance;
 }
 
+// 網頁開著(在前景)時收到的推播:Firebase 不會自動跳出,要自己顯示通知
+let foregroundAttached = false;
+function attachForeground(messaging) {
+  if (foregroundAttached) return;
+  foregroundAttached = true;
+  onMessage(messaging, async (payload) => {
+    const { title, body } = payload.notification || {};
+    const opts = { body: body || '', icon: '/icons/icon-192.png', data: payload.data };
+    try {
+      const reg = await navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope');
+      if (reg) await reg.showNotification(title || 'YY手帳', opts);
+      else new Notification(title || 'YY手帳', opts);
+    } catch (err) {
+      console.error('[firebase] foreground notification failed', err);
+    }
+  });
+}
+
+// 開啟網頁時:已經允許通知的話,先接上前景通知
+export async function initForegroundPush() {
+  if (isNative || typeof Notification === 'undefined' || Notification.permission !== 'granted' || !firebaseConfig.apiKey) return;
+  const messaging = await getMessagingIfSupported();
+  if (messaging) attachForeground(messaging);
+}
+
 // Requests notification permission (if not already granted/denied) and
 // returns an FCM device token, or null if unsupported/denied/unconfigured.
 export async function requestPushToken() {
@@ -56,6 +81,7 @@ export async function requestPushToken() {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
     });
+    if (token) attachForeground(messaging);
     return token || null;
   } catch (err) {
     console.error('[firebase] Failed to get push token', err);
