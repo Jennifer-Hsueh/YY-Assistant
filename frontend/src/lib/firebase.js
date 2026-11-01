@@ -52,6 +52,10 @@ function attachForeground(messaging) {
 // 開啟網頁時:已經允許通知的話,先接上前景通知
 export async function initForegroundPush() {
   if (isNative || typeof Notification === 'undefined' || Notification.permission !== 'granted' || !firebaseConfig.apiKey) return;
+  // 推播用的 service worker 不會自己更新(它的範圍沒有網頁會開),每次打開時主動檢查新版
+  navigator.serviceWorker?.register('/firebase-messaging-sw.js', { scope: '/firebase-cloud-messaging-push-scope' })
+    .then((reg) => reg.update())
+    .catch(() => {});
   const messaging = await getMessagingIfSupported();
   if (messaging) attachForeground(messaging);
 }
