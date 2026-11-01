@@ -14,7 +14,7 @@ const COPY = {
     langSwitch: 'EN',
     docTitle: 'YY手帳 Assistant｜把每天的小事，好好收進手帳',
     heroTitle: ['把每天的小事，', '好好收進手帳'],
-    heroText: '記帳、行事曆、紀念日和隨手記事，放在同一本手帳裡。還能和家人朋友共用帳本、一起排行程、互傳小紙條。註冊後三個月免費使用全部功能，不需要信用卡。',
+    heroText: '記帳、行事曆、紀念日和隨手記事，放在同一本手帳裡。還能和家人朋友共用帳本和行事曆、互傳小紙條，每個月再整理成一本專屬的書。註冊後三個月免費使用全部功能，不需要信用卡。',
     cta: '免費開始使用',
     ctaFull: '測試名額已滿',
     betaLine: (limit, remaining) => `目前開放 ${limit} 位測試者，還有 ${remaining} 個名額`,
@@ -28,10 +28,12 @@ const COPY = {
       ['👥', '共同帳本', '旅遊、家用一起記'],
       ['📅', '行事曆', '月／週檢視、提醒'],
       ['🤝', '共同行程', '約好的事一起看'],
+      ['🗓️', '共用行事曆', '家人朋友一起排'],
       ['🎂', '紀念日', '生日、紀念日不錯過'],
       ['✍️', '墨箋絮語', '想到什麼先記下'],
       ['📝', '小紙條', '傳一句話給在乎的人'],
       ['🌦️', '社群', '聊心情、交流理財'],
+      ['📚', '月刊書櫃', '每月一本專屬的書'],
     ],
     sections: [
       {
@@ -42,8 +44,8 @@ const COPY = {
       },
       {
         key: 'calendar', tag: '行事曆與紀念日', title: '日子排好，重要的日子也記得',
-        text: '月檢視看整個月，週檢視排細節；每週的課、每月的繳費日設成循環行程。和朋友約好的事，邀請對方變成共同行程。生日和紀念日選個小圖示，每年自動提醒，還能算出第幾週年、幾歲；好友生日也會提醒你。',
-        points: ['共同行程', '循環行程', '紀念日圖示', '週年與年紀', '好友生日提醒'],
+        text: '月檢視看整個月，週檢視排細節；每週的課、每月的繳費日設成循環行程。和朋友約好的事，邀請對方變成共同行程；全家的事，開一本共用行事曆，大家都能新增、修改，可以疊在一起看，也可以分開切換。生日和紀念日選個小圖示，每年自動提醒，還能算出第幾週年、幾歲；好友生日也會提醒你。',
+        points: ['共用行事曆', '共同行程', '循環行程', '紀念日圖示', '週年與年紀', '好友生日提醒'],
         shots: ['calendar', 'anniv'],
       },
       {
@@ -57,6 +59,12 @@ const COPY = {
         text: '「晴空與雨天」聊心情、「養豬小能手」交流理財、「小編許願池」告訴我們想要的新功能。可以匿名、具名，或只給好友看；不想給某些好友看到，發文時選擇隱藏就好。用好友碼加好友，點進好友就能看他分享的文章。',
         points: ['匿名或暱稱', '僅好友可見', '隱藏好友', '好友碼與 QR Code', '使用規則與檢舉'],
         shots: ['community', 'friends'],
+      },
+      {
+        key: 'bookshelf', tag: '月刊書櫃', title: '每個月，一本只屬於你的書',
+        text: '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章，整理成一本書放上書櫃。7 號以前挑一張喜歡的封面、寫一句想對這個月說的話，就完成了；也可以下載成 PDF 好好收著。',
+        points: ['每月自動整理', '挑封面', '心情月曆', '海狸的話', '下載 PDF', '三款書櫃'],
+        shots: ['bookshelf', 'book'],
       },
     ],
     themesTitle: '換一種心情的手帳',
@@ -72,7 +80,7 @@ const COPY = {
       ['進階 A／B／C＋社群', '上述任一方案加購社群'],
       ['完整版', '全部功能，包含社群'],
     ],
-    plansNote: '多帳本、共同帳本、共同行程、紀念日、好友與小紙條，目前所有方案都能使用。',
+    plansNote: '多帳本、共同帳本、共同行程、共用行事曆、紀念日、好友、小紙條與月刊書櫃，目前所有方案都能使用。',
     free: '免費',
     perMonth: (m) => `${m} 元／月`,
     perYear: (y) => `年繳 ${y.toLocaleString()} 元`,
@@ -91,7 +99,7 @@ const COPY = {
     langSwitch: '中文',
     docTitle: 'YY Assistant | Every little thing, neatly in one notebook',
     heroTitle: ['Every little thing,', 'neatly in one notebook'],
-    heroText: 'Budget, calendar, anniversaries and quick notes, all in one notebook. Share ledgers with family and friends, plan events together, and send little notes. Every feature is free for your first three months. No credit card needed.',
+    heroText: 'Budget, calendar, anniversaries and quick notes, all in one notebook. Share ledgers and calendars with family and friends, send little notes, and get your month bound into a book of your own. Every feature is free for your first three months. No credit card needed.',
     cta: 'Start free',
     ctaFull: 'Beta is full',
     betaLine: (limit, remaining) => `Open to ${limit} beta testers, ${remaining} spots left`,
@@ -105,10 +113,12 @@ const COPY = {
       ['👥', 'Shared ledgers', 'Trips and home, together'],
       ['📅', 'Calendar', 'Month and week views'],
       ['🤝', 'Shared events', 'Plans you both can see'],
+      ['🗓️', 'Shared calendars', 'Plan as a family'],
       ['🎂', 'Anniversaries', 'Never miss a birthday'],
       ['✍️', 'Ink Notes', 'Jot it down first'],
       ['📝', 'Little notes', 'A line for someone you care about'],
       ['🌦️', 'Community', 'Feelings and money tips'],
+      ['📚', 'Monthly bookshelf', 'A book of your month'],
     ],
     sections: [
       {
@@ -119,8 +129,8 @@ const COPY = {
       },
       {
         key: 'calendar', tag: 'Calendar & anniversaries', title: 'Plan your days, remember the big ones',
-        text: 'See the whole month or plan week by week, and make weekly classes or monthly bills recurring. Invite friends to turn plans into shared events. Give birthdays and anniversaries a little icon for yearly reminders, with years and ages counted for you. Friends’ birthdays are reminded too.',
-        points: ['Shared events', 'Recurring events', 'Anniversary icons', 'Years and ages', 'Friend birthdays'],
+        text: 'See the whole month or plan week by week, and make weekly classes or monthly bills recurring. Invite friends to turn plans into shared events, or open a shared calendar for the family where everyone can add and edit, shown together or one at a time. Give birthdays and anniversaries a little icon for yearly reminders, with years and ages counted for you. Friends’ birthdays are reminded too.',
+        points: ['Shared calendars', 'Shared events', 'Recurring events', 'Anniversary icons', 'Years and ages', 'Friend birthdays'],
         shots: ['calendar', 'anniv'],
       },
       {
@@ -134,6 +144,12 @@ const COPY = {
         text: 'Share how your day went, swap money tips, and tell us which features you want next. Post anonymously, with your nickname, or for friends only, and hide a post from certain friends when you need to. Add friends with a friend code and tap a friend to see what they share.',
         points: ['Anonymous or nickname', 'Friends only', 'Hide from friends', 'Friend code and QR', 'Rules and reporting'],
         shots: ['community', 'friends'],
+      },
+      {
+        key: 'bookshelf', tag: 'Monthly bookshelf', title: 'Every month, a book that’s yours alone',
+        text: 'On the 1st of each month, Beaver gathers last month’s spending, plans, anniversaries, moods, Ink Notes and your posts into a book on your shelf. Pick a cover and write a line to the month before the 7th, and it’s done. You can download it as a PDF to keep.',
+        points: ['Made for you monthly', 'Pick a cover', 'Mood calendar', 'Words from Beaver', 'PDF download', 'Three shelves'],
+        shots: ['bookshelf', 'book'],
       },
     ],
     themesTitle: 'A notebook for every mood',
@@ -149,7 +165,7 @@ const COPY = {
       ['Plus A / B / C + Community', 'Any of the above plus community'],
       ['Complete', 'Everything, including community'],
     ],
-    plansNote: 'Multiple and shared ledgers, shared events, anniversaries, friends and little notes are included in every plan for now.',
+    plansNote: 'Multiple and shared ledgers, shared events and calendars, anniversaries, friends, little notes and the monthly bookshelf are included in every plan for now.',
     free: 'Free',
     perMonth: (m) => `NT$${m} / month`,
     perYear: (y) => `NT$${y.toLocaleString()} / year`,
@@ -165,7 +181,7 @@ const COPY = {
   },
 };
 
-const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)' };
+const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)', bookshelf: '#8A6A54' };
 const THEMES = ['default', 'grey', 'morandi', 'sport'];
 const PRICES = [[null, null], [69, 728], [69, 728], [69, 728], [79, 848], [109, 1208]];
 
@@ -259,7 +275,7 @@ export default function Landing() {
         <section id="overview" className="landing-band scroll-mt-16">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.overviewTitle}</h2>
-            <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+            <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
               {T.overview.map(([emoji, name, desc]) => (
                 <li key={name} className="landing-card rounded-2xl p-4">
                   <span className="text-2xl leading-none">{emoji}</span>
