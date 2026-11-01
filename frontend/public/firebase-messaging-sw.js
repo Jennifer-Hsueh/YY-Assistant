@@ -22,9 +22,13 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// 後端送的推播都帶 notification 欄位,瀏覽器在背景時 Firebase 會自動顯示;
+// 這裡只處理沒有 notification 欄位的訊息,避免同一則通知跳兩次
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
-  self.registration.showNotification(title || '通知', {
+  if (payload.notification) return;
+  const { title, body } = payload.data || {};
+  if (!title && !body) return;
+  self.registration.showNotification(title || 'YY手帳', {
     body: body || '',
     icon: '/icons/icon-192.png',
     data: payload.data,
