@@ -40,6 +40,17 @@ function getToken() {
   return localStorage.getItem('token'); // ok in a real browser; PWA-safe (not an in-artifact context)
 }
 
+// 下載檔案(例如完整備份 ZIP):帶登入資訊,回傳 { blob, filename }
+export async function downloadFile(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  if (!res.ok) throw new Error(`download failed (${res.status})`);
+  const m = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+  return { blob: await res.blob(), filename: m ? m[1] : 'download' };
+}
+
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   // 英文介面:後端錯誤訊息改回英文

@@ -19,6 +19,36 @@ export function downloadBlob(blob, filename) {
 // 檔名用英數字:部分瀏覽器會把中文檔名改成 "download"
 const stamp = () => localDate(new Date().toISOString()).replaceAll('-', '');
 
+// 從備份 ZIP 裡取出 backup.json(也接受直接選 backup.json)
+export async function readBackupFile(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const isZip = buf[0] === 0x50 && buf[1] === 0x4b;
+  if (!isZip) return JSON.parse(new TextDecoder().decode(buf));
+  const dv = new DataView(buf.buffer);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i -= 1) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('bad zip');
+  const total = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  for (let n = 0; n < total; n += 1) {
+    const method = dv.getUint16(p + 10, true);
+    const size = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nameLen));
+    if (name.split('/').pop() === 'backup.json') {
+      const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+      let bytes = buf.subarray(start, start + size);
+      if (method === 8) bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  throw new Error('backup.json not found');
+}
+
 export function downloadBackup(backup) {
   downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }), `YY-Assistant-backup-${stamp()}.json`);
 }

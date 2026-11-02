@@ -108,6 +108,7 @@ export const TERMS_EN = {
     { ol: [
       'The budget entries, events, notes, posts, and photos you record belong to you. You allow us to store, back up, and display them as needed to provide the Service.',
       'Whatever you put in a shared ledger, shared event, shared calendar, or shared anniversary can be seen by its members, and members of a shared calendar can also edit or delete its events. If you leave or delete your account, the entries you made in a shared ledger stay for the other members (shown as "deleted member"); events you created in a shared calendar are deleted along with your account.',
+      'Daily moments (a Complete plan feature) lets you upload photos from your days that only you can see. If a day has several photos, one is placed on the “Moods & Moments” page of that month’s book.',
       'The monthly bookshelf turns each month of your data into a book. When a book is finalized we keep a copy of that month’s content, so later edits or deletions of the original records do not change it (deleted photos are no longer shown). Your books are deleted when you delete your account.',
       'We back up automatically once a week and keep the 8 most recent backups to recover from system failures. These backups are not a restore service for individual data.',
       'Paid plans include data export and backup. We recommend downloading your own copy regularly.',
@@ -143,7 +144,7 @@ export const PRIVACY_EN = {
       head: ['Category', 'What', 'Why'],
       rows: [
         ['Account data', 'Email, password (stored with one-way encryption), display name, country, birthday (optional, month and day only), sign-up and last active time', 'Logging in, password resets, customer support, showing the helpline for your country'],
-        ['Your content', 'Accounts, budget entries, categories, budgets, recurring items, events, anniversaries, notes, mood, community posts, photos and comments, friends, little notes, memberships of shared ledgers, events and calendars, and monthly books (a copy of the content when finalized)', 'Providing the features of the Service'],
+        ['Your content', 'Accounts, budget entries, categories, budgets, recurring items, events, anniversaries, notes, mood, community posts, photos and comments, daily moments photos and captions, friends, little notes, memberships of shared ledgers, events and calendars, and monthly books (a copy of the content when finalized)', 'Providing the features of the Service'],
         ['Plans and payments', 'Plan, plan period, payment date, amount, last five digits of the paying account, transfer screenshot (optional), notes', 'Activating plans, confirming payments, expiry reminders, accounting and tax'],
         ['Notification settings', 'Push device token, notification switches', 'Sending event, budget, and plan notifications'],
         ['Bug reports', 'Report content, device and browser version', 'Finding and fixing problems, replying to you'],
@@ -152,13 +153,13 @@ export const PRIVACY_EN = {
         ['Connection data', 'IP address', 'Limiting login and sign-up attempts; kept only in server memory, never saved to the database'],
       ],
     } },
-    { p: 'Community photos are compressed on your device before upload, stored privately, and shown only through time-limited links to users who can see the post. We do not collect credit card numbers, show ads, or track you on other websites or apps. You need an email and password to sign up; everything else is optional.' },
+    { p: 'Community and daily moments photos are compressed on your device before upload, stored privately, and shown only through time-limited links: community photos to users who can see the post, daily moments photos only to you. You can download a backup with all your data and photos under Settings → Export / backup. We do not collect credit card numbers, show ads, or track you on other websites or apps. You need an email and password to sign up; everything else is optional.' },
     { h: '2. Third-party services' },
     { p: 'To provide the Service, the following providers store or transmit data for us and may only process it as we instruct:' },
     { table: {
       head: ['Provider', 'Purpose', 'Data location'],
       rows: [
-        ['Supabase', 'Database, community photos, weekly backups', 'Singapore'],
+        ['Supabase', 'Database, community and daily moments photos, weekly backups', 'Singapore'],
         ['Render', 'Website and server hosting', 'Singapore'],
         ['Google (Gmail) / Resend', 'Sending password reset and plan notification emails', 'United States and other regions'],
         ['Google Firebase', 'Push notifications', 'United States and other regions'],
@@ -181,7 +182,7 @@ export const PRIVACY_EN = {
     { p: 'Under Article 3 of the Personal Data Protection Act, you can ask to view, get a copy of, add to or correct, stop the collection, processing, or use of, or delete your personal data:' },
     { ul: [
       'You can view, edit, or delete most of your data in the app. Paid plans can export data in Settings.',
-      'Deleting your account: go to Settings → Delete account and confirm with your password. Your account and all data (including community photos) are removed immediately and cannot be recovered. Payment records are kept until the legal retention period ends.',
+      'Deleting your account: go to Settings → Delete account and confirm with your password. Your account and all data (including community and daily moments photos) are removed immediately and cannot be recovered. Payment records are kept until the legal retention period ends.',
       'For other requests, email happybusybeaver@gmail.com. We will respond within 15 days.',
     ] },
     { h: '7. Minors' },

@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { Download, Upload, AlertTriangle, Info } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, downloadFile } from '../lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
-import { downloadBackup, downloadLedgerExcel } from '../lib/dataTransfer';
+import { downloadBlob, downloadLedgerExcel, readBackupFile } from '../lib/dataTransfer';
 import { LockedArea } from './PlanNotice';
 
 const emptyFilters = { from: '', to: '', type: 'all', account: '', category: '' };
@@ -56,10 +56,15 @@ export default function DataTransferCard({ t }) {
       ? { ok: true, text: `${t('data_excel_done_prefix')}${count}${t('data_imported_suffix')}` }
       : { ok: false, text: t('data_excel_none') });
   });
-  const exportBackup = () => run('backup', async () => downloadBackup(await api.exportData()));
+  // 完整備份:ZIP(所有資料+日常時光與文章的照片)
+  const exportBackup = () => run('backup', async () => {
+    const { blob, filename } = await downloadFile('/data/backup');
+    downloadBlob(blob, filename);
+    setMessage({ ok: true, text: t('data_backup_done') });
+  });
 
   const restore = () => run('restore', async () => {
-    const backup = JSON.parse(await restoreFile.text());
+    const backup = await readBackupFile(restoreFile);
     if (!backup?.data) throw new Error('not a backup file');
     await api.importData({ mode: 'replace', data: backup.data });
     setRestoreFile(null);
@@ -75,6 +80,7 @@ export default function DataTransferCard({ t }) {
       <CardContent className="space-y-3 p-4">
         <p className="text-sm font-medium">{t('data_title')}</p>
 
+        <p className="text-xs text-muted-foreground">{t('data_backup_note')}</p>
         <div className="grid grid-cols-2 gap-2">
           <Button variant={excelOpen ? 'default' : 'outline'} className="col-span-2" onClick={openExcel} disabled={!!busy}>
             <Download className="mr-1.5 h-4 w-4" />{t('data_export_excel')}
@@ -136,7 +142,7 @@ export default function DataTransferCard({ t }) {
           </div>
         )}
 
-        <input ref={backupInput} type="file" accept=".json,application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setRestoreFile(f); setMessage(null); } }} />
+        <input ref={backupInput} type="file" accept=".zip,.json,application/zip,application/json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setRestoreFile(f); setMessage(null); } }} />
 
         {restoreFile && (
           <div className="space-y-2 rounded-md border border-border p-3">

@@ -27,39 +27,130 @@ async function insertChunks(table, rows) {
   return count;
 }
 
-// GET /data/export
+// 備份的全部內容(JSON):記帳、行程、紀念日、心情、絮語、文章、留言、日常時光、月刊、小紙條、好友……
+// 還原時只會還原帳本相關、行程、分類、預算、心情與絮語;其他內容是讓使用者自己保存
+async function collectBackup(uid) {
+  // 帳本:匯出自己建立的帳本與裡面所有的紀錄(共同帳本含成員記的帳)
+  const ledgers = await selectAll('yy_ledgers', uid);
+  const ids = ledgers.map((l) => l.id);
+  const byLedger = async (table) => {
+    if (!ids.length) return [];
+    const { data, error } = await supabase.from(table).select('*').in('ledger_id', ids);
+    if (error) throw error;
+    return data.map(({ user_id, ...rest }) => rest);
+  };
+  const optional = (table) => selectAll(table, uid).catch(() => []); // 資料表還沒建立時不影響匯出
+  const [accounts, categories, transactions, events, recurringMoney, recurringEvents, budgets, moods, notes,
+    anniversaries, posts, comments, moments, books, calendars] = await Promise.all([
+    byLedger('yy_accounts'),
+    selectAll('yy_categories', uid),
+    byLedger('yy_transactions'),
+    selectAll('yy_events', uid),
+    byLedger('yy_recurring_items'),
+    selectAll('yy_recurring_items', uid).then((rows) => rows.filter((r) => r.kind === 'event')),
+    byLedger('yy_budgets'),
+    selectAll('yy_moods', uid),
+    optional('yy_notes'),
+    optional('yy_anniversaries'),
+    optional('yy_posts'),
+    optional('yy_post_comments'),
+    optional('yy_moments'),
+    optional('yy_monthly_books'),
+    optional('yy_calendars'),
+  ]);
+  // 小紙條(收到與送出的)、好友名單、個人資料
+  const [{ data: inSlips }, { data: outSlips }, { data: me }] = await Promise.all([
+    supabase.from('yy_slips').select('sender_id, content, created_at, read_at').eq('recipient_id', uid),
+    supabase.from('yy_slips').select('recipient_id, content, created_at, read_at').eq('sender_id', uid),
+    supabase.from('yy_users').select('username, email, birthday_md, friend_code, created_at').eq('id', uid).maybeSingle(),
+  ]);
+  let friendIds = [];
+  try { friendIds = await require('../lib/friends').friendIds(uid); } catch { /* ignore */ }
+  const people = [...new Set([...(inSlips || []).map((r) => r.sender_id), ...(outSlips || []).map((r) => r.recipient_id), ...friendIds].filter(Boolean))];
+  const names = {};
+  for (let i = 0; i < people.length; i += CHUNK) {
+    const { data } = await supabase.from('yy_users').select('id, username').in('id', people.slice(i, i + CHUNK));
+    (data || []).forEach((u) => { names[u.id] = u.username || ''; });
+  }
+  const slips = [
+    ...(inSlips || []).map((r) => ({ direction: 'received', with: names[r.sender_id] || null, content: r.content, created_at: r.created_at, read_at: r.read_at })),
+    ...(outSlips || []).map((r) => ({ direction: 'sent', with: names[r.recipient_id] || null, content: r.content, created_at: r.created_at, read_at: r.read_at })),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  return {
+    app: 'YY手帳',
+    version: BACKUP_VERSION,
+    exported_at: new Date().toISOString(),
+    data: {
+      ledgers, accounts, categories, transactions, events, recurring_items: [...recurringMoney, ...recurringEvents], budgets, moods, notes,
+      profile: me || null,
+      anniversaries, calendars,
+      posts, comments,
+      moments, monthly_books: books,
+      slips,
+      friends: friendIds.map((id) => names[id] || null).filter(Boolean),
+    },
+  };
+}
+
+// GET /data/export(JSON;Excel 匯出用)
 async function exportData(req, res) {
   try {
-    const uid = req.user.id;
-    // 帳本:匯出自己建立的帳本與裡面所有的紀錄(共同帳本含成員記的帳)
-    const ledgers = await selectAll('yy_ledgers', uid);
-    const ids = ledgers.map((l) => l.id);
-    const byLedger = async (table) => {
-      if (!ids.length) return [];
-      const { data, error } = await supabase.from(table).select('*').in('ledger_id', ids);
-      if (error) throw error;
-      return data.map(({ user_id, ...rest }) => rest);
-    };
-    const [accounts, categories, transactions, events, recurringMoney, recurringEvents, budgets, moods, notes] = await Promise.all([
-      byLedger('yy_accounts'),
-      selectAll('yy_categories', uid),
-      byLedger('yy_transactions'),
-      selectAll('yy_events', uid),
-      byLedger('yy_recurring_items'),
-      selectAll('yy_recurring_items', uid).then((rows) => rows.filter((r) => r.kind === 'event')),
-      byLedger('yy_budgets'),
-      selectAll('yy_moods', uid),
-      // 墨箋絮語:資料表尚未建立時不影響匯出
-      selectAll('yy_notes', uid).catch(() => []),
-    ]);
-    return res.json({
-      app: 'YY手帳',
-      version: BACKUP_VERSION,
-      exported_at: new Date().toISOString(),
-      data: { ledgers, accounts, categories, transactions, events, recurring_items: [...recurringMoney, ...recurringEvents], budgets, moods, notes },
-    });
+    return res.json(await collectBackup(req.user.id));
   } catch (err) {
     console.error('[dataController.exportData]', err);
+    return res.status(500).json({ error: 'Failed to export data' });
+  }
+}
+
+// GET /data/backup:完整備份(ZIP)= backup.json + 日常時光與文章的照片
+async function backupZip(req, res) {
+  let started = false;
+  try {
+    const backup = await collectBackup(req.user.id);
+    const { BUCKET } = require('../services/communityImages');
+    const { createZip } = require('../lib/zipStream');
+    const day = (iso) => new Date(new Date(iso).getTime() + 8 * 3600e3).toISOString().slice(0, 10);
+    const stamp = day(new Date().toISOString()).replaceAll('-', '');
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="YY-Assistant-backup-${stamp}.zip"`);
+    started = true;
+    const zip = createZip(res);
+    zip.add('backup.json', JSON.stringify(backup, null, 2));
+    zip.add('README.txt', [
+      'YY手帳 完整備份',
+      '',
+      'backup.json：所有資料（記帳、行程、紀念日、心情、墨箋絮語、文章與留言、日常時光、月刊、小紙條、好友名單）。',
+      '在 App 的「設定 → 資料匯出 / 備份 → 還原備份」選這個 ZIP 檔（或裡面的 backup.json）可以還原帳本、記帳、行程、循環、分類、預算、心情與絮語。',
+      'photos/moments：日常時光的照片（日期_編號）。',
+      'photos/posts：你發過的文章裡的照片（發文日期_編號）。',
+    ].join('\r\n'));
+    const photos = [];
+    const count = {};
+    const nameFor = (folder, date, key) => {
+      const k = `${folder}/${date}`;
+      count[k] = (count[k] || 0) + 1;
+      return `photos/${folder}/${date}_${count[k]}.${key.split('.').pop()}`;
+    };
+    for (const m of [...(backup.data.moments || [])].sort((a, b) => `${a.date}${a.created_at}`.localeCompare(`${b.date}${b.created_at}`))) {
+      if (m.image_key) photos.push([nameFor('moments', m.date, m.image_key), m.image_key]);
+    }
+    for (const p of [...(backup.data.posts || [])].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+      for (const key of Array.isArray(p.images) ? p.images : []) photos.push([nameFor('posts', day(p.created_at), key), key]);
+    }
+    for (const [name, key] of photos) {
+      try {
+        const { data, error } = await supabase.storage.from(BUCKET).download(key);
+        if (error || !data) continue;
+        zip.add(name, Buffer.from(await data.arrayBuffer()));
+      } catch (e) {
+        console.error('[dataController.backupZip] photo failed', key, e.message);
+      }
+    }
+    zip.finish();
+    return undefined;
+  } catch (err) {
+    console.error('[dataController.backupZip]', err);
+    if (started) return res.end();
     return res.status(500).json({ error: 'Failed to export data' });
   }
 }
@@ -218,4 +309,4 @@ async function importData(req, res) {
   }
 }
 
-module.exports = { exportData, importData };
+module.exports = { exportData, backupZip, importData };
