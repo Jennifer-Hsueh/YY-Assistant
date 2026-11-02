@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import BrandMark, { BetaTag } from '../components/BrandMark';
 import { useBeta } from '../lib/useBeta';
 import { useLanguage } from '../context/LanguageContext';
+import LandingPlay from '../components/landing/LandingPlay';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
 // 由上往下:開頭 → 功能一覽 → 記帳與共同帳本 → 行事曆與紀念日 → 首頁(心情、記事、小紙條)→ 社群與好友 → 主題 → 方案 → 在手機上使用
@@ -21,6 +22,7 @@ const COPY = {
     betaFullLine: (limit) => `${limit} 位測試名額已滿，謝謝你的關注`,
     foundingLine: '🦫 測試期間使用滿 5 天，正式上線後送你一年全功能',
     peek: '看看能做什麼',
+    tryIt: '先玩玩看',
     homeAlt: 'YY手帳 首頁畫面',
     overviewTitle: '一本手帳，裝得下這些',
     overview: [
@@ -106,6 +108,7 @@ const COPY = {
     betaFullLine: (limit) => `All ${limit} beta spots are taken. Thanks for your interest`,
     foundingLine: '🦫 Use it on 5 days during the beta, get 1 year of full access free after launch',
     peek: 'See what it does',
+    tryIt: 'Try it',
     homeAlt: 'YY Assistant home screen',
     overviewTitle: 'Everything in one notebook',
     overview: [
@@ -263,6 +266,9 @@ export default function Landing() {
               <button type="button" onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: smooth() })} className="rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
                 {T.peek} ↓
               </button>
+              <button type="button" onClick={() => document.getElementById('play')?.scrollIntoView({ behavior: smooth() })} className="rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
+                {T.tryIt} 🦫
+              </button>
             </div>
           </div>
           <div className="relative order-1 mx-auto md:order-2">
@@ -286,6 +292,9 @@ export default function Landing() {
             </ul>
           </div>
         </section>
+
+        {/* 試玩區:不用註冊的小互動 */}
+        <LandingPlay lang={language} full={full} />
 
         {/* 各功能介紹:圖文左右交錯 */}
         {T.sections.map((s, i) => (

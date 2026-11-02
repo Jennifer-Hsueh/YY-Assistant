@@ -433,3 +433,21 @@ input[type="time"] {
   0% { opacity: 0; transform: translateY(-12px) rotate(-10deg) scale(0.7); }
   100% { opacity: 1; transform: rotate(7deg); }
 }
+
+/* 介紹頁試玩區 */
+.play-mood { width: 48px; height: 48px; border-radius: 9999px; font-size: 24px; background: rgba(255,255,255,.75); border: 1px solid rgba(51,65,92,.15); transition: transform .15s ease, box-shadow .15s ease; }
+.play-mood:hover { transform: translateY(-2px) scale(1.06); }
+.play-mood.is-on { transform: scale(1.15); box-shadow: 0 0 0 3px var(--ink); }
+.play-note { background: color-mix(in srgb, #f6d77a 32%, #fffdf6); border-radius: 6px; padding: 14px 16px; box-shadow: 0 10px 20px -14px rgba(51,65,92,.6); max-width: 300px; margin-inline: auto; text-align: left; }
+.play-btn { display: inline-block; border-radius: 10px; padding: 9px 22px; font-weight: 500; font-size: 15px; background: var(--ink); color: #fff; transition: opacity .15s; }
+.play-btn:disabled { opacity: .35; }
+.play-input { display: block; width: 100%; border-radius: 10px; border: 1px solid rgba(51,65,92,.2); background: rgba(255,255,255,.85); padding: 9px 12px; outline: none; }
+.play-input:focus { border-color: var(--ink); }
+.play-book { display: block; overflow: hidden; border-radius: 4px; background: #fff; }
+.play-page { animation: play-turn .35s ease-out; }
+@keyframes play-turn { from { opacity: 0; transform-origin: left center; filter: blur(1px); } to { opacity: 1; filter: none; } }
+@keyframes play-fly { 0% { transform: translate(0,0) rotate(0) scale(1); opacity: 1; } 30% { transform: translate(0,6px) rotate(-3deg) scale(.92); } 100% { transform: translate(180px,-160px) rotate(25deg) scale(.3); opacity: 0; } }
+.play-fly { animation: play-fly 1.3s ease-in forwards; }
+@keyframes play-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.play-bounce { animation: play-bounce 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .play-fly, .play-bounce, .play-page { animation: none; } }
