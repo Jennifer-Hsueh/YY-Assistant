@@ -95,6 +95,20 @@ async function listPosts(req, res) {
   try {
     const { board, visibility, before, scope } = req.query;
     let q = supabase.from('yy_posts').select('*').order('created_at', { ascending: false }).limit(PAGE_SIZE);
+    if (board === 'reacted') {
+      // 我按過小河狸/讚的文章(微光拾憶「按過的」):只列出現在還看得到的
+      const { data: rs, error: rErr } = await supabase.from('yy_post_reactions').select('post_id').eq('user_id', req.user.id).order('created_at', { ascending: false }).limit(500);
+      if (rErr) throw rErr;
+      const ids = (rs || []).map((r) => r.post_id);
+      if (!ids.length) return res.json({ posts: [], has_more: false });
+      q = q.in('id', ids);
+      if (before) q = q.lt('created_at', before);
+      const { data, error } = await q;
+      if (error) throw error;
+      const visible = [];
+      for (const p of data || []) if (p.visibility !== 'private' && (await canRead(p, req.user.id, false))) visible.push(p);
+      return res.json({ posts: await decorate(visible, req.user.id), has_more: (data || []).length === PAGE_SIZE });
+    }
     if (board === 'mine') {
       q = q.eq('user_id', req.user.id);
       if (VISIBILITIES.includes(visibility)) q = q.eq('visibility', visibility);

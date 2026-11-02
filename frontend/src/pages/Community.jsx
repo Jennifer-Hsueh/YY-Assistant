@@ -170,8 +170,8 @@ export default function Community() {
     if (!append) setLoading(true);
     setError('');
     try {
-      const params = { board: tab };
-      if (tab === 'mine' && mineFilter !== 'all') params.visibility = mineFilter;
+      const params = { board: tab === 'mine' && mineFilter === 'reacted' ? 'reacted' : tab };
+      if (tab === 'mine' && mineFilter !== 'all' && mineFilter !== 'reacted') params.visibility = mineFilter;
       if (tab !== 'mine' && feedScope === 'friends') params.scope = 'friends';
       if (append && posts.length) params.before = posts[posts.length - 1].created_at;
       const { posts: rows, has_more } = await api.listPosts(params);
@@ -406,8 +406,8 @@ export default function Community() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 flex gap-1.5">
-                  {[['all', 'cm_filter_all'], ['private', 'cm_private'], ['friends', 'cm_friends_only'], ['public', 'cm_stat_public']].map(([k, label]) => (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {[['all', 'cm_filter_all'], ['private', 'cm_private'], ['friends', 'cm_friends_only'], ['public', 'cm_stat_public'], ['reacted', 'cm_reacted']].map(([k, label]) => (
                     <button key={k} type="button" onClick={() => setMineFilter(k)} className={pillClass(mineFilter === k)}>{t(label)}</button>
                   ))}
                 </div>
@@ -450,7 +450,7 @@ export default function Community() {
           {loading ? (
             <p className="text-sm text-muted-foreground">{t('loading')}</p>
           ) : posts.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t('cm_empty')}</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">{tab === 'mine' && mineFilter === 'reacted' ? t('cm_reacted_empty') : t('cm_empty')}</p>
           ) : (
             <div className="space-y-3">
               {posts.map((p) => (

@@ -1,7 +1,4 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { usePlan } from '../context/PlanContext';
-import { askUpgrade } from '../components/PlanNotice';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,10 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
-import BudgetBars from '../components/BudgetBars';
 import { Button } from '../components/ui/button';
-import { X } from 'lucide-react';
-import { monthTotals } from '../lib/budget';
 
 const TRANSFER = '轉帳';
 const BALANCE_ADJUST = '餘額調整'; // 帳戶餘額調整,不算收支
@@ -52,14 +46,6 @@ export default function LedgerStats() {
     groupBy: 'category',
   });
   const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
-
-  // 每月預算
-  const { can } = usePlan();
-  const [budgets, setBudgets] = useState([]);
-  useEffect(() => {
-    api.listBudgets().then(({ budgets }) => setBudgets(budgets)).catch((err) => console.error(err));
-  }, []);
-
 
   useEffect(() => {
     async function load() {
@@ -183,24 +169,6 @@ export default function LedgerStats() {
             </CardContent>
           </Card>
 
-          <Card className="mb-4">
-            <CardContent className="p-4">
-              <p className="mb-3 flex items-center text-sm font-medium">{t('budget_title')} <span className="ml-1 flex-1 font-amount text-xs font-normal text-muted-foreground">{month}</span><Link to="/accounts?budget=1" className="text-xs font-normal text-muted-foreground underline">{t('budget_go_set')}</Link></p>
-              <div>
-                <div>
-                  {budgets.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t('budget_empty')}</p>
-                  ) : (
-                    <div className="flex gap-2">
-                      <div className="min-w-0 flex-1">
-                        <BudgetBars budgets={budgets} totals={monthTotals(transactions, accounts, rates, month)} t={t} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardContent className="p-4">

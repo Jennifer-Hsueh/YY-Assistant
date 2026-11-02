@@ -23,6 +23,7 @@ export default function SlipPopup() {
   const [error, setError] = useState('');
   const shown = useRef(new Set()); // 已經跳出過的紙條(點旁邊關掉後不會一直再跳)
 
+  const changed = () => window.dispatchEvent(new Event('yy:slips-changed'));
   async function show(force = false) {
     try {
       const d = await api.listSlips();
@@ -30,6 +31,9 @@ export default function SlipPopup() {
       setSlipUnread(d.received.filter((s) => !s.read_at && !s.hidden).length);
       if (!fresh.length) return;
       fresh.forEach((s) => shown.current.add(s.id));
+      // 跳出來就算看過了(不用再按「收下」)
+      setSlipUnread(0);
+      api.readSlips(fresh.map((s) => s.id)).then(changed).catch(() => {});
       setPopup([...fresh].reverse());
       setIdx(0);
       setReply(null);
@@ -49,19 +53,12 @@ export default function SlipPopup() {
     return () => window.removeEventListener('yy:slip-popup', onOpen);
   }, []);
 
-  const changed = () => window.dispatchEvent(new Event('yy:slips-changed'));
-  function markRead(id) {
-    api.readSlips([id]).then(changed).catch(() => {});
-  }
   function close() {
     setPopup([]);
     setReply(null);
     setError('');
   }
   function next() {
-    const cur = popup[idx];
-    markRead(cur.id);
-    setSlipUnread(Math.max(0, unreadCount - 1));
     setReply(null);
     setSent(false);
     setError('');
@@ -127,7 +124,7 @@ export default function SlipPopup() {
           </form>
         ) : (
           <div className="mt-4 flex gap-2">
-            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => { markRead(pop.id); setReply(''); }}>{t('slip_reply')}</Button>}
+            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => setReply('')}>{t('slip_reply')}</Button>}
             <Button className="flex-1" onClick={next}>{idx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
           </div>
         )}

@@ -19,7 +19,7 @@ export default function Sidebar() {
   const annStatus = useAnnStatus();
   const beta = useBeta();
   const slipUnread = useSlipUnread();
-  const annTotal = annStatus.total + slipUnread;
+  const annTotal = annStatus.total;
   useEffect(() => { refreshSlipStatus(); }, [pathname]);
   const groupOf = (path) => navTabs.find((tb) => tb.children && isTabActive(tb, path))?.to || null;
   const [openGroup, setOpenGroup] = useState(() => groupOf(pathname));

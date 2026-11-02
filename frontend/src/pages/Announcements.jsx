@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Megaphone, UserPlus, CalendarPlus, BookPlus, StickyNote } from 'lucide-react';
+import { Megaphone, UserPlus, CalendarPlus, BookPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
-import { useSlipUnread } from '../lib/slipStatus';
-import { openSlipPopup } from '../components/SlipPopup';
 import { markAnnouncementsSeen, refreshAnnStatus, useAnnStatus } from '../lib/annStatus';
 
 export default function Announcements() {
   const { t } = useLanguage();
   const { friendRequests, friendAccepted, invitesCal, invitesLedger } = useAnnStatus();
-  const slipUnread = useSlipUnread();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +40,6 @@ export default function Announcements() {
         (friendRequests > 0 || friendAccepted > 0) && { key: 'f', to: '/community/friends', Icon: UserPlus, text: [friendRequests > 0 && t('ann_friend_requests').replace('{n}', friendRequests), friendAccepted > 0 && t('ann_friend_accepted').replace('{n}', friendAccepted)].filter(Boolean).join('；'), go: t('ann_go_friends') },
         invitesCal > 0 && { key: 'c', to: '/calendar', Icon: CalendarPlus, text: t('ann_invites_cal').replace('{n}', invitesCal), go: t('ann_go_look') },
         invitesLedger > 0 && { key: 'l', to: '/transactions', Icon: BookPlus, text: t('ann_invites_ledger').replace('{n}', invitesLedger), go: t('ann_go_look') },
-        slipUnread > 0 && { key: 's', to: null, Icon: StickyNote, text: t('ann_slips').replace('{n}', slipUnread), go: t('ann_go_look') },
       ].filter(Boolean).map(({ key, to, Icon, text, go }) => {
         const inner = (
           <>
@@ -53,7 +49,7 @@ export default function Announcements() {
           </>
         );
         const cls = 'mb-3 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left shadow-sm hover:bg-muted/50';
-        return to ? <Link key={key} to={to} className={cls}>{inner}</Link> : <button key={key} type="button" onClick={openSlipPopup} className={cls}>{inner}</button>;
+        return <Link key={key} to={to} className={cls}>{inner}</Link>;
       })}
 
       {loading ? (
