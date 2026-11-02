@@ -71,6 +71,13 @@ const SECTIONS = {
       { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
       '右上角可以換書櫃樣式；有兩年以上的書時，可以切換年份。',
     ] },
+    { title: '日常時光（完整版）', items: [
+      '貼上生活裡的小照片，只有你自己看得到。網頁版在左側選單，手機版點右上角的相片圖示。',
+      '選日期、寫一句話（可不填），按「選照片」，一次可以選好幾張；同一天最多 9 張。',
+      '同一天有好幾張時，會隨機挑一張當代表。點照片可以看大圖、切換同一天的其他照片或刪除。',
+      '每個月的月刊「心情與時光」頁，有照片的日子會放上那天的照片，沒有照片就放心情圖示。',
+      '日常時光是完整版的功能；換成其他方案後，已經貼的照片還看得到，但不能再新增。',
+    ] },
     { title: '好友', items: [
       '到「社群 → 好友」查看自己的好友碼，可以複製、出示 QR Code 或分享邀請連結。',
       '輸入對方的好友碼送出邀請，對方接受後就成為好友。',
@@ -80,8 +87,8 @@ const SECTIONS = {
     ] },
     { title: '小紙條', items: [
       '在首頁的小紙條卡片按「寫一張」，可以傳給好友，以及共同帳本、共同行程、共同紀念日的成員，每張最多 25 個字。',
-      '收到小紙條時會收到推播，打開首頁會跳出紙條；還沒看的紙條會在卡片上方貼一張便利貼，選單的「首頁」也會出現紅點。',
-      '點開紙條可以「回一張」、「撕掉」或「封鎖」對方。紙條會一直保留，直到你撕掉為止。',
+      '收到小紙條時會收到推播，不管在哪一頁都會直接跳出紙條，按「收下」才算看過；還沒看的紙條會算在右上角小鈴噹的數字裡，選單的「首頁」也會出現數字。',
+      '跳出來的紙條可以直接「回一張」。首頁卡片上點開紙條，可以回覆、「收起來」（之後在「收起來」分頁可以拿出來）、「撕掉」或「封鎖」對方。紙條會一直保留，直到你撕掉為止。',
       '送出的紙條在對方還沒看之前可以收回。',
     ] },
     { title: '社群', items: [
@@ -183,6 +190,13 @@ const SECTIONS = {
       { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
       'Use the icons at the top right to change the shelf style, and switch years once you have books from more than one year.',
     ] },
+    { title: 'Daily moments (Complete plan)', items: [
+      'Keep little photos from your days, just for you. On the web it’s in the left menu; on mobile, tap the photos icon at the top right.',
+      'Pick a date, add a line if you like, then tap Choose photos. You can pick several at once, up to 9 per day.',
+      'If a day has several photos, one is picked at random. Tap a photo to see it large, browse that day’s other photos, or delete it.',
+      'In each monthly book, the “Moods & Moments” page shows that day’s photo, or your mood when there is no photo.',
+      'Daily moments is part of the Complete plan. On other plans you can still see your photos, but not add new ones.',
+    ] },
     { title: 'Friends', items: [
       'Go to Community → Friends to see your friend code. Copy it, show a QR code or share an invite link.',
       'Enter someone’s friend code to send a request; you become friends once they accept.',
@@ -192,8 +206,8 @@ const SECTIONS = {
     ] },
     { title: 'Little notes', items: [
       'Tap Write one on the Little notes card on Home to send a note of up to 25 characters to friends or people you share a ledger, event or anniversary with.',
-      'You get a push notification for new notes, and they pop up when you open Home. Unread notes put a sticky note on the card and a red dot on Home in the menu.',
-      'Tap a note to Reply, Tear off, or Block the sender. Notes stay until you tear them off.',
+      'You get a push notification for new notes, and they pop up on whatever page you are on. They count as read once you tap Keep it; unread notes are counted on the bell and on Home in the menu.',
+      'Reply right from the pop-up. On the Home card, tap a note to Reply, Put away (take it out later from the Put away tab), Tear off, or Block the sender. Notes stay until you tear them off.',
       'You can take back a note you sent until the other person reads it.',
     ] },
     { title: 'Community', items: [

@@ -162,15 +162,30 @@ async function postsOf(uid, from, to) {
   }));
 }
 
+// 日常時光:每天挑一張(依日期固定挑,草稿重新整理也不會換)
+async function photosOf(uid, ym) {
+  const { data, error } = await supabase.from('yy_moments').select('id, date, image_key').eq('user_id', uid)
+    .gte('date', `${ym}-01`).lt('date', `${addMonths(ym, 1)}-01`).order('id');
+  if (error) { console.error('[monthlyBook.photosOf]', error.message); return {}; }
+  const byDay = {};
+  for (const r of data || []) (byDay[r.date] ||= []).push(r.image_key);
+  const out = {};
+  for (const [date, keys] of Object.entries(byDay)) {
+    const seed = [...date].reduce((s, ch) => s * 31 + ch.charCodeAt(0), 7);
+    out[date] = keys[Math.abs(seed) % keys.length];
+  }
+  return out;
+}
+
 // 整理一個月的內容(草稿每次即時整理;定稿時存成快照)
 async function buildBookData(uid, ym) {
   const from = monthStart(ym).toISOString();
   const to = monthStart(addMonths(ym, 1)).toISOString();
-  const [money, events, annivs, moods, notes, posts] = await Promise.all([
-    moneyOf(uid, from, to), eventsOf(uid, from, to), annivsOf(uid, ym), moodsOf(uid, ym), notesOf(uid, from, to), postsOf(uid, from, to),
+  const [money, events, annivs, moods, notes, posts, photos] = await Promise.all([
+    moneyOf(uid, from, to), eventsOf(uid, from, to), annivsOf(uid, ym), moodsOf(uid, ym), notesOf(uid, from, to), postsOf(uid, from, to), photosOf(uid, ym),
   ]);
   return {
-    ym, built_at: new Date().toISOString(), money, events, annivs, moods, notes, posts,
+    ym, built_at: new Date().toISOString(), money, events, annivs, moods, notes, posts, photos,
     counts: { events: events.length, annivs: annivs.length, words: notes.length + posts.length, tx: money.tx_count },
   };
 }

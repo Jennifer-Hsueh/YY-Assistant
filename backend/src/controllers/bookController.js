@@ -42,7 +42,11 @@ async function get(req, res) {
     if (!row) return res.status(404).json({ error: '找不到這本書' });
     const data = row.status === 'final' && row.data ? row.data : await B.buildBookData(req.user.id, ym);
     const posts = await signPosts(data.posts || []);
-    return res.json({ book: { ...brief(row), cover: row.cover || null, default_cover: B.defaultCover(ym), data: { ...data, posts } } });
+    // 日常時光的照片:換成暫時網址(縮圖);照片已刪掉的那天就顯示心情
+    const photoDays = Object.entries(data.photos || {});
+    const signedPhotos = photoDays.length ? await signPosts(photoDays.map(([date, key]) => ({ date, images: [key] }))) : [];
+    const photo_urls = Object.fromEntries(signedPhotos.filter((p) => p.images[0]).map((p) => [p.date, p.images[0].thumb]));
+    return res.json({ book: { ...brief(row), cover: row.cover || null, default_cover: B.defaultCover(ym), data: { ...data, posts, photo_urls } } });
   } catch (err) {
     return fail(res, 'get', err, '讀取這本書失敗');
   }

@@ -7,7 +7,8 @@
 // - 管理員、測試員不受限制
 // - 沒有權限的資料仍可讀取,只是不能新增或修改
 
-const FEATURES = ['ledger', 'calendar', 'ledger_recurring', 'calendar_recurring', 'notifications', 'mood', 'export', 'community'];
+// moments(日常時光)只有完整版(與試用期間)
+const FEATURES = ['ledger', 'calendar', 'ledger_recurring', 'calendar_recurring', 'notifications', 'mood', 'export', 'community', 'moments'];
 
 const PLANS = ['basic', 'adv_a', 'adv_b', 'adv_c', 'full'];
 const PAID_PLANS = ['adv_a', 'adv_b', 'adv_c', 'full'];

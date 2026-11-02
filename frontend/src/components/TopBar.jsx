@@ -1,5 +1,5 @@
 import { ROUND_SRCSET } from './BrandMark';
-import { LogOut, Languages, LibraryBig } from 'lucide-react';
+import { LogOut, Languages, LibraryBig, Images } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,6 +20,7 @@ export default function TopBar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/moments" aria-label={t('nav_moments')} className="flex items-center text-muted-foreground"><Images className="h-5 w-5" /></Link>
           <Link to="/bookshelf" aria-label={t('nav_bookshelf')} className="flex items-center text-muted-foreground"><LibraryBig className="h-5 w-5" /></Link>
           <AnnouncementBell />
           <button

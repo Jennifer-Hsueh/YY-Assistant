@@ -54,6 +54,7 @@ const Notes = page(() => import('./pages/Notes'));
 const Community = page(() => import('./pages/Community'));
 const Settings = page(() => import('./pages/Settings'));
 const Bookshelf = page(() => import('./pages/Bookshelf'));
+const Moments = page(() => import('./pages/Moments'));
 
 function ProtectedLayout({ children }) {
   const { user } = useAuth();
@@ -147,6 +148,7 @@ export default function App() {
             <Route path="/community/:board" element={<ProtectedLayout><Community /></ProtectedLayout>} />
             <Route path="/notes" element={<ProtectedLayout><Notes /></ProtectedLayout>} />
             <Route path="/bookshelf" element={<ProtectedLayout><Bookshelf /></ProtectedLayout>} />
+            <Route path="/moments" element={<ProtectedLayout><Moments /></ProtectedLayout>} />
             <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
             <Route path="/help" element={<ProtectedLayout><Help /></ProtectedLayout>} />
 

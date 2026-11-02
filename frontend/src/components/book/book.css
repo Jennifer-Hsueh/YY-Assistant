@@ -68,3 +68,9 @@
   writing-mode: vertical-rl; color: #fff; font-family: "EB Garamond", serif; font-weight: 700; letter-spacing: .04em; font-variant-numeric: lining-nums;
   text-shadow: 0 0 2px rgba(0, 0, 0, .45); white-space: nowrap; line-height: 1; }
 .bk-spine.bk-draft img { opacity: .75; }
+
+/* 心情頁:日常時光的照片放在當天格子裡 */
+.bk-photo { position: relative; padding: 0 !important; overflow: hidden; }
+.bk-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-photo .bk-d { position: absolute; left: 3px; top: 2px; z-index: 1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.bk-photo-mood { position: absolute; right: 2px; bottom: 1px; z-index: 1; font-size: 13px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }

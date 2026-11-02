@@ -575,3 +575,15 @@ update yy_users set friends_seen_at = now() where friends_seen_at is null;
 
 -- 小紙條:收件人可以把紙條收起來(不刪除)(2026-11-02)
 alter table yy_slips add column if not exists recipient_hidden boolean not null default false;
+
+-- 日常時光:自己上傳的生活照片,只有自己看得到;月刊心情頁每天挑一張(2026-11-02)
+create table if not exists yy_moments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references yy_users(id) on delete cascade,
+  date date not null,
+  image_key text not null,
+  caption text check (caption is null or char_length(caption) <= 60),
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_moments_user_date on yy_moments (user_id, date);
+alter table yy_moments enable row level security;

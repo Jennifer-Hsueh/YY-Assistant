@@ -6,7 +6,7 @@ import { moodEmoji } from '../../lib/moods';
 
 const T = {
   zh: {
-    overview: '本月概況', calendar: '行事曆', mood: '心情月曆', notes: '墨箋絮語', posts: '微光拾憶', beaver: '海狸的話',
+    overview: '本月概況', calendar: '行事曆', mood: '心情與時光', notes: '墨箋絮語', posts: '微光拾憶', beaver: '海狸的話',
     income: '收入', expense: '支出', balance: '結餘', top: '支出前五名', ledgers: '帳本', shared: '共同',
     events: '行程', annivs: '紀念日', words: '寫下的話', none: '（未分類）', foreign: '外幣',
     wd: ['日', '一', '二', '三', '四', '五', '六'], most: '這個月最常出現', days: '天',
@@ -14,7 +14,7 @@ const T = {
     say: '我想對這個月說', cont: '（續）', more: (n) => `+${n}`,
   },
   en: {
-    overview: 'This Month', calendar: 'Calendar', mood: 'Mood', notes: 'Ink Notes', posts: 'Glimmers', beaver: 'From Beaver',
+    overview: 'This Month', calendar: 'Calendar', mood: 'Moods & Moments', notes: 'Ink Notes', posts: 'Glimmers', beaver: 'From Beaver',
     income: 'Income', expense: 'Expense', balance: 'Balance', top: 'Top 5 spending', ledgers: 'Ledgers', shared: 'Shared',
     events: 'Events', annivs: 'Anniversaries', words: 'Words', none: '(Uncategorized)', foreign: 'Foreign currency',
     wd: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], most: 'Most frequent', days: 'd',
@@ -123,7 +123,9 @@ function Mood({ data, tx }) {
       <div className="bk-cal">
         {tx.wd.map((w, i) => <div key={i} className="bk-wd">{w}</div>)}
         {cells.map((c, i) => (c
-          ? <div key={i} style={{ minHeight: h }}><span className="bk-d">{c.day}</span><div className="bk-mood">{moodEmoji(data.moods?.[c.date]) || ''}</div></div>
+          ? (data.photo_urls?.[c.date]
+            ? <div key={i} className="bk-photo" style={{ minHeight: h, height: h }}><img src={data.photo_urls[c.date]} alt="" crossOrigin="anonymous" /><span className="bk-d">{c.day}</span>{data.moods?.[c.date] && <span className="bk-photo-mood">{moodEmoji(data.moods[c.date])}</span>}</div>
+            : <div key={i} style={{ minHeight: h }}><span className="bk-d">{c.day}</span><div className="bk-mood">{moodEmoji(data.moods?.[c.date]) || ''}</div></div>)
           : <div key={i} className="bk-off" style={{ minHeight: h }} />))}
       </div>
       {rank.length ? (
