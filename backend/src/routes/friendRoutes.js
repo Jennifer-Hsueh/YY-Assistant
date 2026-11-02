@@ -9,6 +9,7 @@ const codeLimit = rateLimit([{ name: 'friend-code', windowMs: 10 * 60 * 1000, ma
 const router = express.Router();
 router.use(requireAuth);
 router.get('/', c.overview);
+router.post('/seen', c.seen);
 router.post('/code', c.regenerateCode);
 router.get('/lookup', codeLimit, c.lookup);
 router.post('/requests', codeLimit, c.request);

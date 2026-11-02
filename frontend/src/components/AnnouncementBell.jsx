@@ -25,12 +25,12 @@ export function useAnnRefreshOnNavigate() {
 // 手機版頂部列用的鈴鐺
 export default function AnnouncementBell() {
   const { t } = useLanguage();
-  const { unread } = useAnnStatus();
+  const { total } = useAnnStatus();
   useAnnRefreshOnNavigate();
   return (
-    <Link to="/announcements" aria-label={t('nav_announcements')} className="relative flex items-center text-muted-foreground">
-      <Bell className="h-5 w-5" />
-      <UnreadBadge count={unread} className="absolute -right-2 -top-1.5" />
+    <Link to="/announcements" aria-label={t('nav_announcements')} className="relative flex items-center text-muted-foreground" style={total ? { color: 'var(--expense)' } : undefined}>
+      <Bell className="h-5 w-5" fill={total ? 'currentColor' : 'none'} />
+      <UnreadBadge count={total} className="absolute -right-2 -top-1.5" />
     </Link>
   );
 }

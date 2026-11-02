@@ -16,7 +16,7 @@ export default function Sidebar() {
   const { language, toggleLanguage, t } = useLanguage();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { unread } = useAnnStatus();
+  const { total: annTotal } = useAnnStatus();
   const beta = useBeta();
   const slipUnread = useSlipUnread();
   useEffect(() => { refreshSlipStatus(); }, [pathname]);
@@ -120,9 +120,9 @@ export default function Sidebar() {
                 backgroundColor: isActive ? 'var(--muted)' : undefined,
               })}
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5" style={annTotal ? { color: 'var(--expense)' } : undefined} fill={annTotal ? 'currentColor' : 'none'} />
               <span className="flex-1">{t('nav_announcements')}</span>
-              <UnreadBadge count={unread} />
+              <UnreadBadge count={annTotal} />
             </NavLink>
           </li>
           <li>

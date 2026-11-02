@@ -568,3 +568,7 @@ create index if not exists idx_events_calendar on yy_events (calendar_id, start_
 
 -- 推播裝置名稱(例如 Windows・Chrome、Android・App),測試通知時顯示(2026-11-01)
 alter table yy_push_subscriptions add column if not exists device text;
+
+-- 好友通知(2026-11-02):看過好友頁的時間,鈴鐺顯示「之後有人接受了我的好友邀請」
+alter table yy_users add column if not exists friends_seen_at timestamptz;
+update yy_users set friends_seen_at = now() where friends_seen_at is null;

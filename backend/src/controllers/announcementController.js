@@ -23,6 +23,22 @@ async function listAnnouncements(req, res) {
 // 鈴鐺未讀數與重要公告橫幅。已讀時間存在 yy_users,所以各裝置同步。
 // - unread:比「看過公告頁」時間新的公告數
 // - banner:最新一則「重要」公告,且比「看過公告頁」與「按 ✕ 關閉」兩個時間都新
+// 好友通知:等我回覆的好友邀請、上次看好友頁之後接受我邀請的人(欄位還沒建立時回 0)
+async function friendNotices(uid) {
+  try {
+    const { count: requests } = await supabase.from('yy_friendships').select('id', { count: 'exact', head: true })
+      .eq('addressee_id', uid).eq('status', 'pending');
+    const { data: me } = await supabase.from('yy_users').select('friends_seen_at').eq('id', uid).maybeSingle();
+    let q = supabase.from('yy_friendships').select('id', { count: 'exact', head: true }).eq('requester_id', uid).eq('status', 'accepted');
+    if (me?.friends_seen_at) q = q.gt('accepted_at', me.friends_seen_at);
+    const { count: accepted } = await q;
+    return { requests: requests || 0, accepted: me?.friends_seen_at ? (accepted || 0) : 0 };
+  } catch (err) {
+    console.error('[announcementController.friendNotices]', err.message);
+    return { requests: 0, accepted: 0 };
+  }
+}
+
 async function getStatus(req, res) {
   try {
     const { data: user, error: userErr } = await supabase
@@ -58,7 +74,7 @@ async function getStatus(req, res) {
     const { data: banners, error: bannerErr } = await bannerQuery;
     if (bannerErr) throw bannerErr;
 
-    return res.json({ unread: count || 0, banner: banners?.[0] || null });
+    return res.json({ unread: count || 0, banner: banners?.[0] || null, friends: await friendNotices(req.user.id) });
   } catch (err) {
     console.error('[announcementController.getStatus]', err);
     return res.status(500).json({ error: 'Failed to fetch announcement status' });

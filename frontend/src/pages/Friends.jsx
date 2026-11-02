@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { Copy, Check, QrCode, Share2, MoreHorizontal } from 'lucide-react';
+import { Copy, Check, QrCode, Share2, MoreHorizontal, BookOpenText, X } from 'lucide-react';
+import { markFriendsSeen, refreshAnnStatus } from '../lib/annStatus';
 import { api } from '../lib/api';
 import { isNative } from '../lib/platform';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,7 +35,7 @@ const TEXT = {
     reportHint: '檢舉後會同時封鎖對方，管理員會查看。',
     reportPlaceholder: '請簡單說明原因（選填）',
     confirm: '確定', cancel: '取消',
-    unnamed: '未設定稱呼',
+    unnamed: '未設定稱呼', posts: '看他的文章',
     error: '讀取失敗，請稍後再試',
   },
   en: {
@@ -59,7 +60,7 @@ const TEXT = {
     reportHint: 'Reporting also blocks this person. An admin will review it.',
     reportPlaceholder: 'Tell us briefly what happened (optional)',
     confirm: 'Confirm', cancel: 'Cancel',
-    unnamed: 'No name',
+    unnamed: 'No name', posts: 'See their posts',
     error: 'Could not load. Please try again later.',
   },
 };
@@ -103,6 +104,56 @@ function Person({ name, sub, children, onClick }) {
       )}
       {children}
     </li>
+  );
+}
+
+// 點好友的名字:直接寫一張小紙條給他
+const SLIP_MAX = 25;
+const slipLen = (s) => [...s].length;
+function SlipPopup({ f, onClose }) {
+  const { t } = useLanguage();
+  const T = useFriendText();
+  const [content, setContent] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  async function send(e) {
+    e.preventDefault();
+    const text = content.trim();
+    if (!text || slipLen(text) > SLIP_MAX) return;
+    setBusy(true); setError('');
+    try {
+      await api.sendSlip({ to: f.id, content: text });
+      setDone(true);
+      setTimeout(onClose, 1200);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 md:items-center" onClick={onClose}>
+      <form onSubmit={send} className="w-full max-w-sm space-y-3 rounded-xl bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">📝 {t('slip_to').replace('{n}', f.name || T.unnamed)}</p>
+          <button type="button" aria-label={t('cancel')} onClick={onClose} className="text-muted-foreground"><X className="h-4 w-4" /></button>
+        </div>
+        {done ? (
+          <p className="py-2 text-center text-sm" style={{ color: 'var(--ink)' }}>{t('slip_sent_ok')}</p>
+        ) : (
+          <>
+            <div className="relative">
+              <input autoFocus value={content} onChange={(e) => setContent([...e.target.value].slice(0, SLIP_MAX).join(''))}
+                placeholder={t('slip_placeholder')} className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 pr-12 text-sm" />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">{slipLen(content)}/{SLIP_MAX}</span>
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy || !content.trim()}>{t('slip_send')}</Button>
+          </>
+        )}
+      </form>
+    </div>
   );
 }
 
@@ -170,6 +221,9 @@ export default function Friends({ onOpen }) {
   const [showQr, setShowQr] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [showBlocked, setShowBlocked] = useState(false);
+  const [slipTo, setSlipTo] = useState(null);
+  // 進到好友頁:鈴鐺上「接受了你的邀請」歸零
+  useEffect(() => { markFriendsSeen(); }, []);
 
   const load = () => api.getFriends().then((d) => { setData(d); setError(''); }).catch(() => setError(T.error));
   useEffect(() => { load(); }, []);
@@ -184,7 +238,7 @@ export default function Friends({ onOpen }) {
 
   async function act(fn, after) {
     setBusy(true); setError(''); setMsg('');
-    try { const r = await fn(); if (after) after(r); await load(); } catch (e) { setError(e.message); } finally { setBusy(false); }
+    try { const r = await fn(); if (after) after(r); await load(); refreshAnnStatus(); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
 
   async function copy() {
@@ -263,7 +317,10 @@ export default function Friends({ onOpen }) {
         {data.friends.length === 0 ? <p className="text-sm text-muted-foreground">{T.none}</p> : (
           <ul className="divide-y divide-border">
             {data.friends.map((f) => (
-              <Person key={f.id} name={f.name} sub={T.since(fmtDay(f.since))} onClick={onOpen ? () => onOpen(f) : undefined}>
+              <Person key={f.id} name={f.name} sub={T.since(fmtDay(f.since))} onClick={() => setSlipTo(f)}>
+                {onOpen && (
+                  <button type="button" aria-label={T.posts} title={T.posts} onClick={() => onOpen(f)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><BookOpenText className="h-4 w-4" /></button>
+                )}
                 <FriendActions f={f} onDone={load} setError={setError} />
               </Person>
             ))}
@@ -282,6 +339,8 @@ export default function Friends({ onOpen }) {
           </ul>
         </Section>
       )}
+
+      {slipTo && <SlipPopup f={slipTo} onClose={() => setSlipTo(null)} />}
 
       {data.blocked.length > 0 && (
         <div className="mb-3 px-1">

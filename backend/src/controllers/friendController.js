@@ -235,4 +235,16 @@ async function report(req, res) {
   }
 }
 
-module.exports = { overview, regenerateCode, lookup, request, accept, remove, block, unblock, report };
+// POST /friends/seen:看過好友頁,鈴鐺上「接受了你的邀請」的數字歸零
+async function seen(req, res) {
+  try {
+    const { error } = await supabase.from('yy_users').update({ friends_seen_at: new Date().toISOString() }).eq('id', req.user.id);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[friendController.seen]', err);
+    return res.status(500).json({ error: 'Failed' });
+  }
+}
+
+module.exports = { seen, overview, regenerateCode, lookup, request, accept, remove, block, unblock, report };

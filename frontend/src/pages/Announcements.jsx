@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
-import { markAnnouncementsSeen } from '../lib/annStatus';
+import { markAnnouncementsSeen, refreshAnnStatus, useAnnStatus } from '../lib/annStatus';
 
 export default function Announcements() {
   const { t } = useLanguage();
+  const { friendRequests, friendAccepted } = useAnnStatus();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
+        await refreshAnnStatus(); // 先抓好友通知的數字(直接開這頁時也看得到)
         const { announcements } = await api.listAnnouncements();
         setAnnouncements(announcements);
         markAnnouncementsSeen(); // 打開公告頁就算看過:鈴鐺紅點與重要橫幅一起消失
@@ -31,6 +34,17 @@ export default function Announcements() {
         <Megaphone className="h-5 w-5 md:hidden" style={{ color: 'var(--module-recurring)' }} />
         {t('nav_announcements')}
       </h1>
+
+      {/* 好友通知:點了到好友頁 */}
+      {(friendRequests > 0 || friendAccepted > 0) && (
+        <Link to="/community/friends" className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm hover:bg-muted/50">
+          <UserPlus className="h-5 w-5 shrink-0" style={{ color: 'var(--expense)' }} />
+          <span className="min-w-0 flex-1 text-sm">
+            {[friendRequests > 0 && t('ann_friend_requests').replace('{n}', friendRequests), friendAccepted > 0 && t('ann_friend_accepted').replace('{n}', friendAccepted)].filter(Boolean).join('；')}
+          </span>
+          <span className="text-xs text-muted-foreground">{t('ann_go_friends')}</span>
+        </Link>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
