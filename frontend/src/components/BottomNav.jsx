@@ -4,11 +4,13 @@ import { useEffect } from 'react';
 import { navTabs, isTabActive } from './navTabs';
 import { UnreadBadge } from './AnnouncementBell';
 import { useSlipUnread, refreshSlipStatus } from '../lib/slipStatus';
+import { useAnnStatus, navBadge } from '../lib/annStatus';
 
 export default function BottomNav() {
   const { t } = useLanguage();
   const { pathname } = useLocation();
   const slipUnread = useSlipUnread();
+  const annStatus = useAnnStatus();
   useEffect(() => { refreshSlipStatus(); }, [pathname]);
 
   return (
@@ -29,7 +31,7 @@ export default function BottomNav() {
               >
                 <span className="relative">
                   <Icon className="h-6 w-6" />
-                  {to === '/' && <UnreadBadge count={slipUnread} className="absolute -right-2.5 -top-1" />}
+                  <UnreadBadge count={navBadge(to, annStatus, slipUnread)} className="absolute -right-2.5 -top-1" />
                 </span>
                 {t(key)}
               </NavLink>

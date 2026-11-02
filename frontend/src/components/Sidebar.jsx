@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { navTabs, isTabActive } from './navTabs';
 import { UnreadBadge } from './AnnouncementBell';
-import { useAnnStatus } from '../lib/annStatus';
+import { useAnnStatus, navBadge } from '../lib/annStatus';
 import { BetaTag } from './BrandMark';
 import { useBeta } from '../lib/useBeta';
 import { useSlipUnread, refreshSlipStatus } from '../lib/slipStatus';
@@ -16,9 +16,10 @@ export default function Sidebar() {
   const { language, toggleLanguage, t } = useLanguage();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { total: annTotal } = useAnnStatus();
+  const annStatus = useAnnStatus();
   const beta = useBeta();
   const slipUnread = useSlipUnread();
+  const annTotal = annStatus.total + slipUnread;
   useEffect(() => { refreshSlipStatus(); }, [pathname]);
   const groupOf = (path) => navTabs.find((tb) => tb.children && isTabActive(tb, path))?.to || null;
   const [openGroup, setOpenGroup] = useState(() => groupOf(pathname));
@@ -68,7 +69,7 @@ export default function Sidebar() {
                   >
                     <Icon className="h-5 w-5" />
                     <span className="flex-1">{t(key)}</span>
-                    {to === '/' && <UnreadBadge count={slipUnread} />}
+                    <UnreadBadge count={navBadge(to, annStatus, slipUnread)} />
                   </NavLink>
                 </li>
               );
@@ -84,6 +85,7 @@ export default function Sidebar() {
                 >
                   <Icon className="h-5 w-5" />
                   <span className="flex-1 text-left">{t(key)}</span>
+                  <UnreadBadge count={navBadge(to, annStatus, slipUnread)} />
                   <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
                 {open && (

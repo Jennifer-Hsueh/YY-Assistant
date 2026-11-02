@@ -9,6 +9,8 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
+import BudgetSettings from '../components/BudgetSettings';
+import { useSearchParams } from 'react-router-dom';
 import { useIsDesktop } from '../lib/useIsDesktop';
 
 export const BALANCE_ADJUST = '餘額調整';
@@ -117,6 +119,16 @@ export default function Accounts() {
     ).then((pairs) => setRates((prev) => ({ ...prev, ...Object.fromEntries(pairs) })));
   }, [accounts]);
 
+  // 從統計分析「設定預算」過來:直接打開每月預算
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (params.get('budget') && canLedger) {
+      setMode('budget');
+      params.delete('budget');
+      setParams(params, { replace: true });
+    }
+  }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function switchMode(newMode, { keep = false } = {}) {
     if (!canLedger) { askUpgrade('ledger'); return; }
     setMode(!keep && mode === newMode ? null : newMode);
@@ -203,8 +215,8 @@ export default function Accounts() {
   const actionBar = (
     <div className="mb-3 flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
       {/* 手機版:刪除改在編輯裡操作 */}
-      {(isDesktop ? ['add', 'edit', 'delete'] : ['add', 'edit']).map((m) => (
-        <button key={m} type="button" onClick={() => switchMode(m)} className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${mode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{t(`mode_${m}`)}</button>
+      {(isDesktop ? ['add', 'edit', 'delete', 'budget'] : ['add', 'edit', 'budget']).map((m) => (
+        <button key={m} type="button" onClick={() => switchMode(m)} className={`flex-1 whitespace-nowrap rounded-md px-2 py-1.5 transition-colors ${mode === m ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{m === 'budget' ? t('budget_title') : t(`mode_${m}`)}</button>
       ))}
     </div>
   );
@@ -338,6 +350,7 @@ export default function Accounts() {
 
       <Card className={mode && canLedger ? '' : 'hidden'}>
         <CardContent className="p-4">
+          {mode === 'budget' && <BudgetSettings t={t} />}
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="space-y-3">
               <div className="flex gap-2">

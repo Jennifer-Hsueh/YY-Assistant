@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
@@ -17,7 +17,7 @@ import { AnnivIcon } from './Anniversaries';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ymd } from '../lib/recurrence';
+import { ymd, occurrencesBetween } from '../lib/recurrence';
 
 // 行程日期一律用本地時間(台灣早上 8 點前的行程,UTC 日期會是前一天)
 const localKey = (iso) => ymd(new Date(iso));
@@ -88,7 +88,10 @@ export default function CalendarPage() {
   // 分開切換時只看目前那本;疊在一起時全部顯示
   const inView = (ev) => calMode === 'overlay' || (ev.calendar_id || '') === (calCurrent || '');
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => ({ ...emptyForm, date: ymd(new Date()) }));
+  const panelRef = useRef(null);
+  // 循環行程:在行事曆上依頻率顯示每一次
+  const [recurring, setRecurring] = useState([]);
   // 月檢視 / 週檢視
   const [view, setView] = useState('month');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -112,11 +115,13 @@ export default function CalendarPage() {
     try {
       const monthStart = (view === 'week' ? weekStart : new Date(year, month, 1)).toISOString();
       const monthEnd = (view === 'week' ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7) : new Date(year, month + 1, 1)).toISOString();
-      const [{ events }, { categories }] = await Promise.all([
+      const [{ events }, { categories }, rec] = await Promise.all([
         api.listEvents({ from: monthStart, to: monthEnd }),
         api.listCategories(),
+        api.listRecurringItems().catch(() => ({ recurring_items: [] })),
       ]);
       setEvents(events);
+      setRecurring((rec.recurring_items || []).filter((i) => i.kind === 'event' && i.is_active));
       setCategories(categories.filter((c) => c.type === 'event'));
       loadCalendars();
     } catch (err) {
@@ -143,7 +148,7 @@ export default function CalendarPage() {
     setActionMode(newMode);
     setEditSub(null);
     setActiveId(null);
-    setForm({ ...emptyForm, date: selectedDay || '', calendar_id: calMode === 'switch' ? calCurrent : '' });
+    setForm({ ...emptyForm, date: selectedDay || ymd(new Date()), calendar_id: calMode === 'switch' ? calCurrent : '' });
   }
 
   function toDateInputValue(isoString) {
@@ -177,7 +182,7 @@ export default function CalendarPage() {
   }
 
   function resetAfterAction() {
-    setForm({ ...emptyForm, date: selectedDay || '', calendar_id: form.calendar_id });
+    setForm({ ...emptyForm, date: selectedDay || ymd(new Date()), calendar_id: form.calendar_id });
     setActiveId(null);
     setInviteIds([]);
   }
@@ -240,7 +245,13 @@ export default function CalendarPage() {
   }
 
   // 跨日行程會出現在開始到結束的每一天
-  const eventsByDay = events.filter(inView).reduce((acc, ev) => {
+  // 循環行程的每一次(只顯示,要修改到「循環行程」頁)
+  const rangeFrom = view === 'week' ? ymd(weekStart) : ymd(new Date(year, month, 1));
+  const rangeTo = view === 'week' ? ymd(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6)) : ymd(new Date(year, month + 1, 0));
+  const recurringEvents = recurring.flatMap((item) => occurrencesBetween(item, rangeFrom, rangeTo).map((d) => ({
+    id: `rec-${item.id}-${d}`, recurring: true, title: item.title, start_at: new Date(`${d}T00:00:00`).toISOString(), end_at: null, category: item.category || null, color: null, calendar_id: null,
+  })));
+  const eventsByDay = [...events, ...recurringEvents].filter(inView).reduce((acc, ev) => {
     const start = new Date(localKey(ev.start_at) + 'T00:00:00');
     const endKey = ev.end_at && ev.end_at > ev.start_at ? localKey(ev.end_at) : localKey(ev.start_at);
     for (let d = new Date(start), i = 0; ymd(d) <= endKey && i < 62; d.setDate(d.getDate() + 1), i += 1) {
@@ -263,12 +274,16 @@ export default function CalendarPage() {
   const cells = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 
   function handleDayClick(dateKey) {
-    setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+    const next = selectedDay === dateKey ? null : dateKey;
+    setSelectedDay(next);
     setActiveId(null);
-    setForm({ ...emptyForm, date: dateKey, calendar_id: form.calendar_id });
+    setForm({ ...emptyForm, date: next || ymd(new Date()), calendar_id: form.calendar_id });
+    // 手機版編輯:當天行程與修改畫面在月曆上方,點完日期捲上去
+    if (next && actionMode === 'edit' && !isDesktop) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   const selectedDayEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
+  const editableDayEvents = selectedDayEvents.filter((ev) => !ev.recurring);
   // 紀念日:依目前顯示的年份算出每年的那一天(不循環的只在原本那天)
   const annivByDay = (() => {
     const years = view === 'week'
@@ -462,7 +477,7 @@ export default function CalendarPage() {
       <CalendarInvites invites={calInvites} onChanged={(joinedId) => { if (joinedId && calMode === 'switch') setCalCurrent(joinedId); load(); }} />
       <CalendarSwitcher calendars={calendars} mode={calMode} setMode={setCalMode} current={calCurrent} setCurrent={setCalCurrent} reload={() => { loadCalendars(); load(); }} canEdit={canCal} />
 
-      <div className="md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
+      <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_380px] md:grid-rows-[auto_1fr] md:items-start md:gap-x-6">
       <div className="md:col-start-2 md:row-start-1">
 
       {/* Action mode switch: 新增 / 編輯(含刪除) / 查詢 / 管理分類 — 跟記帳頁一致,放在標題下方 */}
@@ -515,7 +530,7 @@ export default function CalendarPage() {
         </div>
       )}
       {/* 手機版:查詢、新增時不顯示行事曆;管理分類時手機、網頁都不顯示 */}
-      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${panel === 'search' || (actionMode === 'add' && !panel) ? 'hidden md:block' : ''} ${panel === 'categories' ? 'hidden' : ''}`}>
+      <div className={`md:col-start-1 md:row-span-2 md:row-start-1 ${actionMode === 'edit' && !panel ? 'order-2 md:order-none' : ''} ${panel === 'search' || (actionMode === 'add' && !panel) ? 'hidden md:block' : ''} ${panel === 'categories' ? 'hidden' : ''}`}>
       <div className="mb-3 flex gap-2">
         <div className="flex rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
           {['month', 'week'].map((v) => (
@@ -571,7 +586,7 @@ export default function CalendarPage() {
                   <p key={ev.id} className="flex items-center gap-1.5 truncate py-0.5 text-xs">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                     <span className="shrink-0 font-amount text-muted-foreground">{timeRange(ev)}</span>
-                    <span className="truncate">{ev.title}</span>
+                    <span className="truncate">{ev.recurring ? '🔁' : ''}{ev.title}</span>
                   </p>
                 ))}
               </button>
@@ -610,7 +625,7 @@ export default function CalendarPage() {
                   {dayEvents.slice(0, (annivByDay[dateKey] || []).length ? 1 : 2).map((ev) => (
                     <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
                       <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
-                      <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.title}</span>
+                      <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.recurring ? '🔁' : ''}{ev.title}</span>
                     </span>
                   ))}
                 </button>
@@ -621,7 +636,7 @@ export default function CalendarPage() {
       </Card>
       </div>
 
-      <div className="md:col-start-2 md:row-start-2">
+      <div ref={panelRef} className={`scroll-mt-4 md:col-start-2 md:row-start-2 ${actionMode === 'edit' && !panel ? 'order-1 mb-3 md:order-none md:mb-0' : ''}`}>
       {/* 未選擇任何模式:點日期只顯示當日行程,沒點日期就空白 */}
       {!actionMode && selectedDay && (
         <Card>
@@ -647,8 +662,9 @@ export default function CalendarPage() {
                   <div key={ev.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-sm">
                     <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
                     <span className="shrink-0 font-amount text-xs text-muted-foreground">{timeRange(ev)}</span>
-                    <span>{ev.title}</span>
+                    <span>{ev.recurring ? '🔁 ' : ''}{ev.title}</span>
                     {ev.category && <span className="text-xs text-muted-foreground">({ev.category})</span>}
+                    {ev.recurring && <Link to="/recurring-events" className="ml-auto text-xs text-muted-foreground underline">{t('sub_recurring_events')}</Link>}
                     <CalTag ev={ev} />
                     {ev.calendar_id && !ev.is_owner && ev.owner?.name && <span className="text-xs text-muted-foreground">· {ev.owner.name}</span>}
                     {ev.shared && <span className="text-xs" title={ev.owner?.name || ''}>👥</span>}
@@ -762,11 +778,11 @@ export default function CalendarPage() {
           <Card>
             <CardContent className="space-y-1 p-4">
               <p className="mb-1 text-sm font-medium">{selectedDay}{t('cal_events_of_day_suffix')}</p>
-              {selectedDayEvents.length === 0 ? (
+              {editableDayEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('cal_no_events_this_day')}</p>
               ) : (
                 <>
-                {selectedDayEvents
+                {editableDayEvents
                   .slice()
                   .sort((a, b) => a.start_at.localeCompare(b.start_at))
                   .map((ev) => (
@@ -798,8 +814,8 @@ export default function CalendarPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">{checked.length ? t('bulk_count').replace('{n}', checked.length) : t('bulk_hint')}</span>
                     <span className="ml-auto flex gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => { setBulkConfirm(false); setChecked(checked.length === selectedDayEvents.length ? [] : selectedDayEvents.map((ev) => ev.id)); }}>
-                        {checked.length === selectedDayEvents.length ? t('bulk_none') : t('bulk_all')}
+                      <Button type="button" size="sm" variant="outline" onClick={() => { setBulkConfirm(false); setChecked(checked.length === editableDayEvents.length ? [] : editableDayEvents.map((ev) => ev.id)); }}>
+                        {checked.length === editableDayEvents.length ? t('bulk_none') : t('bulk_all')}
                       </Button>
                       {checked.length > 0 && !bulkConfirm && (
                         <Button type="button" size="sm" variant="destructive" onClick={() => setBulkConfirm(true)}>{t('bulk_delete').replace('{n}', checked.length)}</Button>
@@ -809,7 +825,7 @@ export default function CalendarPage() {
                   {bulkConfirm && (
                     <div className="space-y-2 rounded-md border border-destructive/40 p-2">
                       <p>{t('bulk_confirm').replace('{n}', checked.length)}</p>
-                      {selectedDayEvents.some((ev) => ev.shared && checked.includes(ev.id)) && <p className="text-xs text-muted-foreground">{t('bulk_shared_note')}</p>}
+                      {editableDayEvents.some((ev) => ev.shared && checked.includes(ev.id)) && <p className="text-xs text-muted-foreground">{t('bulk_shared_note')}</p>}
                       <div className="flex gap-2">
                         <Button type="button" size="sm" variant="destructive" className="flex-1" disabled={bulkBusy} onClick={handleBulkDelete}>{bulkBusy ? t('loading') : t('tx_confirm_delete')}</Button>
                         <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setBulkConfirm(false)}>{t('cancel')}</Button>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from '../components/PlanNotice';
@@ -55,32 +56,10 @@ export default function LedgerStats() {
   // 每月預算
   const { can } = usePlan();
   const [budgets, setBudgets] = useState([]);
-  const [budgetCategory, setBudgetCategory] = useState('');
-  const [budgetAmount, setBudgetAmount] = useState('');
   useEffect(() => {
     api.listBudgets().then(({ budgets }) => setBudgets(budgets)).catch((err) => console.error(err));
   }, []);
-  async function saveBudget(e) {
-    e.preventDefault();
-    if (!can('ledger')) { askUpgrade('ledger'); return; }
-    if (!(Number(budgetAmount) > 0)) return;
-    try {
-      const { budget } = await api.saveBudget({ category: budgetCategory, amount: Number(budgetAmount) });
-      setBudgets((prev) => [...prev.filter((b) => b.category !== budget.category), budget]);
-      setBudgetAmount('');
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  async function removeBudget(id) {
-    if (!can('ledger')) { askUpgrade('ledger'); return; }
-    try {
-      await api.deleteBudget(id);
-      setBudgets((prev) => prev.filter((b) => b.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  }
+
 
   useEffect(() => {
     async function load() {
@@ -206,9 +185,9 @@ export default function LedgerStats() {
 
           <Card className="mb-4">
             <CardContent className="p-4">
-              <p className="mb-3 text-sm font-medium">{t('budget_title')} <span className="ml-1 font-amount text-xs font-normal text-muted-foreground">{month}</span></p>
-              <div className="md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:gap-6">
-                <div className="mb-4 md:mb-0">
+              <p className="mb-3 flex items-center text-sm font-medium">{t('budget_title')} <span className="ml-1 flex-1 font-amount text-xs font-normal text-muted-foreground">{month}</span><Link to="/accounts?budget=1" className="text-xs font-normal text-muted-foreground underline">{t('budget_go_set')}</Link></p>
+              <div>
+                <div>
                   {budgets.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t('budget_empty')}</p>
                   ) : (
@@ -219,33 +198,6 @@ export default function LedgerStats() {
                     </div>
                   )}
                 </div>
-                {(
-                <div className="space-y-2">
-                  <form onSubmit={saveBudget} className="flex gap-2">
-                    <Select value={budgetCategory || 'total'} onValueChange={(v) => setBudgetCategory(v === 'total' ? '' : v)}>
-                      <SelectTrigger className="w-32 shrink-0"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="total">{t('budget_total')}</SelectItem>
-                        {categories.filter((c) => c.type !== 'income').map((c) => (
-                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" inputMode="decimal" min="1" placeholder={t('budget_amount_placeholder')} value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} className="min-w-0 flex-1" />
-                    <Button type="submit" disabled={!(Number(budgetAmount) > 0)}>{t('budget_add')}</Button>
-                  </form>
-                  {budgets.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {[...budgets].sort((a, b) => (a.category === '' ? -1 : b.category === '' ? 1 : a.category.localeCompare(b.category))).map((b) => (
-                        <span key={b.id} className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs">
-                          {b.category === '' ? t('budget_total') : b.category} {Number(b.amount).toLocaleString()}
-                          <button type="button" aria-label="remove" onClick={() => removeBudget(b.id)} className="text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /></button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                )}
               </div>
             </CardContent>
           </Card>

@@ -281,7 +281,7 @@ export default function Home() {
             {!overview ? (
               <p className="text-xs text-muted-foreground">{t('loading')}</p>
             ) : overview.budgets.length === 0 ? (
-              <Link to="/ledger-stats" className="text-sm text-muted-foreground underline">{t('home_set_budget')}</Link>
+              <Link to="/accounts?budget=1" className="text-sm text-muted-foreground underline">{t('home_set_budget')}</Link>
             ) : (
               <BudgetBars budgets={overview.budgets.slice(0, 4)} totals={overview.totals} t={t} compact />
             )}

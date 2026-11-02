@@ -39,6 +39,22 @@ async function friendNotices(uid) {
   }
 }
 
+// 還沒回覆的邀請:行事曆、共同行程、共同紀念日算在「行事曆」,共同帳本算在「記帳」
+async function inviteCounts(uid) {
+  const count = async (table) => {
+    const { count: n, error } = await supabase.from(table).select('user_id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'invited');
+    if (error) throw error;
+    return n || 0;
+  };
+  try {
+    const [cal, ev, ann, led] = await Promise.all(['yy_calendar_members', 'yy_event_members', 'yy_anniversary_members', 'yy_ledger_members'].map(count));
+    return { calendar: cal + ev + ann, ledger: led };
+  } catch (err) {
+    console.error('[announcementController.inviteCounts]', err.message);
+    return { calendar: 0, ledger: 0 };
+  }
+}
+
 async function getStatus(req, res) {
   try {
     const { data: user, error: userErr } = await supabase
@@ -74,7 +90,7 @@ async function getStatus(req, res) {
     const { data: banners, error: bannerErr } = await bannerQuery;
     if (bannerErr) throw bannerErr;
 
-    return res.json({ unread: count || 0, banner: banners?.[0] || null, friends: await friendNotices(req.user.id) });
+    return res.json({ unread: count || 0, banner: banners?.[0] || null, friends: await friendNotices(req.user.id), invites: await inviteCounts(req.user.id) });
   } catch (err) {
     console.error('[announcementController.getStatus]', err);
     return res.status(500).json({ error: 'Failed to fetch announcement status' });

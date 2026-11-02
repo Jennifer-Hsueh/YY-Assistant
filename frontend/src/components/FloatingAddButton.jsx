@@ -124,7 +124,7 @@ export default function FloatingAddButton() {
         type="button"
         aria-label={t('qa_open')}
         onClick={() => { if (!tabs.includes(tab)) setTab(tabs[0]); setOpen(true); }}
-        className={`fixed right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] z-40 ${pathname === '/' ? 'flex' : 'hidden md:flex'} h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform active:scale-95 md:right-8 md:bottom-8 md:h-14 md:w-14`}
+        className={`fixed right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] z-40 ${pathname === '/' ? 'flex' : 'hidden'} h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform active:scale-95 md:right-8 md:bottom-8 md:h-14 md:w-14`}
       >
         <Plus className="h-6 w-6" />
       </button>

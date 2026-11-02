@@ -52,8 +52,6 @@ export default function BeaverBubble() {
     if (bubble) return;
     const seen = readSeen();
     const list = [];
-    // 小紙條:首頁會直接跳出紙條,所以只在其他頁面提醒
-    if (slipUnread > 0 && pathname !== '/') list.push({ key: `slip-${slipUnread}`, img: 'hug', text: t('bb_slip'), go: () => navigate('/') });
     for (const it of items) {
       const key = `bd-${it.kind}-${it.id}-${it.days}`;
       if (it.kind === 'friend') {

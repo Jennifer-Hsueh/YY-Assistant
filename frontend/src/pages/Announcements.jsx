@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Megaphone, UserPlus } from 'lucide-react';
+import { Megaphone, UserPlus, CalendarPlus, BookPlus, StickyNote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
+import { useSlipUnread } from '../lib/slipStatus';
+import { openSlipPopup } from '../components/SlipPopup';
 import { markAnnouncementsSeen, refreshAnnStatus, useAnnStatus } from '../lib/annStatus';
 
 export default function Announcements() {
   const { t } = useLanguage();
-  const { friendRequests, friendAccepted } = useAnnStatus();
+  const { friendRequests, friendAccepted, invitesCal, invitesLedger } = useAnnStatus();
+  const slipUnread = useSlipUnread();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,16 +38,23 @@ export default function Announcements() {
         {t('nav_announcements')}
       </h1>
 
-      {/* 好友通知:點了到好友頁 */}
-      {(friendRequests > 0 || friendAccepted > 0) && (
-        <Link to="/community/friends" className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm hover:bg-muted/50">
-          <UserPlus className="h-5 w-5 shrink-0" style={{ color: 'var(--expense)' }} />
-          <span className="min-w-0 flex-1 text-sm">
-            {[friendRequests > 0 && t('ann_friend_requests').replace('{n}', friendRequests), friendAccepted > 0 && t('ann_friend_accepted').replace('{n}', friendAccepted)].filter(Boolean).join('；')}
-          </span>
-          <span className="text-xs text-muted-foreground">{t('ann_go_friends')}</span>
-        </Link>
-      )}
+      {/* 通知:好友、邀請、小紙條,點了到對應的頁面 */}
+      {[
+        (friendRequests > 0 || friendAccepted > 0) && { key: 'f', to: '/community/friends', Icon: UserPlus, text: [friendRequests > 0 && t('ann_friend_requests').replace('{n}', friendRequests), friendAccepted > 0 && t('ann_friend_accepted').replace('{n}', friendAccepted)].filter(Boolean).join('；'), go: t('ann_go_friends') },
+        invitesCal > 0 && { key: 'c', to: '/calendar', Icon: CalendarPlus, text: t('ann_invites_cal').replace('{n}', invitesCal), go: t('ann_go_look') },
+        invitesLedger > 0 && { key: 'l', to: '/transactions', Icon: BookPlus, text: t('ann_invites_ledger').replace('{n}', invitesLedger), go: t('ann_go_look') },
+        slipUnread > 0 && { key: 's', to: null, Icon: StickyNote, text: t('ann_slips').replace('{n}', slipUnread), go: t('ann_go_look') },
+      ].filter(Boolean).map(({ key, to, Icon, text, go }) => {
+        const inner = (
+          <>
+            <Icon className="h-5 w-5 shrink-0" style={{ color: 'var(--expense)' }} />
+            <span className="min-w-0 flex-1 text-sm">{text}</span>
+            <span className="text-xs text-muted-foreground">{go}</span>
+          </>
+        );
+        const cls = 'mb-3 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left shadow-sm hover:bg-muted/50';
+        return to ? <Link key={key} to={to} className={cls}>{inner}</Link> : <button key={key} type="button" onClick={openSlipPopup} className={cls}>{inner}</button>;
+      })}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>

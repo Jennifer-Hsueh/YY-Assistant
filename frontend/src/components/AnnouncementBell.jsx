@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAnnStatus, refreshAnnStatus } from '../lib/annStatus';
+import { useSlipUnread } from '../lib/slipStatus';
 
 // 未讀紅點:最多顯示 9+
 export function UnreadBadge({ count, className = '' }) {
@@ -25,7 +26,8 @@ export function useAnnRefreshOnNavigate() {
 // 手機版頂部列用的鈴鐺
 export default function AnnouncementBell() {
   const { t } = useLanguage();
-  const { total } = useAnnStatus();
+  const { total: annTotal } = useAnnStatus();
+  const total = annTotal + useSlipUnread();
   useAnnRefreshOnNavigate();
   return (
     <Link to="/announcements" aria-label={t('nav_announcements')} className="relative flex items-center text-muted-foreground" style={total ? { color: 'var(--expense)' } : undefined}>

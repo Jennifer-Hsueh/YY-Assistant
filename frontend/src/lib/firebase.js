@@ -37,6 +37,7 @@ function attachForeground(messaging) {
   if (foregroundAttached) return;
   foregroundAttached = true;
   onMessage(messaging, async (payload) => {
+    window.dispatchEvent(new Event('yy:push'));
     const { title, body } = payload.notification || {};
     const opts = { body: body || '', icon: '/icons/icon-192.png', data: payload.data };
     try {

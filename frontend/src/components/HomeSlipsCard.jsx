@@ -6,6 +6,7 @@ import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { setSlipUnread } from '../lib/slipStatus';
+import { openSlipPopup } from './SlipPopup';
 
 const MAX = 25;
 const SHOW = 6;
@@ -23,28 +24,23 @@ export default function HomeSlipsCard({ t, style }) {
   const [error, setError] = useState('');
   const [blocking, setBlocking] = useState(null); // 要封鎖的寄件人
   const [params, setParams] = useSearchParams();
-  // 新收到的紙條:進首頁時跳出來一張一張看
-  const [popup, setPopup] = useState([]);
-  const [popIdx, setPopIdx] = useState(0);
-  const [popReply, setPopReply] = useState(null); // 在跳出的紙條上直接回覆的內容
-  const [popSent, setPopSent] = useState(false);
 
   async function load() {
     try {
       const d = await api.listSlips();
       setData(d);
-      // 新紙條先跳出來;看過(收下、回一張或在卡片上點開)才算已讀
-      const fresh = d.received.filter((s) => !s.read_at && !s.hidden);
-      if (fresh.length) {
-        setPopup([...fresh].reverse());
-        setPopIdx(0);
-      }
     } catch (err) {
       console.error(err);
       setData({ received: [], sent: [] });
     }
   }
   useEffect(() => { load(); }, []);
+  // 跳出來的紙條看過或回覆後,卡片跟著更新
+  useEffect(() => {
+    const onChanged = () => load();
+    window.addEventListener('yy:slips-changed', onChanged);
+    return () => window.removeEventListener('yy:slips-changed', onChanged);
+  }, []);
   // 小河狸提示「傳張小紙條祝福吧」:帶著 ?slipTo= 進首頁,直接打開寫紙條
   useEffect(() => {
     const to = params.get('slipTo');
@@ -100,39 +96,6 @@ export default function HomeSlipsCard({ t, style }) {
     });
     api.readSlips(ids).catch(() => {});
   }
-  // 點旁邊關掉:還沒看的紙條留著(卡片上會有便利貼)
-  const dismissPopup = () => { setPopup([]); setPopReply(null); setError(''); };
-  function replyFromPopup(slip) {
-    markRead([slip.id]);
-    setError('');
-    setPopReply('');
-  }
-  function nextPopup() {
-    markRead([popup[popIdx].id]);
-    setPopReply(null);
-    setPopSent(false);
-    setError('');
-    if (popIdx + 1 < popup.length) setPopIdx(popIdx + 1);
-    else setPopup([]);
-  }
-  async function sendPopReply(e) {
-    e.preventDefault();
-    const content = (popReply || '').trim();
-    const slip = popup[popIdx];
-    if (!content || !slip?.from || len(content) > MAX) return;
-    setBusy(true);
-    setError('');
-    try {
-      await api.sendSlip({ to: slip.from.id, content });
-      setPopSent(true);
-      api.listSlips().then((d) => setData((old) => ({ ...(old || {}), sent: d.sent }))).catch(() => {});
-      setTimeout(nextPopup, 1200);
-    } catch (err) {
-      setError(err?.message || t('slip_error'));
-    } finally {
-      setBusy(false);
-    }
-  }
   async function setHidden(slip, hidden) {
     setOpen(null);
     const now = new Date().toISOString();
@@ -143,12 +106,7 @@ export default function HomeSlipsCard({ t, style }) {
     });
     try { await api.hideSlip(slip.id, hidden); } catch (err) { console.error(err); load(); }
   }
-  function showUnread() {
-    const fresh = data.received.filter((x) => !x.read_at);
-    if (!fresh.length) return;
-    setPopup([...fresh].reverse());
-    setPopIdx(0);
-  }
+  const showUnread = () => openSlipPopup();
 
   async function remove(slip) {
     setOpen(null);
@@ -161,59 +119,13 @@ export default function HomeSlipsCard({ t, style }) {
   const shown = all ? list : list.slice(0, SHOW);
   const nameOf = (u) => (u ? u.name || '—' : t('slip_deleted_user'));
 
-  const pop = popup[popIdx];
   const unread = data ? data.received.filter((x) => !x.read_at && !x.hidden) : [];
 
   return (
     <>
-    {pop && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6" onClick={dismissPopup}>
-        <div key={pop.id} className="slip-pop w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
-          <p className="mb-2 text-center text-sm font-medium text-white drop-shadow">
-            📝 {t('slip_new_from').replace('{name}', nameOf(pop.from))}
-            {popup.length > 1 && <span className="ml-1 opacity-80">({popIdx + 1}/{popup.length})</span>}
-          </p>
-          <div className="rounded-md p-5 shadow-xl" style={{ background: 'color-mix(in srgb, var(--highlight) 30%, var(--card))', transform: 'rotate(-2deg)' }}>
-            <p className="min-h-16 break-words text-lg leading-relaxed">{pop.content}</p>
-            <p className="mt-3 text-right text-xs text-muted-foreground">— {nameOf(pop.from)}</p>
-          </div>
-          {popReply !== null && pop.from ? (
-            <form onSubmit={sendPopReply} className="mt-4 space-y-2 rounded-md bg-card p-3 shadow-xl">
-              <p className="text-xs text-muted-foreground">{t('slip_to').replace('{n}', nameOf(pop.from))}</p>
-              {popSent ? (
-                <p className="py-2 text-center text-sm">{t('slip_sent_ok')}</p>
-              ) : (
-                <>
-                  <div className="relative">
-                    <input
-                      autoFocus
-                      value={popReply}
-                      onChange={(e) => setPopReply([...e.target.value].slice(0, MAX).join(''))}
-                      placeholder={t('slip_placeholder')}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 pr-12 text-sm"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">{len(popReply)}/{MAX}</span>
-                  </div>
-                  {error && <p className="text-xs text-red-500">{error}</p>}
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => { setPopReply(null); setError(''); }}>{t('cancel')}</Button>
-                    <Button type="submit" size="sm" className="flex-1" disabled={busy || !popReply.trim()}>{t('slip_send')}</Button>
-                  </div>
-                </>
-              )}
-            </form>
-          ) : (
-            <div className="mt-4 flex gap-2">
-              {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => replyFromPopup(pop)}>{t('slip_reply')}</Button>}
-              <Button className="flex-1" onClick={nextPopup}>{popIdx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
     <Card className="relative z-10 border-none" style={style}>
       {/* 有還沒看的紙條:卡片上方貼一張摺角便利貼,點一下打開;看過就消失 */}
-      {unread.length > 0 && !pop && (
+      {unread.length > 0 && (
         <button type="button" onClick={showUnread} aria-label={t('slip_new_badge')} title={t('slip_new_badge')} className="slip-sticky">
           <span className="slip-sticky-fold" />
         </button>

@@ -7,6 +7,7 @@ import { LedgerProvider, useLedger } from './context/LedgerContext';
 import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import BeaverBubble from './components/BeaverBubble';
+import SlipPopup from './components/SlipPopup';
 import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
@@ -76,6 +77,7 @@ function ProtectedLayout({ children }) {
       <BottomNav />
       <FloatingAddButton />
       <BeaverBubble />
+      <SlipPopup />
       <PlanLockModal />
       <TermsConsentModal />
     </div>

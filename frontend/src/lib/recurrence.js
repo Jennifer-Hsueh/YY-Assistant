@@ -71,3 +71,26 @@ export function reactivationPayload(item, dateStr) {
   if (item.frequency === 'yearly') return base;
   return { ...base, day_of_month: Number(item.day_of_month) === -1 ? -1 : d.getDate() };
 }
+
+// 循環行程在某段期間內的每一天(行事曆上顯示用):從建立那天起,到結束日期為止
+export function occurrencesBetween(item, fromKey, toKey) {
+  const created = item.created_at ? ymd(new Date(item.created_at)) : fromKey;
+  const startKey = [fromKey, created].sort().pop();
+  const endKey = item.end_date && item.end_date < toKey ? item.end_date : toKey;
+  const out = [];
+  if (startKey > endKey) return out;
+  const [ys, ms, ds] = startKey.split('-').map(Number);
+  const [mmY, ddY] = item.frequency === 'yearly' ? (item.next_trigger_date || '').split('-').slice(1).map(Number) : [];
+  for (let d = new Date(ys, ms - 1, ds), i = 0; ymd(d) <= endKey && i < 400; d.setDate(d.getDate() + 1), i += 1) {
+    let hit = false;
+    if (item.frequency === 'weekly') hit = d.getDay() === Number(item.day_of_week ?? 0);
+    else if (item.frequency === 'yearly') hit = d.getMonth() + 1 === mmY && d.getDate() === Math.min(ddY, daysIn(d.getFullYear(), d.getMonth()));
+    else {
+      const last = daysIn(d.getFullYear(), d.getMonth());
+      const want = Number(item.day_of_month) === -1 ? last : Math.min(Number(item.day_of_month) || 1, last);
+      hit = d.getDate() === want;
+    }
+    if (hit) out.push(ymd(d));
+  }
+  return out;
+}
