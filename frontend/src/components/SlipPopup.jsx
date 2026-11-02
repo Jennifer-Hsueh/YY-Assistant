@@ -31,9 +31,6 @@ export default function SlipPopup() {
       setSlipUnread(d.received.filter((s) => !s.read_at && !s.hidden).length);
       if (!fresh.length) return;
       fresh.forEach((s) => shown.current.add(s.id));
-      // 跳出來就算看過了(不用再按「收下」)
-      setSlipUnread(0);
-      api.readSlips(fresh.map((s) => s.id)).then(changed).catch(() => {});
       setPopup([...fresh].reverse());
       setIdx(0);
       setReply(null);
@@ -58,7 +55,10 @@ export default function SlipPopup() {
     setReply(null);
     setError('');
   }
+  // 按「收下」(或回覆送出)才算已讀
   function next() {
+    const cur = popup[idx];
+    if (cur) api.readSlips([cur.id]).then(() => { changed(); refreshSlipStatus(true); }).catch(() => {});
     setReply(null);
     setSent(false);
     setError('');

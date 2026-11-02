@@ -4,6 +4,7 @@ import BrandMark, { BetaTag } from '../components/BrandMark';
 import { useBeta } from '../lib/useBeta';
 import { useLanguage } from '../context/LanguageContext';
 import LandingPlay from '../components/landing/LandingPlay';
+import BeaverGuide from '../components/landing/BeaverGuide';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
 // 由上往下:開頭 → 功能一覽 → 記帳與共同帳本 → 行事曆與紀念日 → 首頁(心情、記事、小紙條)→ 社群與好友 → 主題 → 方案 → 在手機上使用
@@ -232,6 +233,18 @@ export default function Landing() {
     document.documentElement.lang = language === 'en' ? 'en' : 'zh-Hant';
   }, [T, language]);
 
+  // 捲到才淡入(.reveal → .is-in);不想要動畫的人直接顯示
+  useEffect(() => {
+    const els = [...document.querySelectorAll('.landing .reveal')];
+    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach((el) => el.classList.add('is-in'));
+      return undefined;
+    }
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [language]);
+
   const smooth = () => (window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
 
   return (
@@ -248,7 +261,7 @@ export default function Landing() {
 
       <main>
         {/* 開頭 */}
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-14 pt-6 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-20 md:pt-12">
+        <section data-guide="hero" className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-14 pt-6 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-20 md:pt-12">
           <div className="order-2 md:order-1">
             {beta?.active && (
               <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-foreground/75">
@@ -274,17 +287,19 @@ export default function Landing() {
           <div className="relative order-1 mx-auto md:order-2">
             <span className="landing-tape" aria-hidden="true" />
             <Phone src={shot('home')} alt={T.homeAlt} className="landing-hero-phone w-[220px] md:w-[300px]" eager />
+            {/* 小河狸從手機旁邊探出頭來 */}
+            <img src="/reactions/cheer.webp" alt="" width="160" height="160" className="landing-peek absolute -left-12 bottom-10 h-20 w-20 md:-left-16 md:h-28 md:w-28" />
           </div>
         </section>
 
         {/* 功能一覽 */}
-        <section id="overview" className="landing-band scroll-mt-16">
+        <section id="overview" data-guide="overview" className="landing-band scroll-mt-16">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.overviewTitle}</h2>
             <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
-              {T.overview.map(([emoji, name, desc]) => (
-                <li key={name} className="landing-card rounded-2xl p-4">
-                  <span className="text-2xl leading-none">{emoji}</span>
+              {T.overview.map(([emoji, name, desc], k) => (
+                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 5) * 70}ms` }}>
+                  <span className="landing-emoji inline-block text-2xl leading-none">{emoji}</span>
                   <p className="mt-2 font-semibold" style={{ color: 'var(--ink)' }}>{name}</p>
                   <p className="mt-0.5 text-sm text-foreground/70">{desc}</p>
                 </li>
@@ -298,9 +313,9 @@ export default function Landing() {
 
         {/* 各功能介紹:圖文左右交錯 */}
         {T.sections.map((s, i) => (
-          <section key={s.key} className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
+          <section key={s.key} data-guide={s.key} className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
             <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-              <div className={i % 2 ? 'md:order-2' : ''}>
+              <div className={`reveal ${i % 2 ? 'md:order-2' : ''}`}>
                 <p className="mb-3 flex items-center gap-2 text-sm font-medium" style={{ color: SECTION_COLOR[s.key] }}>
                   <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: SECTION_COLOR[s.key] }} />
                   {s.tag}
@@ -313,7 +328,7 @@ export default function Landing() {
                   ))}
                 </ul>
               </div>
-              <div className={`landing-pair ${i % 2 ? 'md:order-1' : ''}`}>
+              <div className={`landing-pair reveal ${i % 2 ? 'md:order-1' : ''}`} style={{ transitionDelay: '120ms' }}>
                 <Phone src={shot(s.shots[0])} alt={T.shotAlt(s.tag)} className="landing-pair-back" />
                 <Phone src={shot(s.shots[1])} alt={T.shotAlt(s.tag)} className="landing-pair-front" />
               </div>
@@ -322,13 +337,13 @@ export default function Landing() {
         ))}
 
         {/* 主題 */}
-        <section className="landing-band">
+        <section data-guide="themes" className="landing-band">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.themesTitle}</h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-[15px] leading-[1.8] text-foreground/75">{T.themesText}</p>
             <ul className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
               {THEMES.map((th, i) => (
-                <li key={th} className="text-center">
+                <li key={th} className="landing-lift reveal text-center" style={{ transitionDelay: `${i * 80}ms` }}>
                   <div className="landing-theme"><img src={shot(`theme-${th}`)} alt={T.themes[i]} width="390" height="520" loading="lazy" decoding="async" /></div>
                   <p className="mt-2 text-sm font-medium" style={{ color: 'var(--ink)' }}>{T.themes[i]}</p>
                 </li>
@@ -338,7 +353,7 @@ export default function Landing() {
         </section>
 
         {/* 方案 */}
-        <section className="mx-auto max-w-3xl px-5 py-14 md:px-8 md:py-20">
+        <section data-guide="plans" className="reveal mx-auto max-w-3xl px-5 py-14 md:px-8 md:py-20">
           <h2 className="landing-serif text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}>{T.plansTitle}</h2>
           <p className="mt-3 text-[15px] leading-[1.8] text-foreground/80 md:text-[16px]">{T.plansText}</p>
           <ul className="mt-6 border-t-2" style={{ borderColor: 'var(--ink)' }}>
@@ -356,8 +371,9 @@ export default function Landing() {
         </section>
 
         {/* 結尾+在手機上使用 */}
-        <section className="landing-band">
+        <section data-guide="end" className="landing-band">
           <div className="mx-auto max-w-3xl px-5 py-14 text-center md:px-8 md:py-20">
+            <img src="/reactions/hug.webp" alt="" width="160" height="160" className="landing-bob mx-auto mb-2 h-24 w-24" />
             <h2 className="landing-serif text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}>{T.endTitle}</h2>
             <CTA className="mt-6" label={T.cta} full={full} fullLabel={T.ctaFull} />
             <h3 className="mt-12 font-semibold" style={{ color: 'var(--ink)' }}>{T.mobileTitle}</h3>
@@ -377,6 +393,7 @@ export default function Landing() {
         </section>
       </main>
 
+      <BeaverGuide lang={language} />
       <footer className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-5 gap-y-2 px-5 py-6 text-sm text-muted-foreground md:px-8">
         <Link to="/terms" className="hover:underline">{T.terms}</Link>
         <Link to="/privacy" className="hover:underline">{T.privacy}</Link>

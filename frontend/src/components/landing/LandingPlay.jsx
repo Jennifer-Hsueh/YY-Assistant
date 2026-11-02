@@ -219,7 +219,7 @@ export default function LandingPlay({ lang, full }) {
   const T = COPY[lang] || COPY.zh;
   const [tab, setTab] = useState('mood');
   return (
-    <section id="play" className="mx-auto max-w-4xl scroll-mt-16 px-5 py-14 md:px-8 md:py-20">
+    <section id="play" data-guide="play" className="mx-auto max-w-4xl scroll-mt-16 px-5 py-14 md:px-8 md:py-20">
       <h2 className="landing-serif text-center text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}>{T.title}</h2>
       <p className="mx-auto mt-3 max-w-xl text-center text-[15px] leading-[1.8] text-foreground/75">{T.text}</p>
       <div className="mx-auto mt-7 grid max-w-2xl grid-cols-2 gap-2 md:grid-cols-4">
