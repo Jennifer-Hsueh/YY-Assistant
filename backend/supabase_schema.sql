@@ -572,3 +572,6 @@ alter table yy_push_subscriptions add column if not exists device text;
 -- 好友通知(2026-11-02):看過好友頁的時間,鈴鐺顯示「之後有人接受了我的好友邀請」
 alter table yy_users add column if not exists friends_seen_at timestamptz;
 update yy_users set friends_seen_at = now() where friends_seen_at is null;
+
+-- 小紙條:收件人可以把紙條收起來(不刪除)(2026-11-02)
+alter table yy_slips add column if not exists recipient_hidden boolean not null default false;

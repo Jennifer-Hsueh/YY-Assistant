@@ -366,6 +366,15 @@ export default function Community() {
                 </li>
               ))}
             </ol>
+            <p className="mb-2 text-sm font-semibold">🧭 {t('cm_guide_title')}</p>
+            <ul className="mb-4 space-y-2 text-sm">
+              {TABS.map(({ key, emoji }) => (
+                <li key={key} className="flex gap-2">
+                  <span className="shrink-0">{emoji}</span>
+                  <span><span className="font-medium">{key === 'mine' ? t('cm_mine') : key === 'friends' ? t('cm_friends') : t(`cm_board_${key}`)}</span>：{t(`cm_guide_${key}`)}</span>
+                </li>
+              ))}
+            </ul>
             <p className="mb-2 text-xs text-muted-foreground">{t('cm_rules_outro')}</p>
             {helplineText(country, language) && <p className="mb-2 text-xs text-muted-foreground">{t('cm_rules_care')} {helplineText(country, language)}</p>}
             <button type="button" onClick={() => setRulesOpen(true)} className="text-xs text-muted-foreground underline">{t('cm_rules_full')}</button>

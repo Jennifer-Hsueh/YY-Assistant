@@ -106,7 +106,7 @@ async function list(req, res) {
     const users = await usersByIds([...new Set([...(received || []).map((s) => s.sender_id), ...(sent || []).map((s) => s.recipient_id)].filter(Boolean))]);
     const nameOf = (id) => (id ? users.get(id)?.username || null : null);
     return res.json({
-      received: (received || []).map((s) => ({ id: s.id, content: s.content, created_at: s.created_at, read_at: s.read_at, from: s.sender_id ? { id: s.sender_id, name: nameOf(s.sender_id) } : null })),
+      received: (received || []).map((s) => ({ id: s.id, content: s.content, created_at: s.created_at, read_at: s.read_at, hidden: !!s.recipient_hidden, from: s.sender_id ? { id: s.sender_id, name: nameOf(s.sender_id) } : null })),
       sent: (sent || []).map((s) => ({ id: s.id, content: s.content, created_at: s.created_at, read_at: s.read_at, to: { id: s.recipient_id, name: nameOf(s.recipient_id) } })),
     });
   } catch (err) {
@@ -169,6 +169,22 @@ async function markRead(req, res) {
   }
 }
 
+// POST /slips/:id/hide { hidden }:收件人把紙條收起來(不刪除,之後可以拿出來)
+async function hide(req, res) {
+  try {
+    const hidden = req.body?.hidden !== false;
+    const patch = { recipient_hidden: hidden };
+    if (hidden) patch.read_at = new Date().toISOString();
+    const { data, error } = await supabase.from('yy_slips').update(patch)
+      .eq('id', req.params.id).eq('recipient_id', req.user.id).select('id, read_at');
+    if (error) throw error;
+    if (!data?.length) return res.status(404).json({ error: '找不到這張小紙條' });
+    return res.json({ ok: true, hidden });
+  } catch (err) {
+    return fail(res, 'hide', err, '更新失敗');
+  }
+}
+
 // DELETE /slips/:id:收件人撕掉;寄件人在對方還沒看之前收回,看過了就只從自己的「送出」移除
 async function remove(req, res) {
   try {
@@ -189,4 +205,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { contacts, list, unread, send, markRead, remove, contactIds, MAX_LEN, DAILY_MAX };
+module.exports = { contacts, list, unread, send, markRead, hide, remove, contactIds, MAX_LEN, DAILY_MAX };

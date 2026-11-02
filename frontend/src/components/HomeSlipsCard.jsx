@@ -26,13 +26,15 @@ export default function HomeSlipsCard({ t, style }) {
   // 新收到的紙條:進首頁時跳出來一張一張看
   const [popup, setPopup] = useState([]);
   const [popIdx, setPopIdx] = useState(0);
+  const [popReply, setPopReply] = useState(null); // 在跳出的紙條上直接回覆的內容
+  const [popSent, setPopSent] = useState(false);
 
   async function load() {
     try {
       const d = await api.listSlips();
       setData(d);
       // 新紙條先跳出來;看過(收下、回一張或在卡片上點開)才算已讀
-      const fresh = d.received.filter((s) => !s.read_at);
+      const fresh = d.received.filter((s) => !s.read_at && !s.hidden);
       if (fresh.length) {
         setPopup([...fresh].reverse());
         setPopIdx(0);
@@ -99,16 +101,47 @@ export default function HomeSlipsCard({ t, style }) {
     api.readSlips(ids).catch(() => {});
   }
   // 點旁邊關掉:還沒看的紙條留著(卡片上會有便利貼)
-  const dismissPopup = () => setPopup([]);
+  const dismissPopup = () => { setPopup([]); setPopReply(null); setError(''); };
   function replyFromPopup(slip) {
     markRead([slip.id]);
-    setPopup([]);
-    startCompose(slip.from.id);
+    setError('');
+    setPopReply('');
   }
   function nextPopup() {
     markRead([popup[popIdx].id]);
+    setPopReply(null);
+    setPopSent(false);
+    setError('');
     if (popIdx + 1 < popup.length) setPopIdx(popIdx + 1);
     else setPopup([]);
+  }
+  async function sendPopReply(e) {
+    e.preventDefault();
+    const content = (popReply || '').trim();
+    const slip = popup[popIdx];
+    if (!content || !slip?.from || len(content) > MAX) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api.sendSlip({ to: slip.from.id, content });
+      setPopSent(true);
+      api.listSlips().then((d) => setData((old) => ({ ...(old || {}), sent: d.sent }))).catch(() => {});
+      setTimeout(nextPopup, 1200);
+    } catch (err) {
+      setError(err?.message || t('slip_error'));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function setHidden(slip, hidden) {
+    setOpen(null);
+    const now = new Date().toISOString();
+    setData((d) => {
+      const received = d.received.map((x) => (x.id === slip.id ? { ...x, hidden, read_at: x.read_at || now } : x));
+      setSlipUnread(received.filter((x) => !x.read_at).length);
+      return { ...d, received };
+    });
+    try { await api.hideSlip(slip.id, hidden); } catch (err) { console.error(err); load(); }
   }
   function showUnread() {
     const fresh = data.received.filter((x) => !x.read_at);
@@ -123,12 +156,13 @@ export default function HomeSlipsCard({ t, style }) {
     try { await api.deleteSlip(slip.id); } catch (err) { console.error(err); load(); }
   }
 
-  const list = data ? data[view] : [];
+  const hiddenList = data ? data.received.filter((x) => x.hidden) : [];
+  const list = !data ? [] : view === 'received' ? data.received.filter((x) => !x.hidden) : view === 'hidden' ? hiddenList : data.sent;
   const shown = all ? list : list.slice(0, SHOW);
   const nameOf = (u) => (u ? u.name || '—' : t('slip_deleted_user'));
 
   const pop = popup[popIdx];
-  const unread = data ? data.received.filter((x) => !x.read_at) : [];
+  const unread = data ? data.received.filter((x) => !x.read_at && !x.hidden) : [];
 
   return (
     <>
@@ -143,10 +177,37 @@ export default function HomeSlipsCard({ t, style }) {
             <p className="min-h-16 break-words text-lg leading-relaxed">{pop.content}</p>
             <p className="mt-3 text-right text-xs text-muted-foreground">— {nameOf(pop.from)}</p>
           </div>
-          <div className="mt-4 flex gap-2">
-            {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => replyFromPopup(pop)}>{t('slip_reply')}</Button>}
-            <Button className="flex-1" onClick={nextPopup}>{popIdx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
-          </div>
+          {popReply !== null && pop.from ? (
+            <form onSubmit={sendPopReply} className="mt-4 space-y-2 rounded-md bg-card p-3 shadow-xl">
+              <p className="text-xs text-muted-foreground">{t('slip_to').replace('{n}', nameOf(pop.from))}</p>
+              {popSent ? (
+                <p className="py-2 text-center text-sm">{t('slip_sent_ok')}</p>
+              ) : (
+                <>
+                  <div className="relative">
+                    <input
+                      autoFocus
+                      value={popReply}
+                      onChange={(e) => setPopReply([...e.target.value].slice(0, MAX).join(''))}
+                      placeholder={t('slip_placeholder')}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 pr-12 text-sm"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">{len(popReply)}/{MAX}</span>
+                  </div>
+                  {error && <p className="text-xs text-red-500">{error}</p>}
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => { setPopReply(null); setError(''); }}>{t('cancel')}</Button>
+                    <Button type="submit" size="sm" className="flex-1" disabled={busy || !popReply.trim()}>{t('slip_send')}</Button>
+                  </div>
+                </>
+              )}
+            </form>
+          ) : (
+            <div className="mt-4 flex gap-2">
+              {pop.from && <Button variant="outline" className="flex-1 bg-card" onClick={() => replyFromPopup(pop)}>{t('slip_reply')}</Button>}
+              <Button className="flex-1" onClick={nextPopup}>{popIdx + 1 < popup.length ? t('slip_next') : t('slip_keep')}</Button>
+            </div>
+          )}
         </div>
       </div>
     )}
@@ -205,8 +266,8 @@ export default function HomeSlipsCard({ t, style }) {
         )}
 
         {data && (
-          <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card/60 p-1 text-sm">
-            {['received', 'sent'].map((v) => (
+          <div className={`mb-3 grid ${hiddenList.length || view === 'hidden' ? 'grid-cols-3' : 'grid-cols-2'} gap-1 rounded-lg border border-border bg-card/60 p-1 text-sm`}>
+            {['received', 'sent', ...(hiddenList.length || view === 'hidden' ? ['hidden'] : [])].map((v) => (
               <button
                 key={v}
                 type="button"
@@ -224,12 +285,13 @@ export default function HomeSlipsCard({ t, style }) {
         {!data ? (
           <p className="text-sm text-muted-foreground">{t('loading')}</p>
         ) : list.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{view === 'received' ? t('slip_empty') : t('slip_empty_sent')}</p>
+          <p className="text-sm text-muted-foreground">{view === 'received' ? t('slip_empty') : view === 'hidden' ? t('slip_empty_hidden') : t('slip_empty_sent')}</p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {shown.map((s, i) => {
               const isOpen = open === s.id;
               const isNew = view === 'received' && !s.read_at;
+              const fromSide = view !== 'sent';
               return (
                 <div
                   key={s.id}
@@ -239,16 +301,17 @@ export default function HomeSlipsCard({ t, style }) {
                   <button type="button" onClick={() => { setOpen(isOpen ? null : s.id); if (isNew) markRead([s.id]); }} className="block w-full text-left">
                     <p className="mb-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                       {isNew && <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--expense)' }} />}
-                      <span className="truncate">{view === 'received' ? nameOf(s.from) : `→ ${nameOf(s.to)}`}</span>
+                      <span className="truncate">{fromSide ? nameOf(s.from) : `→ ${nameOf(s.to)}`}</span>
                     </p>
                     <p className="break-words leading-snug">{s.content}</p>
                     {view === 'sent' && <p className="mt-1 text-[11px] text-muted-foreground">{s.read_at ? t('slip_read') : t('slip_unread')}</p>}
                   </button>
                   {isOpen && (
                     <div className="mt-2 flex gap-3 border-t border-dashed border-border pt-1.5 text-xs text-muted-foreground">
-                      {view === 'received' ? (
+                      {fromSide ? (
                         <>
                           {s.from && <button type="button" onClick={() => startCompose(s.from.id)} className="underline">{t('slip_reply')}</button>}
+                          <button type="button" onClick={() => setHidden(s, view === 'received')} className="underline">{view === 'received' ? t('slip_hide') : t('slip_unhide')}</button>
                           <button type="button" onClick={() => remove(s)} className="underline">{t('slip_tear')}</button>
                           {s.from && <button type="button" onClick={() => setBlocking(s.from)} className="ml-auto underline">{t('slip_block')}</button>}
                         </>

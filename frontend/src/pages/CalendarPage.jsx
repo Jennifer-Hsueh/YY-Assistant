@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import DateInputSegmented from '../components/DateInputSegmented';
-import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind } from '../lib/eventRemind';
+import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind, endAtIso } from '../lib/eventRemind';
 import CalendarSubNav from '../components/CalendarSubNav';
 import EventPeople, { EventInvites } from '../components/EventPeople';
 import CalendarSwitcher, { CalendarInvites, ColorDots, CAL_COLORS } from '../components/CalendarSwitcher';
@@ -192,9 +192,7 @@ export default function CalendarPage() {
       title: form.title,
       start_at: new Date(startAt).toISOString(),
       // 結束:可只填結束時間(同一天),或填結束日期(跨日)
-      end_at: form.end_date || form.end_time
-        ? new Date(`${form.end_date || form.date}T${form.end_time || (form.end_date ? '23:59' : form.time || '00:00')}:00`).toISOString()
-        : null,
+      end_at: endAtIso(form),
       category: form.category || null,
       color: form.category ? categoryColor(form.category) : '#9CA3AF',
       note: form.note || null,
@@ -495,6 +493,14 @@ export default function CalendarPage() {
         ))}
       </div>
       {!isDesktop && <div className="mb-3">{panelContent}</div>}
+      {/* 選了編輯:刪除/修改放在月曆上方(先選刪除或修改,再點日期) */}
+      {actionMode === 'edit' && !activeId && !panel && (
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
+          {[['delete', t('mode_delete')], ['modify', t('edit_sub_modify')]].map(([k, label]) => (
+            <button key={k} type="button" onClick={() => { setEditSub(k); setActiveId(null); }} className={`rounded-md px-2 py-1.5 transition-colors ${editSub === k ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{label}</button>
+          ))}
+        </div>
+      )}
 
       </div>
 
@@ -683,14 +689,16 @@ export default function CalendarPage() {
             <form onSubmit={handleSubmit} className="space-y-2">
               <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               <div className="flex gap-2">
-                <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
+                <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v, end_date: form.end_date > v ? form.end_date : '' })} required />
                 <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                 
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-9 shrink-0 text-xs text-muted-foreground">{t('cal_end')}</span>
-                <Input type="date" value={form.end_date} min={form.date || undefined} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="min-w-0 flex-1" />
-                <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">{t('cal_end')}</p>
+                <div className="flex gap-2">
+                  <DateInputSegmented value={form.end_date || form.date} onChange={(v) => setForm({ ...form, end_date: v })} />
+                  <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="shrink-0 text-xs text-muted-foreground">🔔 {t('cal_remind')}</span>
@@ -747,14 +755,6 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {/* 選了編輯模式:先選日期,再選當日行程(刪除在編輯表單內) */}
-      {actionMode === 'edit' && !activeId && (
-        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-sm shadow-sm">
-          {[['delete', t('mode_delete')], ['modify', t('edit_sub_modify')]].map(([k, label]) => (
-            <button key={k} type="button" onClick={() => { setEditSub(k); setActiveId(null); }} className={`rounded-md px-2 py-1.5 transition-colors ${editSub === k ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{label}</button>
-          ))}
-        </div>
-      )}
       {actionMode === 'edit' && !activeId && editSub && (
         !selectedDay ? (
           <p className="px-1 text-sm text-muted-foreground">{t('cal_pick_day_edit')}</p>
@@ -832,14 +832,16 @@ export default function CalendarPage() {
                 <p className="text-xs font-medium text-muted-foreground">{t('cal_editing')}</p>
                 <Input type="text" placeholder={t('cal_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                 <div className="flex gap-2">
-                  <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v })} required />
+                  <DateInputSegmented value={form.date} onChange={(v) => setForm({ ...form, date: v, end_date: form.end_date > v ? form.end_date : '' })} required />
                   <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-28" />
                   
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 shrink-0 text-xs text-muted-foreground">{t('cal_end')}</span>
-                  <Input type="date" value={form.end_date} min={form.date || undefined} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="min-w-0 flex-1" />
-                  <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">{t('cal_end')}</p>
+                  <div className="flex gap-2">
+                    <DateInputSegmented value={form.end_date || form.date} onChange={(v) => setForm({ ...form, end_date: v })} />
+                    <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-28" />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="shrink-0 text-xs text-muted-foreground">🔔 {t('cal_remind')}</span>

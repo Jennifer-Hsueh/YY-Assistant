@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from './PlanNotice';
 import { Plus, X, Check } from 'lucide-react';
@@ -18,6 +19,7 @@ const emptyEv = () => ({ title: '', date: ymd(new Date()), time: '', end_date: '
 
 export default function FloatingAddButton() {
   const { t } = useLanguage();
+  const { pathname } = useLocation();
   const { ledgers, current } = useLedger();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('tx');
@@ -122,7 +124,7 @@ export default function FloatingAddButton() {
         type="button"
         aria-label={t('qa_open')}
         onClick={() => { if (!tabs.includes(tab)) setTab(tabs[0]); setOpen(true); }}
-        className="fixed right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] z-40 flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform active:scale-95 md:right-8 md:bottom-8 md:h-14 md:w-14"
+        className={`fixed right-4 bottom-[calc(80px+env(safe-area-inset-bottom))] z-40 ${pathname === '/' ? 'flex' : 'hidden md:flex'} h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform active:scale-95 md:right-8 md:bottom-8 md:h-14 md:w-14`}
       >
         <Plus className="h-6 w-6" />
       </button>
@@ -197,12 +199,12 @@ export default function FloatingAddButton() {
               <form onSubmit={saveEv} className="space-y-2">
                 <Input autoFocus placeholder={t('cal_title_placeholder')} value={ev.title} onChange={(e) => setEv({ ...ev, title: e.target.value })} required />
                 <div className="flex gap-2">
-                  <Input type="date" value={ev.date} onChange={(e) => setEv({ ...ev, date: e.target.value })} className="min-w-0 flex-1" required />
+                  <Input type="date" value={ev.date} onChange={(e) => setEv({ ...ev, date: e.target.value, end_date: ev.end_date > e.target.value ? ev.end_date : '' })} className="min-w-0 flex-1" required />
                   <Input type="time" value={ev.time} onChange={(e) => setEv({ ...ev, time: e.target.value })} className="w-32" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-9 shrink-0 text-xs text-muted-foreground">{t('cal_end')}</span>
-                  <Input type="date" value={ev.end_date} min={ev.date || undefined} onChange={(e) => setEv({ ...ev, end_date: e.target.value })} className="min-w-0 flex-1" />
+                  <Input type="date" value={ev.end_date || ev.date} min={ev.date || undefined} onChange={(e) => setEv({ ...ev, end_date: e.target.value })} className="min-w-0 flex-1" />
                   <Input type="time" value={ev.end_time} onChange={(e) => setEv({ ...ev, end_time: e.target.value })} className="w-32" />
                 </div>
                 <div className="flex items-center gap-2">

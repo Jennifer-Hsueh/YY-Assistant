@@ -9,5 +9,6 @@ router.get('/contacts', c.contacts);
 router.get('/unread', c.unread);
 router.post('/', c.send);
 router.post('/read', c.markRead);
+router.post('/:id/hide', c.hide);
 router.delete('/:id', c.remove);
 module.exports = router;

@@ -15,7 +15,8 @@ export const remindMinutes = (remind, hasTime) => {
 };
 
 // 結束:可只填結束時間(同一天),或填結束日期(跨日)
-export function endAtIso({ date, time, end_date, end_time }) {
+export function endAtIso({ date, time, end_date: ed, end_time }) {
+  const end_date = ed && ed > date ? ed : ''; // 和開始同一天(或更早)= 不跨日
   if (!end_date && !end_time) return null;
   return new Date(`${end_date || date}T${end_time || (end_date ? '23:59' : time || '00:00')}:00`).toISOString();
 }

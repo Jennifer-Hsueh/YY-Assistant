@@ -5,7 +5,7 @@ const supabase = require('../config/supabase');
 // 結果也會顯示在 /health 的 schema 欄位。
 const REQUIRED = {
   yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at, friend_code, birthday_md, birthday_visible, notify_birthdays, friends_seen_at',
-  yy_slips: 'id, sender_id, recipient_id, content, read_at, sender_hidden',
+  yy_slips: 'id, sender_id, recipient_id, content, read_at, sender_hidden, recipient_hidden',
   yy_calendars: 'id, user_id, name, color',
   yy_events: 'id, calendar_id',
   yy_calendar_members: 'calendar_id, user_id, status, invited_by, joined_at',
