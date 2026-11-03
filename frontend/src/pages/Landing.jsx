@@ -16,7 +16,7 @@ const COPY = {
     langSwitch: 'EN',
     docTitle: 'YY手帳 Assistant｜把每天的小事，好好收進手帳',
     heroTitle: ['把每天的小事，', '好好收進手帳'],
-    heroText: '記帳、行事曆、紀念日和隨手記事，放在同一本手帳裡。還能和家人朋友共用帳本和行事曆、互傳小紙條，每個月再整理成一本專屬的書。註冊後三個月免費使用全部功能，不需要信用卡。',
+    heroText: '記帳、行事曆、紀念日和隨手記事，放在同一本手帳裡。還能和家人朋友共用帳本和行事曆、互傳小紙條，貼上生活照片，每個月再整理成一本專屬的書，放進小河狸的家。註冊後三個月免費使用全部功能，不需要信用卡。',
     cta: '免費開始使用',
     ctaFull: '測試名額已滿',
     betaLine: (limit, remaining) => `目前開放 ${limit} 位測試者，還有 ${remaining} 個名額`,
@@ -37,6 +37,8 @@ const COPY = {
       ['📝', '小紙條', '傳一句話給在乎的人'],
       ['🌦️', '社群', '聊心情、交流理財'],
       ['📚', '月刊書櫃', '每月一本專屬的書'],
+      ['📷', '日常時光', '生活照片收進手帳'],
+      ['🏡', '小河狸的家', '點點房間裡的小東西'],
     ],
     sections: [
       {
@@ -53,7 +55,7 @@ const COPY = {
       },
       {
         key: 'home', tag: '首頁', title: '打開手帳，今天的事都在這裡',
-        text: '今天的行程、這個月花了多少、預算還剩多少，首頁一次看完。點一下記下今天的心情；想到要做的事寫進墨箋絮語，完成就打勾。收到小紙條會跳出來給你看，小河狸也會提醒你朋友今天生日。',
+        text: '今天的行程、這個月花了多少、預算還剩多少，首頁一次看完。點一下記下今天的心情；想到要做的事寫進墨箋絮語，完成就打勾。收到小紙條，不管在哪一頁都會跳出來，還能直接回一張；小河狸也會提醒你朋友今天生日。',
         points: ['本日心情', '墨箋絮語', '小紙條', '小河狸提醒'],
         shots: ['home2', 'notes'],
       },
@@ -65,9 +67,15 @@ const COPY = {
       },
       {
         key: 'bookshelf', tag: '月刊書櫃', title: '每個月，一本只屬於你的書',
-        text: '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章，整理成一本書放上書櫃。7 號以前挑一張喜歡的封面、寫一句想對這個月說的話，就完成了；也可以下載成 PDF 好好收著。',
-        points: ['每月自動整理', '挑封面', '心情月曆', '海狸的話', '下載 PDF', '三款書櫃'],
+        text: '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、日常時光的照片、墨箋絮語和你發的文章，整理成一本書放上書櫃。7 號以前挑一張喜歡的封面、寫一句想對這個月說的話，就完成了；也可以下載成 PDF 好好收著。',
+        points: ['每月自動整理', '挑封面', '心情與照片月曆', '海狸的話', '下載 PDF', '三款書櫃'],
         shots: ['bookshelf', 'book'],
+      },
+      {
+        key: 'room', tag: '日常時光與小河狸的家', title: '生活的照片，有個溫暖的家',
+        text: '把今天的晚餐、路上的夕陽貼進「日常時光」，寫一句話，只有你自己看得到；每個月也會放進月刊。書櫃住在「小河狸的家」：月曆是今天的日期、To Do 寫著還沒做完的事、窗外天氣跟著你的心情變、相框掛著你的照片。點一下小河狸，牠會跟你聊聊今天。',
+        points: ['日常時光（完整版）', '只給自己看', '放進月刊', '窗外跟著心情變', '開關燈', '跟小河狸聊天'],
+        shots: ['room', 'moments'],
       },
     ],
     themesTitle: '換一種心情的手帳',
@@ -83,7 +91,7 @@ const COPY = {
       ['進階 A／B／C＋社群', '上述任一方案加購社群'],
       ['完整版', '全部功能，包含社群和日常時光'],
     ],
-    plansNote: '多帳本、共同帳本、共同行程、共用行事曆、紀念日、好友、小紙條與月刊書櫃，目前所有方案都能使用。',
+    plansNote: '多帳本、共同帳本、共同行程、共用行事曆、紀念日、好友、小紙條、月刊書櫃與小河狸的家，目前所有方案都能使用；日常時光是完整版的功能。',
     free: '免費',
     perMonth: (m) => `${m} 元／月`,
     perYear: (y) => `年繳 ${y.toLocaleString()} 元`,
@@ -102,7 +110,7 @@ const COPY = {
     langSwitch: '中文',
     docTitle: 'YY Assistant | Every little thing, neatly in one notebook',
     heroTitle: ['Every little thing,', 'neatly in one notebook'],
-    heroText: 'Budget, calendar, anniversaries and quick notes, all in one notebook. Share ledgers and calendars with family and friends, send little notes, and get your month bound into a book of your own. Every feature is free for your first three months. No credit card needed.',
+    heroText: 'Budget, calendar, anniversaries and quick notes, all in one notebook. Share ledgers and calendars with family and friends, send little notes, keep photos of your days, and get each month bound into a book for Beaver’s home. Every feature is free for your first three months. No credit card needed.',
     cta: 'Start free',
     ctaFull: 'Beta is full',
     betaLine: (limit, remaining) => `Open to ${limit} beta testers, ${remaining} spots left`,
@@ -123,6 +131,8 @@ const COPY = {
       ['📝', 'Little notes', 'A line for someone you care about'],
       ['🌦️', 'Community', 'Feelings and money tips'],
       ['📚', 'Monthly bookshelf', 'A book of your month'],
+      ['📷', 'Daily moments', 'Photos of your days'],
+      ['🏡', 'Beaver’s home', 'A cozy room to explore'],
     ],
     sections: [
       {
@@ -139,7 +149,7 @@ const COPY = {
       },
       {
         key: 'home', tag: 'Home', title: 'Open it, and your day is right there',
-        text: 'Today’s plans, this month’s spending and what is left in your budget, all on one page. Tap to log today’s mood, and jot to-dos in Ink Notes. New little notes pop up for you, and a little beaver reminds you when it’s a friend’s birthday.',
+        text: 'Today’s plans, this month’s spending and what is left in your budget, all on one page. Tap to log today’s mood, and jot to-dos in Ink Notes. New little notes pop up on any page so you can reply right away, and a little beaver reminds you when it’s a friend’s birthday.',
         points: ['Daily mood', 'Ink Notes', 'Little notes', 'Beaver reminders'],
         shots: ['home2', 'notes'],
       },
@@ -151,9 +161,15 @@ const COPY = {
       },
       {
         key: 'bookshelf', tag: 'Monthly bookshelf', title: 'Every month, a book that’s yours alone',
-        text: 'On the 1st of each month, Beaver gathers last month’s spending, plans, anniversaries, moods, Ink Notes and your posts into a book on your shelf. Pick a cover and write a line to the month before the 7th, and it’s done. You can download it as a PDF to keep.',
-        points: ['Made for you monthly', 'Pick a cover', 'Mood calendar', 'Words from Beaver', 'PDF download', 'Three shelves'],
+        text: 'On the 1st of each month, Beaver gathers last month’s spending, plans, anniversaries, moods, daily photos, Ink Notes and your posts into a book on your shelf. Pick a cover and write a line to the month before the 7th, and it’s done. You can download it as a PDF to keep.',
+        points: ['Made for you monthly', 'Pick a cover', 'Moods & photos', 'Words from Beaver', 'PDF download', 'Three shelves'],
         shots: ['bookshelf', 'book'],
+      },
+      {
+        key: 'room', tag: 'Daily moments & Beaver’s home', title: 'A cozy home for the photos of your days',
+        text: 'Pin tonight’s dinner or a sunset on the way home to Daily moments, add a line, and keep it just for you. It goes into your monthly book, too. Your bookshelf lives in Beaver’s home: the calendar shows today, the To Do note counts what is left, the weather outside follows your mood, and your photo hangs in the frame. Tap Beaver for a little chat about your day.',
+        points: ['Daily moments (Complete)', 'Just for you', 'In your monthly book', 'Weather follows your mood', 'Lights on and off', 'Chat with Beaver'],
+        shots: ['room', 'moments'],
       },
     ],
     themesTitle: 'A notebook for every mood',
@@ -169,7 +185,7 @@ const COPY = {
       ['Plus A / B / C + Community', 'Any of the above plus community'],
       ['Complete', 'Everything, including community'],
     ],
-    plansNote: 'Multiple and shared ledgers, shared events and calendars, anniversaries, friends, little notes and the monthly bookshelf are included in every plan for now.',
+    plansNote: 'Multiple and shared ledgers, shared events and calendars, anniversaries, friends, little notes, the monthly bookshelf and Beaver’s home are included in every plan for now. Daily moments is part of the Complete plan.',
     free: 'Free',
     perMonth: (m) => `NT$${m} / month`,
     perYear: (y) => `NT$${y.toLocaleString()} / year`,
@@ -185,7 +201,7 @@ const COPY = {
   },
 };
 
-const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)', bookshelf: '#8A6A54' };
+const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)', bookshelf: '#8A6A54', room: '#6E8B5D' };
 const THEMES = ['default', 'grey', 'morandi', 'sport'];
 const PRICES = [[null, null], [69, 728], [69, 728], [69, 728], [79, 848], [109, 1208]];
 
@@ -296,9 +312,9 @@ export default function Landing() {
         <section id="overview" data-guide="overview" className="landing-band scroll-mt-16">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.overviewTitle}</h2>
-            <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
+            <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6">
               {T.overview.map(([emoji, name, desc], k) => (
-                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 5) * 70}ms` }}>
+                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 6) * 70}ms` }}>
                   <span className="landing-emoji inline-block text-2xl leading-none">{emoji}</span>
                   <p className="mt-2 font-semibold" style={{ color: 'var(--ink)' }}>{name}</p>
                   <p className="mt-0.5 text-sm text-foreground/70">{desc}</p>
