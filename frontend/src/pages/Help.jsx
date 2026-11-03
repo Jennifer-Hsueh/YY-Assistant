@@ -66,13 +66,19 @@ const SECTIONS = {
       '建立者可以刪除整本或移出成員；成員可以退出。只想約一次的話，用新增行程時的「邀請好友」就好。',
     ] },
     { title: '月刊書櫃', items: [
-      '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。網頁版在左側選單，手機版點右上角的書櫃圖示。',
+      '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。書櫃在「小河狸的家」裡（網頁版在左側選單，手機版點右上角的沙發圖示），點房間裡的書櫃就能打開。',
       '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
       { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
       '右上角可以換書櫃樣式；有兩年以上的書時，可以切換年份。',
     ] },
+    { title: '小河狸的家', items: [
+      '網頁版在左側選單，手機版點右上角的沙發圖示。房間裡的東西都可以點：',
+      '月曆顯示今天的日期，點了看今天的行程；To Do 上的數字是還沒完成的待辦。',
+      '窗外的天氣會跟著今天的心情變；相框會掛上一張日常時光的照片；點書櫃打開月刊書櫃；點檯燈可以開關燈。',
+      '點小河狸，牠會跟你說說今天的事。',
+    ] },
     { title: '日常時光（完整版）', items: [
-      '貼上生活裡的小照片，只有你自己看得到。網頁版在左側選單，手機版點右上角的相片圖示。',
+      '貼上生活裡的小照片，只有你自己看得到。網頁版在左側選單，手機版點右上角的相片圖示。小河狸的家的相框也會掛上一張。',
       '選日期、寫一句話（可不填），按「選照片」，一次可以選好幾張；同一天最多 9 張。',
       '同一天有好幾張時，會隨機挑一張當代表。點照片可以看大圖、切換同一天的其他照片或刪除。',
       '每個月的月刊「心情與時光」頁，有照片的日子會放上那天的照片，沒有照片就放心情圖示。',
@@ -185,10 +191,16 @@ const SECTIONS = {
       'The creator can delete the calendar or remove members; members can leave. For a one-off plan, just invite friends to a single event.',
     ] },
     { title: 'Monthly Bookshelf', items: [
-      'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. On the web it’s in the left menu; on mobile, tap the bookshelf icon at the top right.',
+      'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. The shelf is in Beaver’s home (left menu on the web, the armchair icon at the top right on mobile); tap the bookshelf in the room to open it.',
       'Until the 7th it’s a draft: pick a cover, write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
       { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
       'Use the icons at the top right to change the shelf style, and switch years once you have books from more than one year.',
+    ] },
+    { title: "Beaver's home", items: [
+      'Find it in the left menu on the web, or tap the armchair icon at the top right on mobile. Everything in the room can be tapped:',
+      'The calendar shows today’s date; tap it to see today’s events. The number on the To Do note is how many to-dos are left.',
+      'The weather outside follows today’s mood, the frame shows a photo from Daily moments, the bookshelf opens your monthly books, and the lamp turns the light on and off.',
+      'Tap Beaver to hear a little about your day.',
     ] },
     { title: 'Daily moments (Complete plan)', items: [
       'Keep little photos from your days, just for you. On the web it’s in the left menu; on mobile, tap the photos icon at the top right.',

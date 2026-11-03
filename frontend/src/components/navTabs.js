@@ -1,4 +1,4 @@
-import { Home as HomeIcon, Wallet, Calendar, Users, Settings, NotebookPen, LibraryBig, Images } from 'lucide-react';
+import { Home as HomeIcon, Wallet, Calendar, Users, Settings, NotebookPen, Armchair, Images } from 'lucide-react';
 
 export const navTabs = [
   { to: '/', key: 'nav_home', Icon: HomeIcon, color: 'var(--nav-active)', end: true },
@@ -26,7 +26,8 @@ export const navTabs = [
   // 月刊書櫃:網頁版左側選單;手機版在頂部列的書櫃圖示
   // 日常時光:網頁版左側選單;手機版在頂部列的相片圖示
   { to: '/moments', key: 'nav_moments', Icon: Images, color: 'var(--nav-active)', desktopOnly: true },
-  { to: '/bookshelf', key: 'nav_bookshelf', Icon: LibraryBig, color: 'var(--nav-active)', desktopOnly: true },
+  // 小河狸的家(月刊書櫃在房間裡):網頁版左側選單;手機版在頂部列的沙發圖示
+  { to: '/room', key: 'nav_room', Icon: Armchair, color: 'var(--nav-active)', desktopOnly: true, match: ['/bookshelf'] },
   { to: '/settings', key: 'nav_settings', Icon: Settings, color: 'var(--nav-active)' },
 ];
 

@@ -1,4 +1,5 @@
 // 月刊書櫃:每月一本書,放在書櫃上;點書打開閱讀,草稿可以挑封面、寫一句話、按完成;定稿後可下載 PDF
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import '@fontsource/eb-garamond/latin-700.css';
@@ -77,6 +78,7 @@ export default function Bookshelf() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-3xl md:px-8 md:py-10">
+      <Link to="/room" className="mb-2 inline-block text-xs text-muted-foreground underline">← {lang === 'en' ? "Beaver's home" : '小河狸的家'}</Link>
       <div className="page-title-row mb-3 flex items-center justify-between gap-2">
         <h1 className="page-title flex items-center gap-2 text-lg font-semibold">
           <LibraryBig className="h-5 w-5 md:hidden" />
