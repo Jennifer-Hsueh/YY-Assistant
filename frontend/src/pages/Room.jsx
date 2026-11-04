@@ -11,18 +11,18 @@ import { Card, CardContent } from '../components/ui/card';
 // 相框=日常時光的照片、書櫃=月刊書櫃、檯燈=開關燈、小河狸=說一句話。座標是圖片寬高的百分比 [左, 上, 右, 下]
 const SCENES = {
   sit: {
-    src: '/room/room-1.webp', w: 1000, h: 870,
-    calendar: [24.0, 31.2, 30.6, 39.0], todo: [36, 35, 44, 47.5], windows: [[45.5, 30.1, 64.0, 50.6]], frame: [72.2, 34.7, 79.7, 43.7],
+    src: '/room/room-1.webp', mask: '/room/room-1-win.png', w: 1000, h: 870,
+    calendar: [24.0, 31.2, 30.6, 39.0], todo: [36, 35, 44, 47.5], windows: [[45.5, 29.0, 66.5, 50.6]], frame: [72.2, 34.7, 79.7, 43.7],
     shelves: [[13, 40, 41, 64]], beaver: [63, 47, 78, 70], lamps: [[41, 20, 49, 29]],
   },
   walk: {
-    src: '/room/room-1b.webp', w: 1000, h: 852,
-    calendar: [23.8, 29.3, 30.6, 37.3], todo: [35.5, 33, 43.8, 45.2], windows: [[45.5, 27.8, 64.5, 48.5]], frame: [72.2, 32.3, 80.0, 41.3],
+    src: '/room/room-1b.webp', mask: '/room/room-1b-win.png', w: 1000, h: 852,
+    calendar: [23.8, 29.3, 30.6, 37.3], todo: [35.5, 33, 43.8, 45.2], windows: [[45.0, 27.0, 67.0, 49.0]], frame: [72.2, 32.3, 80.0, 41.3],
     shelves: [[14, 37, 40, 70]], beaver: [54, 55, 70, 80], lamps: [[41, 18, 49, 27]],
   },
   wide: {
-    src: '/room/room-wide.webp', w: 1600, h: 795,
-    calendar: [11.7, 31.4, 16.1, 39.0], todo: [19.7, 35.2, 24.9, 47.5], windows: [[25.75, 28.7, 38.1, 51.6], [73.75, 31.4, 84.5, 54]], frame: [90.2, 37.5, 94.25, 46.3],
+    src: '/room/room-wide.webp', mask: '/room/room-wide-win.png', w: 1600, h: 795,
+    calendar: [11.7, 31.4, 16.1, 39.0], todo: [19.7, 35.2, 24.9, 47.5], windows: [[26.0, 28.0, 40.0, 51.5], [73.5, 30.5, 86.5, 54.2]], frame: [90.2, 37.5, 94.25, 46.3],
     shelves: [[6.5, 41, 23, 75], [61, 34, 71, 78]], beaver: [76.5, 56, 87, 83], lamps: [[22.5, 17, 28.5, 30], [70.5, 17, 76.5, 30]], hall: [47, 36, 58, 78],
   },
 };
@@ -116,12 +116,17 @@ export default function Room() {
         ))}
 
         {/* 窗外天氣(依今天的心情) */}
-        {weather && scene.windows.map((w, i) => (
-          <span key={i} className={`room-window room-w-${weather} pointer-events-none absolute`} style={box(w)}>
-            {weather === 'sun' && <i className="room-sun" />}
-            {(weather === 'rain' || weather === 'storm') && <i className="room-rain" />}
+        {/* 用窗戶玻璃的遮罩圖(public/room/*-win.png)貼齊玻璃,不會蓋到窗框和窗簾 */}
+        {weather && (
+          <span className="pointer-events-none absolute inset-0" style={{ WebkitMaskImage: `url(${scene.mask})`, maskImage: `url(${scene.mask})`, WebkitMaskSize: '100% 100%', maskSize: '100% 100%' }}>
+            {scene.windows.map((w, i) => (
+              <span key={i} className={`room-window room-w-${weather} absolute`} style={box(w)}>
+                {weather === 'sun' && <i className="room-sun" />}
+                {(weather === 'rain' || weather === 'storm') && <i className="room-rain" />}
+              </span>
+            ))}
           </span>
-        ))}
+        )}
 
         {/* 月曆:今天的日期 */}
         <span className="pointer-events-none absolute flex flex-col items-center justify-center rounded-[2px] leading-none" style={{ ...box(cal), background: '#F8DEBA', color: '#5A3B22' }}>

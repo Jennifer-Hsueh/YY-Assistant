@@ -27,7 +27,7 @@ export default function DeleteAccountCard({ t }) {
     setBusy(true);
     setError('');
     try {
-      await api.deleteAccount(password);
+      await api.deleteMyAccount(password);
       sessionStorage.setItem('yy_account_deleted', '1');
       clearSession();
     } catch (err) {
