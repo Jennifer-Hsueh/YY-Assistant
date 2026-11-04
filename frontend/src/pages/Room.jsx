@@ -54,17 +54,21 @@ export default function Room() {
       api.listEvents({ from: dayStart.toISOString(), to: dayEnd.toISOString() }).catch(() => ({ events: [] })),
       api.listNotes({ status: 'open' }).catch(() => ({ notes: [] })),
       api.listMoods({ from: today, to: today }).catch(() => ({ moods: [] })),
-      api.listMoments(ym).then((r) => (r.moments.length ? r : api.listMoments(prev))).catch(() => ({ moments: [] })),
+      // 這個月+上個月的日常時光(相框挑一張、下方列出最近 10 張)
+      Promise.all([api.listMoments(ym), api.listMoments(prev)]).then(([a, b]) => ({ moments: [...a.moments, ...b.moments] })).catch(() => ({ moments: [] })),
       api.listBooks().catch(() => ({ books: [] })),
       api.listPosts({ board: 'mine' }).catch(() => ({ posts: [] })),
     ]).then(([{ events }, { notes }, { moods }, { moments }, { books }, { posts }]) => {
       const weekAgo = new Date(Date.now() - 7 * 24 * 3600e3).toISOString();
-      const withPhoto = (moments || []).filter((m) => m.thumb);
+      const withPhoto = (moments || []).filter((m) => m.thumb).sort((a, b) => `${b.date}${b.created_at}`.localeCompare(`${a.date}${a.created_at}`));
+      const thisMonth = withPhoto.filter((m) => m.date.startsWith(ym));
+      const pool = thisMonth.length ? thisMonth : withPhoto;
       setData({
         events: (events || []).slice().sort((a, b) => a.start_at.localeCompare(b.start_at)),
         notes: notes || [],
         mood: moods?.[0]?.mood || null,
-        photo: withPhoto.length ? withPhoto[Math.floor(Math.random() * withPhoto.length)] : null,
+        photo: pool.length ? pool[Math.floor(Math.random() * pool.length)] : null,
+        recent: withPhoto.slice(0, 10),
         books: (books || []).length,
         // 箱子:近一週的微光拾憶(自己發的文章)
         posts: (posts || []).filter((x) => x.created_at >= weekAgo),
@@ -216,6 +220,18 @@ export default function Room() {
                 {data?.photo ? (
                   <p className="font-medium">🖼️ {data.photo.date.slice(5).replace('-', '/')}{data.photo.caption ? `　${data.photo.caption}` : ''}</p>
                 ) : <p className="text-muted-foreground">{t('room_no_photo')}</p>}
+                {/* 最近 10 張:點一下就掛到相框上 */}
+                {data?.recent?.length > 1 && (
+                  <div className="grid grid-cols-5 gap-1.5 md:grid-cols-10">
+                    {data.recent.map((m) => (
+                      <button key={m.id} type="button" onClick={() => setData((d) => ({ ...d, photo: m }))} aria-label={m.date}
+                        className={`aspect-square overflow-hidden rounded-md bg-muted ${data.photo?.id === m.id ? 'ring-2 ring-[var(--ink)] ring-offset-1' : 'opacity-90 hover:opacity-100'}`}>
+                        <img src={m.thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {data?.recent?.length > 1 && <p className="text-xs text-muted-foreground">{t('room_pick_photo')}</p>}
                 <Link to="/moments" className="block text-right text-xs text-muted-foreground underline">{t('room_open_moments')}</Link>
               </>
             )}
