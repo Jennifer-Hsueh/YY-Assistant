@@ -13,17 +13,17 @@ const SCENES = {
   sit: {
     src: '/room/room-1.webp', mask: '/room/room-1-win.png', w: 1000, h: 870,
     calendar: [24.0, 31.2, 30.6, 39.0], todo: [36, 35, 44, 47.5], windows: [[45.5, 29.0, 66.5, 50.6]], frame: [72.2, 34.7, 79.7, 43.7],
-    shelves: [[13, 40, 41, 64]], beaver: [63, 47, 78, 70], lamps: [[41, 20, 49, 29]],
+    chest: [13.5, 68.5, 30.5, 81.5], shelves: [[13, 40, 41, 64]], beaver: [63, 47, 78, 70], lamps: [[41, 20, 49, 29]],
   },
   walk: {
     src: '/room/room-1b.webp', mask: '/room/room-1b-win.png', w: 1000, h: 852,
     calendar: [23.8, 29.3, 30.6, 37.3], todo: [35.5, 33, 43.8, 45.2], windows: [[45.0, 27.0, 67.0, 49.0]], frame: [72.2, 32.3, 80.0, 41.3],
-    shelves: [[14, 37, 40, 70]], beaver: [54, 55, 70, 80], lamps: [[41, 18, 49, 27]],
+    chest: [14.2, 67.5, 30.2, 80.2], shelves: [[14, 37, 40, 67]], beaver: [54, 55, 70, 80], lamps: [[41, 18, 49, 27]],
   },
   wide: {
     src: '/room/room-wide.webp', mask: '/room/room-wide-win.png', w: 1600, h: 795,
     calendar: [11.7, 31.4, 16.1, 39.0], todo: [19.7, 35.2, 24.9, 47.5], windows: [[26.0, 28.0, 40.0, 51.5], [73.5, 30.5, 86.5, 54.2]], frame: [90.2, 37.5, 94.25, 46.3],
-    shelves: [[6.5, 41, 23, 75], [61, 34, 71, 78]], beaver: [76.5, 56, 87, 83], lamps: [[22.5, 17, 28.5, 30], [70.5, 17, 76.5, 30]], hall: [47, 36, 58, 78],
+    chest: [7, 69, 17.2, 82.5], shelves: [[6.5, 41, 23, 68], [61, 34, 71, 78]], beaver: [76.5, 56, 87, 83], lamps: [[22.5, 17, 28.5, 30], [70.5, 17, 76.5, 30]], hall: [47, 36, 58, 78],
   },
 };
 
@@ -56,7 +56,9 @@ export default function Room() {
       api.listMoods({ from: today, to: today }).catch(() => ({ moods: [] })),
       api.listMoments(ym).then((r) => (r.moments.length ? r : api.listMoments(prev))).catch(() => ({ moments: [] })),
       api.listBooks().catch(() => ({ books: [] })),
-    ]).then(([{ events }, { notes }, { moods }, { moments }, { books }]) => {
+      api.listPosts({ board: 'mine' }).catch(() => ({ posts: [] })),
+    ]).then(([{ events }, { notes }, { moods }, { moments }, { books }, { posts }]) => {
+      const weekAgo = new Date(Date.now() - 7 * 24 * 3600e3).toISOString();
       const withPhoto = (moments || []).filter((m) => m.thumb);
       setData({
         events: (events || []).slice().sort((a, b) => a.start_at.localeCompare(b.start_at)),
@@ -64,6 +66,8 @@ export default function Room() {
         mood: moods?.[0]?.mood || null,
         photo: withPhoto.length ? withPhoto[Math.floor(Math.random() * withPhoto.length)] : null,
         books: (books || []).length,
+        // 箱子:近一週的微光拾憶(自己發的文章)
+        posts: (posts || []).filter((x) => x.created_at >= weekAgo),
       });
     });
   }, []);
@@ -82,6 +86,7 @@ export default function Room() {
     if (weather) out.push(t(`room_weather_${weather}`));
     else out.push(t('room_no_mood'));
     if (data.books) out.push(t('room_books').replace('{n}', data.books));
+    if (data.posts.length) out.push(t('room_posts_week').replace('{n}', data.posts.length));
     out.push(t('room_tip'));
     return out;
   }, [data, weather, t]);
@@ -156,6 +161,7 @@ export default function Room() {
         <button type="button" aria-label={t('room_calendar')} className={hot} style={box(cal)} onClick={() => pick('calendar')} />
         <button type="button" aria-label={t('room_todo')} className={hot} style={box(scene.todo)} onClick={() => pick('todo')} />
         <button type="button" aria-label={t('room_frame')} className={hot} style={box(scene.frame)} onClick={() => pick('frame')} />
+        <button type="button" aria-label={t('room_chest')} className={hot} style={box(scene.chest)} onClick={() => pick('chest')} />
         {scene.lamps.map((l, i) => <button key={i} type="button" aria-label={t('room_lamp')} className={hot} style={box(l)} onClick={() => setNight((v) => !v)} />)}
         {scene.hall && <button type="button" aria-label={t('room_hall')} className={hot} style={box(scene.hall)} onClick={() => pick('hall')} />}
         <button type="button" aria-label="🦫" className={`${hot} room-beaver`} style={box(scene.beaver)} onClick={talk} />
@@ -217,6 +223,26 @@ export default function Room() {
               <>
                 <p className="font-medium">📚 {data?.books ? t('room_books').replace('{n}', data.books) : t('room_no_books')}</p>
                 <Link to="/bookshelf" className="block text-right text-xs text-muted-foreground underline">{t('room_open_shelf')}</Link>
+              </>
+            )}
+            {focus === 'chest' && (
+              <>
+                <p className="font-medium">📦 {t('room_chest_title')}</p>
+                {!data ? <p className="text-muted-foreground">{t('loading')}</p> : data.posts.length === 0 ? <p className="text-muted-foreground">{t('room_no_posts')}</p> : (
+                  <ul className="space-y-2">
+                    {data.posts.slice(0, 6).map((x) => (
+                      <li key={x.id} className="flex gap-2">
+                        <span className="w-11 shrink-0 font-amount text-xs leading-5 text-muted-foreground">{new Date(x.created_at).getMonth() + 1}/{new Date(x.created_at).getDate()}</span>
+                        <span className="min-w-0">
+                          {x.title && <span className="block truncate font-medium">{x.title}</span>}
+                          <span className="line-clamp-2 text-muted-foreground">{x.content}</span>
+                        </span>
+                      </li>
+                    ))}
+                    {data.posts.length > 6 && <li className="text-xs text-muted-foreground">+{data.posts.length - 6}</li>}
+                  </ul>
+                )}
+                <Link to="/community/mine" className="block text-right text-xs text-muted-foreground underline">{t('room_open_posts')}</Link>
               </>
             )}
             {focus === 'hall' && <p>🚪 {t('room_hall_soon')}</p>}

@@ -74,7 +74,7 @@ const SECTIONS = {
     { title: '小河狸的家', items: [
       '網頁版在左側選單，手機版點右上角的沙發圖示。房間裡的東西都可以點：',
       '月曆顯示今天的日期，點了看今天的行程；To Do 上的數字是還沒完成的待辦。',
-      '窗外的天氣會跟著今天的心情變；相框會掛上一張日常時光的照片；點書櫃打開月刊書櫃；點檯燈可以開關燈。',
+      '窗外的天氣會跟著今天的心情變；相框會掛上一張日常時光的照片；點書櫃打開月刊書櫃；箱子裡收著這一週的微光拾憶；點檯燈可以開關燈。',
       '點小河狸，牠會跟你說說今天的事。',
     ] },
     { title: '日常時光（完整版）', items: [
@@ -199,7 +199,7 @@ const SECTIONS = {
     { title: "Beaver's home", items: [
       'Find it in the left menu on the web, or tap the armchair icon at the top right on mobile. Everything in the room can be tapped:',
       'The calendar shows today’s date; tap it to see today’s events. The number on the To Do note is how many to-dos are left.',
-      'The weather outside follows today’s mood, the frame shows a photo from Daily moments, the bookshelf opens your monthly books, and the lamp turns the light on and off.',
+      'The weather outside follows today’s mood, the frame shows a photo from Daily moments, the bookshelf opens your monthly books, the chest holds this week’s Glimmers, and the lamp turns the light on and off.',
       'Tap Beaver to hear a little about your day.',
     ] },
     { title: 'Daily moments (Complete plan)', items: [
