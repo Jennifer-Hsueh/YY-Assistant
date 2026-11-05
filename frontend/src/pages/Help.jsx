@@ -71,7 +71,7 @@ const SECTIONS = {
       '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。書櫃在「小河狸的家」裡（網頁版在左側選單，手機版點右上角的沙發圖示），點房間裡的書櫃就能打開。',
       '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
       { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
-      '右上角可以換書櫃樣式；有兩年以上的書時，可以切換年份。',
+      '第一次打開時選一個書櫃（樹屋可放 21 本、單櫃 16 本、高櫃 24 本）。一次只能用一個書櫃，放滿了才能再選下一個，舊的書櫃會留著，可以切換查看。',
     ] },
     { title: '小河狸的家', items: [
       '網頁版在左側選單，手機版點右上角的沙發圖示。房間裡的東西都可以點：',
@@ -197,7 +197,7 @@ const SECTIONS = {
       'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. The shelf is in Beaver’s home (left menu on the web, the armchair icon at the top right on mobile); tap the bookshelf in the room to open it.',
       'Until the 7th it’s a draft: pick a cover, write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
       { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
-      'Use the icons at the top right to change the shelf style, and switch years once you have books from more than one year.',
+      'Choose a bookshelf the first time you open it (Treehouse holds 21 books, Classic 16, Tall 24). You use one shelf at a time and choose the next once it’s full; earlier shelves stay and you can switch between them.',
     ] },
     { title: "Beaver's home", items: [
       'Find it in the left menu on the web, or tap the armchair icon at the top right on mobile. Everything in the room can be tapped:',

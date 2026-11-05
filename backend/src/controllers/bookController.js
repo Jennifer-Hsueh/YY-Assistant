@@ -19,14 +19,26 @@ const brief = (r) => ({
   deadline: B.deadlineOf(r.ym).toISOString(), finalized_at: r.finalized_at || null,
 });
 
-// GET /books:書櫃上的書(新的在後)
+// 書櫃樣式與容量(與前端 lib/bookshelf.js 的 shelfCapacity 一致:樹屋 21、單櫃 16、高櫃 24)
+// 使用者一次只能選一個書櫃,放滿了才能選下一個;選過的依序存在 yy_users.shelf_styles
+const SHELF_CAPS = { 1: 21, 2: 16, 3: 24 };
+const capOf = (styles) => styles.reduce((n, s) => n + (SHELF_CAPS[s] || 0), 0);
+
+async function shelfStyles(uid) {
+  const { data, error } = await supabase.from('yy_users').select('shelf_styles').eq('id', uid).single();
+  if (error) throw error;
+  return (data.shelf_styles || []).map(Number);
+}
+
+// GET /books:書櫃上的書(新的在後)+已選的書櫃
 async function list(req, res) {
   try {
     await B.ensureBooks(req.user.id);
     const { data, error } = await supabase.from('yy_monthly_books').select('ym, status, cover, message, finalized_at')
       .eq('user_id', req.user.id).order('ym');
     if (error) throw error;
-    return res.json({ books: (data || []).map(brief) });
+    const shelves = await shelfStyles(req.user.id);
+    return res.json({ books: (data || []).map(brief), shelves });
   } catch (err) {
     return fail(res, 'list', err, '讀取書櫃失敗');
   }
@@ -97,4 +109,24 @@ async function finalize(req, res) {
   }
 }
 
-module.exports = { list, get, update, finalize };
+// POST /books/shelves { style }:選書櫃。還沒選過,或目前的書櫃都放滿了,才能選下一個
+async function pickShelf(req, res) {
+  try {
+    const style = Number(req.body.style);
+    if (!SHELF_CAPS[style]) return res.status(400).json({ error: '書櫃不正確' });
+    const styles = await shelfStyles(req.user.id);
+    const { count, error: cErr } = await supabase.from('yy_monthly_books').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id);
+    if (cErr) throw cErr;
+    if (styles.length && (count || 0) < capOf(styles)) {
+      return res.status(409).json({ error: '目前的書櫃還沒放滿，放滿後才能選下一個', code: 'SHELF_NOT_FULL' });
+    }
+    const next = [...styles, style];
+    const { error } = await supabase.from('yy_users').update({ shelf_styles: next }).eq('id', req.user.id);
+    if (error) throw error;
+    return res.json({ shelves: next });
+  } catch (err) {
+    return fail(res, 'pickShelf', err, '選擇書櫃失敗');
+  }
+}
+
+module.exports = { list, get, update, finalize, pickShelf };

@@ -5,6 +5,7 @@ const c = require('../controllers/bookController');
 const router = express.Router();
 router.use(requireAuth);
 router.get('/', c.list);
+router.post('/shelves', c.pickShelf);
 router.get('/:ym', c.get);
 router.patch('/:ym', c.update);
 router.post('/:ym/finalize', c.finalize);

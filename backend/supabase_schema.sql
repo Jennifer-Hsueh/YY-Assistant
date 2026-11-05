@@ -587,3 +587,6 @@ create table if not exists yy_moments (
 );
 create index if not exists idx_moments_user_date on yy_moments (user_id, date);
 alter table yy_moments enable row level security;
+
+-- batch113:書櫃一次只能選一個,放滿才能選下一個(依序記錄選過的書櫃樣式)
+alter table yy_users add column if not exists shelf_styles smallint[] not null default '{}';
