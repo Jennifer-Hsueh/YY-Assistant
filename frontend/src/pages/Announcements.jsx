@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Megaphone, UserPlus, CalendarPlus, BookPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
+import UpdateLog from '../components/UpdateLog';
 import { Card, CardContent } from '../components/ui/card';
 import { markAnnouncementsSeen, refreshAnnStatus, useAnnStatus } from '../lib/annStatus';
 
 export default function Announcements() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { friendRequests, friendAccepted, invitesCal, invitesLedger } = useAnnStatus();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const recruitIdx = announcements.findIndex((a) => /招募|recruit/i.test(a.title || ''));
 
   useEffect(() => {
     async function load() {
@@ -54,12 +56,14 @@ export default function Announcements() {
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{t('loading')}</p>
-      ) : announcements.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('ann_empty')}</p>
       ) : (
         <div className="space-y-3">
-          {announcements.map((a) => (
-            <Card key={a.id}>
+          {/* 更新紀錄放在「招募中」公告的後面;沒有這則公告就放在最上面 */}
+          {recruitIdx < 0 && <UpdateLog lang={language} />}
+          {announcements.length === 0 && <p className="text-sm text-muted-foreground">{t('ann_empty')}</p>}
+          {announcements.map((a, idx) => (
+            <Fragment key={a.id}>
+            <Card>
               <CardContent className="p-4">
                 <p className="mb-1 text-xs text-muted-foreground">{a.published_at.slice(0, 10)}</p>
                 <p className="mb-1 flex items-center gap-2 font-medium">
@@ -71,6 +75,8 @@ export default function Announcements() {
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">{a.content}</p>
               </CardContent>
             </Card>
+            {idx === recruitIdx && <UpdateLog lang={language} />}
+            </Fragment>
           ))}
         </div>
       )}
