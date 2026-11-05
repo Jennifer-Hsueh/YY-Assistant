@@ -13,6 +13,7 @@ import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
 import TermsConsentModal from './components/TermsConsentModal';
 import SafetyNotice from './components/SafetyNotice';
+import StagingRibbon from './components/StagingRibbon';
 import { isNative } from './lib/platform';
 import UpdatePrompt from './components/UpdatePrompt';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
@@ -123,6 +124,7 @@ export default function App() {
         <LedgerProvider>
         <BrowserRouter>
           <NativeBridge />
+          <StagingRibbon />
           {!isNative && <UpdatePrompt />}
           <Suspense fallback={null}>
           <LedgerRoutes>

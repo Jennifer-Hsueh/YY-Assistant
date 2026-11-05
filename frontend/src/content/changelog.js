@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-05', short: ['更新紀錄', 'What’s new'], detail: ['公告頁新增更新紀錄，每次更新的內容都看得到。', 'Announcements now list what changed in each update.'] },
   { date: '2026-11-05', short: ['安全提醒', 'Safety tips'], detail: ['第一次進來會看到小河狸的安全提醒，使用說明也看得到。', 'Beaver’s safety tips appear on your first visit and in Help.'] },
   { date: '2026-11-04', short: ['相框換照片', 'Pick a frame photo'], detail: ['點小河狸的家的相框，可以看最近 10 張照片並換上相框。', 'Tap the frame in Beaver’s home to pick from your 10 latest photos.'] },
   { date: '2026-11-04', short: ['箱子收文章', 'The chest'], detail: ['小河狸的家的箱子，收著你這一週的微光拾憶。', 'The chest in Beaver’s home keeps this week’s Glimmers.'] },
