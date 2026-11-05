@@ -12,6 +12,7 @@ import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
 import TermsConsentModal from './components/TermsConsentModal';
+import SafetyNotice from './components/SafetyNotice';
 import { isNative } from './lib/platform';
 import UpdatePrompt from './components/UpdatePrompt';
 import ProfileErrorBanner from './components/ProfileErrorBanner';
@@ -82,6 +83,7 @@ function ProtectedLayout({ children }) {
       <SlipPopup />
       <PlanLockModal />
       <TermsConsentModal />
+      <SafetyNotice />
     </div>
   );
 }

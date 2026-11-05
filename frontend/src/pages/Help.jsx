@@ -4,6 +4,7 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import { isNative } from '../lib/platform';
 import { useBeta } from '../lib/useBeta';
 import { useLanguage } from '../context/LanguageContext';
+import { SAFETY_ITEMS } from '../components/SafetyNotice';
 
 // 使用說明(中英文;要修改直接改下面的 SECTIONS)
 // section 的 beta:只在測試期間顯示;web:只在網頁版顯示
@@ -21,6 +22,7 @@ const SECTIONS = {
       'Android：用 Chrome 開啟網站 → 右上角選單 →「安裝應用程式」或「加到主畫面」。',
       '登入後會保持 7 天，超過時間會請您重新登入。',
     ] },
+    { title: '安全提醒', items: SAFETY_ITEMS.zh.map(([, title, text]) => `${title}：${text}`) },
     { title: '首頁', items: [
       '一眼看到今天的行程、本月累積消費、預算、紀念日、墨箋絮語和小紙條。',
       '名字後面的小圓圖示是「本日心情」，點一下就能選今天的心情；還沒選時會直接展開九種天氣。',
@@ -146,6 +148,7 @@ const SECTIONS = {
       'Android: open the site in Chrome → menu → Install app or Add to Home screen.',
       'You stay logged in for 7 days, after which you will be asked to log in again.',
     ] },
+    { title: 'Safety tips', items: SAFETY_ITEMS.en.map(([, title, text]) => `${title}: ${text}`) },
     { title: 'Home', items: [
       'See today’s events, this month’s spending, budgets, anniversaries, Ink Notes and little notes at a glance.',
       'The small circle after your name is your daily mood. Tap it to pick today’s mood; if you haven’t picked one yet, the nine weather icons open right away.',
