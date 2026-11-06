@@ -31,7 +31,7 @@ const SECTIONS = {
       '畫面左下角偶爾會冒出小河狸，提醒你好友生日、紀念日或新的小紙條。點一下就會消失，同一句話一天只出現一次。',
     ] },
     { title: '記帳', items: [
-      '建議先到「帳戶管理」建立現金、銀行、信用卡等帳戶，並填入目前金額。',
+      '建議先到「帳戶管理」建立現金、銀行、信用卡等帳戶，並填入目前金額。帳戶可以填銀行名稱（可從清單選或自己輸入），手機版可依銀行查看各帳戶餘額。',
       '「新增」記一筆收入或支出；「轉帳」在兩個帳戶之間移動金額；「編輯」可以修改或刪除。',
       '「管理分類」可以自訂分類和顏色；日曆檢視會用當天最高一筆支出的分類顏色標示。',
       '「循環」適合房租、訂閱等固定收支，到期會自動入帳。',
@@ -157,7 +157,7 @@ const SECTIONS = {
       'A little beaver sometimes pops up at the bottom left to remind you of a friend’s birthday, an anniversary or a new little note. Tap it to close; each message appears once a day.',
     ] },
     { title: 'Ledger', items: [
-      'Start by creating accounts (cash, bank, credit card) in Accounts with their current balances.',
+      'Start by creating accounts (cash, bank, credit card) in Accounts with their current balances. You can add a bank name (pick from the list or type your own), and on mobile view balances by bank.',
       'Add records income or expenses, Transfer moves money between accounts, and Edit lets you change or delete entries.',
       'Manage categories to set your own categories and colors. The calendar view colors each day by its largest expense.',
       'Recurring is for fixed items like rent or subscriptions, recorded automatically when due.',

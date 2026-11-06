@@ -1,6 +1,8 @@
 const supabase = require('../config/supabase');
 
 const isHexColor = (v) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+// 銀行名稱:選填,自由輸入(前端提供常見銀行與自己用過的名稱當建議),最多 40 字
+const cleanBank = (v) => { const s = String(v ?? '').trim().slice(0, 40); return s || null; };
 
 async function listAccounts(req, res) {
   try {
@@ -19,13 +21,13 @@ async function listAccounts(req, res) {
 
 async function createAccount(req, res) {
   try {
-    const { name, balance, currency, color } = req.body;
+    const { name, balance, currency, color, bank } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
     if (color != null && !isHexColor(color)) return res.status(400).json({ error: 'Invalid color' });
 
     const { data, error } = await supabase
       .from('yy_accounts')
-      .insert({ user_id: req.user.id, ledger_id: req.ledger.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null })
+      .insert({ user_id: req.user.id, ledger_id: req.ledger.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null, bank: cleanBank(bank) })
       .select()
       .single();
     if (error) throw error;
@@ -39,7 +41,7 @@ async function createAccount(req, res) {
 async function updateAccount(req, res) {
   try {
     const { id } = req.params;
-    const { name, balance, currency, color } = req.body;
+    const { name, balance, currency, color, bank } = req.body;
     if (color != null && !isHexColor(color)) return res.status(400).json({ error: 'Invalid color' });
 
     const { data: existing, error: fetchErr } = await supabase
@@ -57,6 +59,7 @@ async function updateAccount(req, res) {
     if (balance !== undefined) updates.balance = balance;
     if (currency !== undefined) updates.currency = currency;
     if (color !== undefined) updates.color = color;
+    if (bank !== undefined) updates.bank = cleanBank(bank);
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'Nothing to update' });
     }

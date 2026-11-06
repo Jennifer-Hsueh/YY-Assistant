@@ -233,7 +233,7 @@ async function importData(req, res) {
       if (!a.name) continue;
       const { data: created, error } = await supabase
         .from('yy_accounts')
-        .insert({ user_id: uid, ledger_id: ledgerOf(a), ...pick(a, ['name', 'currency', 'color']), balance: Number(a.balance) || 0 })
+        .insert({ user_id: uid, ledger_id: ledgerOf(a), ...pick(a, ['name', 'currency', 'color', 'bank']), balance: Number(a.balance) || 0 })
         .select('id')
         .single();
       if (error) throw error;

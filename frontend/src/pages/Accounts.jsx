@@ -12,6 +12,7 @@ import LedgerSubNav from '../components/LedgerSubNav';
 import BudgetSettings from '../components/BudgetSettings';
 import { useSearchParams } from 'react-router-dom';
 import { useIsDesktop } from '../lib/useIsDesktop';
+import { bankSuggestions } from '../lib/banks';
 
 export const BALANCE_ADJUST = '餘額調整';
 
@@ -23,6 +24,20 @@ const CARD_COLORS = ['var(--acc-1)', 'var(--acc-2)', 'var(--acc-3)', 'var(--acc-
 const SWATCHES = ['#33415C', '#6E8B5D', '#C1666B', '#B08238', '#4F46E5', '#0F766E', '#7C3AED', '#475569'];
 
 const cardColor = (acc, idx) => acc.color || CARD_COLORS[idx % CARD_COLORS.length];
+const NO_BANK = '__none';
+const bankOf = (acc) => (acc.bank || '').trim();
+
+// 銀行名稱:可從建議清單選,也可以自己輸入(國外銀行等)
+function BankInput({ value, onChange, options, t }) {
+  return (
+    <>
+      <Input type="text" list="yy-bank-options" maxLength={40} placeholder={t('acc_bank')} value={value} onChange={(e) => onChange(e.target.value)} />
+      <datalist id="yy-bank-options">
+        {options.map((b) => <option key={b} value={b} />)}
+      </datalist>
+    </>
+  );
+}
 
 function ColorPicker({ value, onChange, t }) {
   return (
@@ -77,6 +92,10 @@ export default function Accounts() {
   const [newName, setNewName] = useState('');
   const [newCurrency, setNewCurrency] = useState('TWD');
   const [newColor, setNewColor] = useState(null);
+  const [newBank, setNewBank] = useState('');
+  const [editBank, setEditBank] = useState('');
+  // 手機版依銀行查看:'' = 全部
+  const [bankFilter, setBankFilter] = useState('');
   const [editColor, setEditColor] = useState(null);
 
   const [pickedId, setPickedId] = useState(null);
@@ -142,8 +161,9 @@ export default function Accounts() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName) return;
-    await api.createAccount({ name: newName, balance: Number(newBalance) || 0, currency: newCurrency, color: newColor });
+    await api.createAccount({ name: newName, balance: Number(newBalance) || 0, currency: newCurrency, color: newColor, bank: newBank.trim() || null });
     setNewName('');
+    setNewBank('');
     setNewBalance('');
     setNewColor(null);
     load();
@@ -153,6 +173,7 @@ export default function Accounts() {
     setPickedId(acc.id);
     setEditName(acc.name);
     setEditColor(acc.color || null);
+    setEditBank(acc.bank || '');
     setEditBalance(String(Number(acc.balance)));
   }
 
@@ -160,7 +181,7 @@ export default function Accounts() {
     if (!editName.trim()) return;
     setActionError('');
     try {
-      await api.updateAccount(pickedId, { name: editName.trim(), color: editColor });
+      await api.updateAccount(pickedId, { name: editName.trim(), color: editColor, bank: editBank.trim() || null });
       // 餘額有改 → 記一筆「餘額調整」,帳戶餘額由記帳紀錄自動更新(統計分析不會計入)
       const acc = accounts.find((a) => a.id === pickedId);
       const delta = Math.round((Number(editBalance) - Number(acc?.balance || 0)) * 100) / 100;
@@ -199,6 +220,19 @@ export default function Accounts() {
   // 手機版帳戶卡片:左右切換(循環)
   const step = (dir) => setActiveIndex((i) => (accounts.length ? (i + dir + accounts.length) % accounts.length : 0));
   const pickedAccount = accounts.find((a) => a.id === pickedId);
+  const bankOptions = bankSuggestions(accounts);
+
+  // 手機版:依銀行分類查看(只列出自己帳戶用到的銀行;有沒填銀行的帳戶時多一個「未設定銀行」)
+  const myBanks = [...new Set(accounts.map(bankOf).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+  const hasNoBank = accounts.some((a) => !bankOf(a));
+  const bankChips = myBanks.length ? [...myBanks, ...(hasNoBank ? [NO_BANK] : [])] : [];
+  const activeBank = bankChips.includes(bankFilter) ? bankFilter : '';
+  const bankAccounts = activeBank ? accounts.filter((a) => (activeBank === NO_BANK ? !bankOf(a) : bankOf(a) === activeBank)) : [];
+  const bankTotals = bankAccounts.reduce((acc, a) => {
+    const c = a.currency || 'TWD';
+    acc[c] = (acc[c] || 0) + Number(a.balance);
+    return acc;
+  }, {});
 
   const subtotals = accounts.reduce((acc, a) => {
     const c = a.currency || 'TWD';
@@ -285,12 +319,41 @@ export default function Accounts() {
               className={`flex h-24 flex-col justify-between rounded-2xl px-4 py-3 text-card shadow-lg ${pickedId === acc.id ? 'ring-4 ring-ring ring-offset-2' : ''}`}
               style={{ backgroundColor: cardColor(acc, idx) }}
             >
-              <p className="text-sm opacity-80">{acc.name}</p>
+              <p className="truncate text-sm opacity-80">{acc.name}{bankOf(acc) && <span className="ml-2 opacity-80">· {bankOf(acc)}</span>}</p>
               <p className="text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
             </div>
           ))}
         </div>
-        <div className="mb-6 md:hidden">
+        {bankChips.length > 0 && (
+          <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 md:hidden">
+            {['', ...bankChips].map((b) => (
+              <button key={b || 'all'} type="button" onClick={() => setBankFilter(b)}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm ${b === activeBank ? 'border-[var(--primary)] bg-card font-medium' : 'border-border text-muted-foreground'}`}>
+                {b === '' ? t('acc_bank_all') : b === NO_BANK ? t('acc_bank_none') : b}
+              </button>
+            ))}
+          </div>
+        )}
+        {activeBank && (
+          <div className="mb-6 space-y-2 md:hidden">
+            {bankAccounts.length === 0 && <p className="text-sm text-muted-foreground">{t('acc_bank_empty')}</p>}
+            {bankAccounts.map((acc) => (
+              <div key={acc.id} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-card shadow-md"
+                style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }}>
+                <p className="min-w-0 truncate font-semibold">{acc.name}</p>
+                <p className="shrink-0 font-amount font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
+              </div>
+            ))}
+            {bankAccounts.length > 1 && (
+              <div className="flex flex-wrap justify-end gap-x-4 gap-y-1 px-1 pt-1 text-sm">
+                {Object.entries(bankTotals).map(([c, v]) => (
+                  <span key={c} className="font-amount"><span className="mr-1 text-xs text-muted-foreground">{c}</span><span className="font-semibold">{v.toLocaleString()}</span></span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <div className={`mb-6 md:hidden ${activeBank ? 'hidden' : ''}`}>
           <div
             className="relative h-28"
             onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
@@ -365,6 +428,7 @@ export default function Accounts() {
                 </Select>
                 <Button type="submit">{t('acc_add')}</Button>
               </div>
+              <BankInput value={newBank} onChange={setNewBank} options={bankOptions} t={t} />
               <Input type="number" step="0.01" inputMode="decimal" placeholder={t('acc_opening_balance')} value={newBalance} onChange={(e) => setNewBalance(e.target.value)} />
               <ColorPicker value={newColor} onChange={setNewColor} t={t} />
             </form>
@@ -382,6 +446,7 @@ export default function Accounts() {
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
                     {acc.name}
+                    {bankOf(acc) && <span className="text-xs text-muted-foreground">{bankOf(acc)}</span>}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
@@ -393,6 +458,7 @@ export default function Accounts() {
             <div className="space-y-2">
               {actionError && <p className="text-sm text-red-500">{actionError}</p>}
               <Input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <BankInput value={editBank} onChange={setEditBank} options={bankOptions} t={t} />
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">{t('acc_current_balance')}（{accounts.find((a) => a.id === pickedId)?.currency || 'TWD'}）</label>
                 <Input type="number" step="0.01" inputMode="decimal" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
@@ -429,6 +495,7 @@ export default function Accounts() {
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
                     {acc.name}
+                    {bankOf(acc) && <span className="text-xs text-muted-foreground">{bankOf(acc)}</span>}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>

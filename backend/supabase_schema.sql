@@ -590,3 +590,6 @@ alter table yy_moments enable row level security;
 
 -- batch113:書櫃一次只能選一個,放滿才能選下一個(依序記錄選過的書櫃樣式)
 alter table yy_users add column if not exists shelf_styles smallint[] not null default '{}';
+
+-- batch114:帳戶加銀行名稱(選填)
+alter table yy_accounts add column if not exists bank text check (bank is null or char_length(bank) <= 40);
