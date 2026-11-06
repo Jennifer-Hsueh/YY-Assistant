@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
+import { accountLabel } from '../lib/banks';
 import { askUpgrade } from '../components/PlanNotice';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -282,7 +283,7 @@ export default function Transactions() {
   }
 
   function accountName(id) {
-    return accounts.find((a) => a.id === id)?.name;
+    return accountLabel(accounts.find((a) => a.id === id));
   }
 
   function accountCurrency(id) {
@@ -468,7 +469,7 @@ export default function Transactions() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_transfer_from')}</SelectItem>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
+                    <SelectItem key={acc.id} value={acc.id}>{accountLabel(acc)}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -477,7 +478,7 @@ export default function Transactions() {
                 <SelectContent>
                   <SelectItem value="none">{t('tx_transfer_to')}</SelectItem>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
+                    <SelectItem key={acc.id} value={acc.id}>{accountLabel(acc)}({acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -538,7 +539,7 @@ export default function Transactions() {
                   <SelectContent>
                     <SelectItem value="none">{t('tx_no_account')}</SelectItem>
                     {accounts.map((acc) => (
-                      <SelectItem key={acc.id} value={acc.id}>{acc.name}({acc.currency || 'TWD'})</SelectItem>
+                      <SelectItem key={acc.id} value={acc.id}>{accountLabel(acc)}({acc.currency || 'TWD'})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -725,7 +726,7 @@ function TxSearchBlock({ t, filters, setFilters, accounts, categories, hasFilter
               <SelectContent>
                 <SelectItem value="all">{t('search_all_accounts')}</SelectItem>
                 {accounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                  <SelectItem key={acc.id} value={acc.id}>{accountLabel(acc)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

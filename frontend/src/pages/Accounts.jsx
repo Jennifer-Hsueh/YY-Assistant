@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from '../components/PlanNotice';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
@@ -12,7 +11,7 @@ import LedgerSubNav from '../components/LedgerSubNav';
 import BudgetSettings from '../components/BudgetSettings';
 import { useSearchParams } from 'react-router-dom';
 import { useIsDesktop } from '../lib/useIsDesktop';
-import { bankSuggestions } from '../lib/banks';
+import { bankSuggestions, accountLabel } from '../lib/banks';
 
 export const BALANCE_ADJUST = '餘額調整';
 
@@ -76,11 +75,6 @@ function ColorPicker({ value, onChange, t }) {
 export default function Accounts() {
   const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const touchX = useRef(null);
-  useEffect(() => {
-    if (activeIndex >= accounts.length) setActiveIndex(0);
-  }, [accounts.length]);
   const [loading, setLoading] = useState(true);
 
   // 新增/編輯/刪除:點了才出現內容,再點一次收起
@@ -217,8 +211,6 @@ export default function Accounts() {
   }
 
   const pickingMode = (mode === 'edit' || mode === 'delete') && !pickedId;
-  // 手機版帳戶卡片:左右切換(循環)
-  const step = (dir) => setActiveIndex((i) => (accounts.length ? (i + dir + accounts.length) % accounts.length : 0));
   const pickedAccount = accounts.find((a) => a.id === pickedId);
   const bankOptions = bankSuggestions(accounts);
 
@@ -227,12 +219,16 @@ export default function Accounts() {
   const hasNoBank = accounts.some((a) => !bankOf(a));
   const bankChips = myBanks.length ? [...myBanks, ...(hasNoBank ? [NO_BANK] : [])] : [];
   const activeBank = bankChips.includes(bankFilter) ? bankFilter : '';
-  const bankAccounts = activeBank ? accounts.filter((a) => (activeBank === NO_BANK ? !bankOf(a) : bankOf(a) === activeBank)) : [];
-  const bankTotals = bankAccounts.reduce((acc, a) => {
-    const c = a.currency || 'TWD';
-    acc[c] = (acc[c] || 0) + Number(a.balance);
-    return acc;
-  }, {});
+  // 依銀行分組(順序同後端:銀行名稱,未設定銀行放最後)
+  const bankGroups = [...myBanks, ...(hasNoBank || !myBanks.length ? [NO_BANK] : [])].map((key) => {
+    const list = accounts.filter((a) => (key === NO_BANK ? !bankOf(a) : bankOf(a) === key));
+    const totals = list.reduce((acc, a) => {
+      const c = a.currency || 'TWD';
+      acc[c] = (acc[c] || 0) + Number(a.balance);
+      return acc;
+    }, {});
+    return { key, accounts: list, totals };
+  }).filter((g) => g.accounts.length);
 
   const subtotals = accounts.reduce((acc, a) => {
     const c = a.currency || 'TWD';
@@ -319,11 +315,12 @@ export default function Accounts() {
               className={`flex h-24 flex-col justify-between rounded-2xl px-4 py-3 text-card shadow-lg ${pickedId === acc.id ? 'ring-4 ring-ring ring-offset-2' : ''}`}
               style={{ backgroundColor: cardColor(acc, idx) }}
             >
-              <p className="truncate text-sm opacity-80">{acc.name}{bankOf(acc) && <span className="ml-2 opacity-80">· {bankOf(acc)}</span>}</p>
+              <p className="truncate text-sm opacity-80">{accountLabel(acc)}</p>
               <p className="text-2xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
             </div>
           ))}
         </div>
+        {/* 手機版:依銀行分組列出帳戶與餘額;上方可點銀行只看那一家 */}
         {bankChips.length > 0 && (
           <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 md:hidden">
             {['', ...bankChips].map((b) => (
@@ -334,75 +331,34 @@ export default function Accounts() {
             ))}
           </div>
         )}
-        {activeBank && (
-          <div className="mb-6 space-y-2 md:hidden">
-            {bankAccounts.length === 0 && <p className="text-sm text-muted-foreground">{t('acc_bank_empty')}</p>}
-            {bankAccounts.map((acc) => (
-              <div key={acc.id} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-card shadow-md"
-                style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }}>
-                <p className="min-w-0 truncate font-semibold">{acc.name}</p>
-                <p className="shrink-0 font-amount font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
-              </div>
-            ))}
-            {bankAccounts.length > 1 && (
-              <div className="flex flex-wrap justify-end gap-x-4 gap-y-1 px-1 pt-1 text-sm">
-                {Object.entries(bankTotals).map(([c, v]) => (
-                  <span key={c} className="font-amount"><span className="mr-1 text-xs text-muted-foreground">{c}</span><span className="font-semibold">{v.toLocaleString()}</span></span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        <div className={`mb-6 md:hidden ${activeBank ? 'hidden' : ''}`}>
-          <div
-            className="relative h-28"
-            onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
-            onTouchEnd={(e) => {
-              if (touchX.current == null) return;
-              const dx = e.changedTouches[0].clientX - touchX.current;
-              touchX.current = null;
-              if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
-            }}
-          >
-            {accounts.map((acc, idx) => {
-              const offset = (idx - activeIndex + accounts.length) % accounts.length;
-              if (offset > 2) return null;
-              return (
-                <button
-                  key={acc.id}
-                  type="button"
-                  onClick={() => step(1)}
-                  className="absolute inset-x-0 flex h-24 flex-col justify-between rounded-2xl px-4 py-3 text-left text-card shadow-lg transition-all"
-                  style={{ backgroundColor: cardColor(acc, idx), top: `${offset * 8}px`, transform: `scale(${1 - offset * 0.04})`, zIndex: 10 - offset, opacity: offset > 1 ? 0.5 : 1 }}
-                >
-                  <p className="truncate text-xl font-semibold">{acc.name}</p>
-                  <p className="font-amount text-xl font-semibold">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</p>
-                </button>
-              );
-            })}
-          </div>
-          {accounts.length > 1 && (
-            <div className="mt-2 flex items-center justify-between">
-              <button type="button" aria-label="prev" onClick={() => step(-1)} className="rounded-full border border-border bg-card p-1.5 shadow-sm">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="flex items-center gap-1.5">
-                {accounts.map((acc, idx) => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    aria-label={acc.name}
-                    onClick={() => setActiveIndex(idx)}
-                    className={`h-2 rounded-full transition-all ${idx === activeIndex ? 'w-5 bg-foreground' : 'w-2 bg-border'}`}
-                  />
-                ))}
-                <span className="ml-1.5 font-amount text-xs text-muted-foreground">{activeIndex + 1} / {accounts.length}</span>
-              </div>
-              <button type="button" aria-label="next" onClick={() => step(1)} className="rounded-full border border-border bg-card p-1.5 shadow-sm">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+        <div className="mb-6 space-y-3 md:hidden">
+          {bankGroups.filter((g) => !activeBank || g.key === activeBank).map((g) => (
+            <Card key={g.key}>
+              <CardContent className="px-4 py-2">
+                {bankChips.length > 0 && (
+                  <div className="flex items-baseline justify-between gap-2 border-b border-border pb-1.5 pt-1">
+                    <p className="min-w-0 truncate text-sm font-semibold">{g.key === NO_BANK ? t('acc_bank_none') : g.key}</p>
+                    <p className="shrink-0 space-x-2 text-right font-amount text-xs text-muted-foreground">
+                      {Object.entries(g.totals).map(([c, v]) => <span key={c}>{c} {v.toLocaleString()}</span>)}
+                    </p>
+                  </div>
+                )}
+                <div className="divide-y divide-border">
+                  {g.accounts.map((acc) => (
+                    <div key={acc.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
+                        <span className="truncate text-sm">{acc.name}</span>
+                      </span>
+                      <span className="shrink-0 font-amount text-sm font-semibold">
+                        <span className="mr-1 text-xs font-normal text-muted-foreground">{acc.currency || 'TWD'}</span>{Number(acc.balance).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
         </>
       )}
@@ -445,8 +401,7 @@ export default function Accounts() {
                 >
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
-                    {acc.name}
-                    {bankOf(acc) && <span className="text-xs text-muted-foreground">{bankOf(acc)}</span>}
+                    {accountLabel(acc)}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
@@ -494,8 +449,7 @@ export default function Accounts() {
                 >
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
-                    {acc.name}
-                    {bankOf(acc) && <span className="text-xs text-muted-foreground">{bankOf(acc)}</span>}
+                    {accountLabel(acc)}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>

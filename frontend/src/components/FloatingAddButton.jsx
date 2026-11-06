@@ -4,6 +4,7 @@ import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from './PlanNotice';
 import { Plus, X, Check } from 'lucide-react';
 import { api } from '../lib/api';
+import { accountLabel } from '../lib/banks';
 import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { Button } from './ui/button';
@@ -178,7 +179,7 @@ export default function FloatingAddButton() {
                     <SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder={t('tx_account_placeholder')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t('tx_no_account')}</SelectItem>
-                      {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}({a.currency || 'TWD'})</SelectItem>)}
+                      {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{accountLabel(a)}({a.currency || 'TWD'})</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={tx.category || 'none'} onValueChange={(v) => setTx({ ...tx, category: v === 'none' ? '' : v })}>

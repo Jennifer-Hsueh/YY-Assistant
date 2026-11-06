@@ -13,3 +13,10 @@ export function bankSuggestions(accounts) {
   const mine = [...new Set(accounts.map((a) => (a.bank || '').trim()).filter(Boolean))];
   return [...mine, ...COMMON_BANKS.filter((b) => !mine.includes(b))];
 }
+
+// 帳戶顯示名稱:有銀行時「銀行 / 帳戶」,沒有就只有帳戶名稱
+export const accountLabel = (acc) => {
+  if (!acc) return '';
+  const bank = (acc.bank || '').trim();
+  return bank ? `${bank} / ${acc.name}` : acc.name;
+};

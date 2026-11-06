@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
+import { accountLabel } from '../lib/banks';
 import { askUpgrade } from '../components/PlanNotice';
 import RecurrenceFields from '../components/RecurrenceFields';
 import { emptyRecurrence, recurrenceFromItem, recurrencePayload, reactivationPayload, describeRecurrence } from '../lib/recurrence';
@@ -235,7 +236,7 @@ export default function RecurringMoney() {
             const details = [
               describeRecurrence(item, t),
               !expired && `${t('rec_next')}${item.next_trigger_date}`,
-              acc?.name,
+              acc && accountLabel(acc),
               item.category,
               item.end_date && `${t('rec_until')}${item.end_date}`,
             ].filter(Boolean).join(' · ');
@@ -314,7 +315,7 @@ export default function RecurringMoney() {
                   <SelectContent>
                     <SelectItem value="none">{t('tx_no_account')}</SelectItem>
                     {accounts.map((acc) => (
-                      <SelectItem key={acc.id} value={acc.id}>{acc.name}（{acc.currency || 'TWD'}）</SelectItem>
+                      <SelectItem key={acc.id} value={acc.id}>{accountLabel(acc)}（{acc.currency || 'TWD'}）</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

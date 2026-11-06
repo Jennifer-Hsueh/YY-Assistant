@@ -10,7 +10,8 @@ async function listAccounts(req, res) {
       .from('yy_accounts')
       .select('*')
       .eq('ledger_id', req.ledger.id)
-      .order('created_at', { ascending: true });
+      .order('bank', { ascending: true, nullsFirst: false })
+      .order('name', { ascending: true });
     if (error) throw error;
     return res.json({ accounts: data });
   } catch (err) {

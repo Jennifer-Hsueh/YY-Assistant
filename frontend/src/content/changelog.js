@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-06', short: ['依銀行看帳戶', 'Accounts by bank'], detail: ['帳戶顯示「銀行 / 帳戶」，手機版依銀行分組列出餘額。', 'Accounts show “Bank / Account”; mobile groups balances by bank.'] },
   { date: '2026-11-06', short: ['帳戶銀行名稱', 'Bank names'], detail: ['帳戶可填銀行名稱，手機版可依銀行查看餘額。', 'Add a bank to accounts; view balances by bank on mobile.'] },
   { date: '2026-11-05', short: ['書櫃放滿再換', 'Fill your shelf'], detail: ['一次選一個書櫃，放滿了才能選下一個。', 'Pick one shelf at a time; choose the next once it’s full.'] },
   { date: '2026-11-05', short: ['更新紀錄', 'What’s new'], detail: ['公告頁新增更新紀錄，每次更新的內容都看得到。', 'Announcements now list what changed in each update.'] },

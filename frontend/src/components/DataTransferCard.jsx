@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Download, Upload, AlertTriangle, Info } from 'lucide-react';
+import { accountLabel } from '../lib/banks';
 import { api, downloadFile } from '../lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -120,7 +121,7 @@ export default function DataTransferCard({ t }) {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('data_excel_all_accounts')}</SelectItem>
-                  {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{accountLabel(a)}</SelectItem>)}
                 </SelectContent>
               </Select>
               <div className="col-span-2">

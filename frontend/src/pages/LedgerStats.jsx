@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { accountLabel } from '../lib/banks';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -80,7 +81,7 @@ export default function LedgerStats() {
   }, [accounts]);
 
   const currencyOf = (accountId) => accounts.find((a) => a.id === accountId)?.currency || 'TWD';
-  const accountName = (accountId) => accounts.find((a) => a.id === accountId)?.name || t('tx_unspecified_account');
+  const accountName = (accountId) => accountLabel(accounts.find((a) => a.id === accountId)) || t('tx_unspecified_account');
   const rateOf = (tx) => rates[currencyOf(tx.account_id)];
   const toTwd = (tx) => Number(tx.amount) * (rateOf(tx) ?? 0);
 
@@ -207,7 +208,7 @@ export default function LedgerStats() {
                       <SelectContent>
                         <SelectItem value="all">{t('stats_all_accounts')}</SelectItem>
                         {accounts.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          <SelectItem key={a.id} value={a.id}>{accountLabel(a)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
