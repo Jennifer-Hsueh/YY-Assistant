@@ -409,7 +409,7 @@
   --primary-foreground: #4A3B12;
   --secondary: #DCE8F2;
   --secondary-foreground: #3B6F94;
-  --muted: #DCEEE5;
+  --muted: #FFEB99;
   --muted-foreground: #7895AA;
   --accent: #DCE8F2;
   --accent-foreground: #3B6F94;
@@ -430,8 +430,8 @@
   --module-transactions-bg: #FFFFFF;
   --module-accounts: #3E9A74;
   --module-accounts-bg: #DCEEE5;
-  --module-calendar: #3F80B3;
-  --module-calendar-bg: #DCE8F2;
+  --module-calendar: #B8862B;
+  --module-calendar-bg: #FFF6DA;
   --module-recurring: #B58E22;
   --module-recurring-bg: #F4E9C6;
   --module-notes: #8C74B8;
@@ -813,3 +813,33 @@ input[type="time"] {
 .room-ping { width: 1.6cqw; height: 1.6cqw; min-width: 8px; min-height: 8px; transform: translate(-50%, -150%); border-radius: 9999px; background: #FFD66B; box-shadow: 0 0 0 0 rgba(255, 214, 107, .7); animation: room-ping 2.2s ease-out infinite; }
 @keyframes room-ping { 0% { box-shadow: 0 0 0 0 rgba(255, 214, 107, .7); } 80%, 100% { box-shadow: 0 0 0 10px rgba(255, 214, 107, 0); } }
 @media (prefers-reduced-motion: reduce) { .room-sun, .room-rain, .room-w-storm, .room-ping { animation: none; } }
+
+/* ───────── 框線一致(小河狸、莫蘭迪、少女心、黃檸檬、海洋) ─────────
+   輸入框、下拉選單、多行文字框用同一種框線;點選時不再多出一圈外框(避免雙框線);
+   不能填的欄位框線、底色都不變,只把字變淡 */
+:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea) {
+  border: 2px solid var(--stk, var(--mr-stroke, var(--bv-line)));
+  border-radius: 0.9rem;
+  background: #FFFFFF;
+  box-shadow: none;
+}
+:root[data-theme="sport"] :is([data-slot="input"], [data-slot="select-trigger"], textarea) {
+  border: 1px solid var(--sp-blue);
+  box-shadow: none;
+}
+:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):focus,
+:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):disabled {
+  opacity: 1;
+  background: #FFFFFF;
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+}
+/* 黃檸檬:主要按鍵改白底深色字(靠芥末黃粗框與陰影看出是按鍵) */
+:root[data-theme="lemon"] [data-slot="button"]:is([data-variant="default"], [data-variant="secondary"]) {
+  background: #FFFFFF;
+  color: #6B4E12;
+}
