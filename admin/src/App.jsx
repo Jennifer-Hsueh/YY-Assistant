@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Megaphone, ShieldAlert, Bug, DatabaseBackup, LogOut, Wallet } from 'lucide-react';
+import { LayoutDashboard, Users, Megaphone, ShieldAlert, Bug, DatabaseBackup, LogOut, Wallet, Activity as ActivityIcon } from 'lucide-react';
 import { api, getToken, setToken } from './api';
 import Login from './pages/Login';
 import Overview from './pages/Overview';
@@ -9,10 +9,12 @@ import Reports from './pages/Reports';
 import BugReports from './pages/BugReports';
 import Backups from './pages/Backups';
 import Payments from './pages/Payments';
+import Activity from './pages/Activity'; // 【暫時】使用狀況
 
 const NAV = [
   ['overview', '總覽', LayoutDashboard],
   ['users', '使用者管理', Users],
+  ['activity', '使用狀況（暫時）', ActivityIcon], // 【暫時】之後拿掉
   ['payments', '收款管理', Wallet],
   ['announcements', '公告管理', Megaphone],
   ['reports', '檢舉與社群', ShieldAlert],
@@ -98,6 +100,7 @@ export default function App() {
           {page === 'reports' && <Reports key={JSON.stringify(params)} initial={params} />}
           {page === 'bugs' && <BugReports go={go} />}
           {page === 'backups' && <Backups />}
+          {page === 'activity' && <Activity />}
           {page === 'payments' && <Payments key={JSON.stringify(params)} initial={params} />}
         </div>
       </main>

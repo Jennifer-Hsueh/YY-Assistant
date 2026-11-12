@@ -8,6 +8,7 @@ router.use(requireAuth, requireAdmin);
 
 router.get('/me', c.me);
 router.get('/overview', c.overview);
+router.get('/activity', require('../controllers/activityController').activity); // 【暫時】使用狀況
 router.get('/settings/beta', c.getBetaSettings);
 router.put('/settings/beta', c.updateBetaSettings);
 router.post('/beta/clear-data', c.clearBetaData);
