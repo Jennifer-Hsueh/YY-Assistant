@@ -11,6 +11,7 @@ const M = require('../services/moderation');
 const { sendEmail } = require('../services/emailService');
 const beta = require('../lib/beta');
 const founding = require('../lib/founding');
+const deletePassword = require('../lib/deletePassword');
 const zlib = require('zlib');
 const { buildSnapshot, ensureBucket } = require('../services/backupService');
 const { USER_TABLES } = require('../services/restoreService');
@@ -20,7 +21,7 @@ const ROLES = ['user', 'tester', 'admin'];
 const PLANS = E.PLANS;
 const WISH_STATUSES = ['considering', 'planned', 'done'];
 const USER_COLUMNS = 'id, email, username, role, plan, addon_community, basic_choice, basic_choice_changed_at, trial_ends_at, last_payment_date, plan_expires_at, created_at, last_active_at, is_disabled, disabled_reason, disabled_at, community_suspended_until, founding_member, founding_marked_at, founding_granted_at';
-const USER_PAGE = 50;
+const USER_PAGE = 20;
 const EXPIRING_DAYS = 30;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // 網路銷售勞務每月銷售額未達 5 萬元可暫免稅籍登記(2025-01-01 起);超過 4 萬元先提醒
@@ -158,6 +159,8 @@ async function listUsers(req, res) {
   try {
     const { q = '', role = '', plan = '', status = '', exp_from = '', exp_to = '' } = req.query;
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    // 每頁筆數:20 / 50 / 100(預設 20)
+    const pageSize = [20, 50, 100].includes(Number(req.query.pageSize)) ? Number(req.query.pageSize) : USER_PAGE;
     const today = taipeiToday();
     let users = (await fetchAll('yy_users', USER_COLUMNS)).map((u) => ({ u, e: summarize(u, today) }));
     const kw = String(q).trim().toLowerCase();
@@ -178,8 +181,8 @@ async function listUsers(req, res) {
     if (DATE_RE.test(exp_from) || DATE_RE.test(exp_to)) users.sort((a, b) => a.u.plan_expires_at.localeCompare(b.u.plan_expires_at));
     else users.sort((a, b) => (b.u.created_at || '').localeCompare(a.u.created_at || ''));
     const total = users.length;
-    const rows = users.slice((page - 1) * USER_PAGE, page * USER_PAGE).map(({ u }) => publicUser(u, today));
-    return res.json({ users: rows, total, page, pageSize: USER_PAGE });
+    const rows = users.slice((page - 1) * pageSize, page * pageSize).map(({ u }) => publicUser(u, today));
+    return res.json({ users: rows, total, page, pageSize });
   } catch (err) {
     return fail(res, 'listUsers', err, 'Failed to load users');
   }
@@ -291,11 +294,30 @@ async function updateBetaSettings(req, res) {
   }
 }
 
+// 刪除密碼:查看是否已自訂、修改(要先輸入目前的刪除密碼)
+async function getDeletePassword(req, res) {
+  try {
+    return res.json(await deletePassword.info());
+  } catch (err) {
+    return fail(res, 'getDeletePassword', err, '讀取刪除密碼設定失敗');
+  }
+}
+async function changeDeletePassword(req, res) {
+  try {
+    const { current, next } = req.body || {};
+    const r = await deletePassword.change(current, next);
+    if (!r.ok) return res.status(400).json({ error: r.error });
+    return res.json({ custom: true, updated_at: r.updated_at });
+  } catch (err) {
+    return fail(res, 'changeDeletePassword', err, '修改刪除密碼失敗');
+  }
+}
+
 // 刪除勾選的使用者(帳號與所有資料、社群照片;管理員與自己不會被刪)
 async function bulkDeleteUsers(req, res) {
   try {
     const { ids, confirm } = req.body || {};
-    if (confirm !== '刪除') return res.status(400).json({ error: '請輸入「刪除」確認' });
+    if (!(await deletePassword.verify(confirm))) return res.status(400).json({ error: '刪除密碼不正確', code: 'WRONG_DELETE_PASSWORD' });
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '請勾選要刪除的使用者' });
     if (ids.length > 500) return res.status(400).json({ error: '一次最多刪除 500 位' });
     const { data: users, error } = await supabase.from('yy_users').select('id, email, role').in('id', ids);
@@ -989,6 +1011,8 @@ async function restoreBackup(req, res) {
 }
 
 module.exports = {
+  getDeletePassword,
+  changeDeletePassword,
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
   getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding, listUserReports, updateUserReport,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,

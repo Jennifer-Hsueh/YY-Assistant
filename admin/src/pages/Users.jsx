@@ -433,6 +433,7 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
 export default function UsersPage({ initial, selfId }) {
   const [filters, setFilters] = useState({ ...emptyFilters, ...initial });
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => { try { return Number(localStorage.getItem('yy_admin_page_size')) || 20; } catch { return 20; } });
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
@@ -458,10 +459,10 @@ export default function UsersPage({ initial, selfId }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      api.users({ ...filters, page }).then((d) => { setData(d); setError(''); }).catch((e) => setError(e.message));
+      api.users({ ...filters, page, pageSize }).then((d) => { setData(d); setError(''); }).catch((e) => setError(e.message));
     }, filters.q ? 300 : 0);
     return () => clearTimeout(timer);
-  }, [filters, page, reload]);
+  }, [filters, page, pageSize, reload]);
 
   const setFilter = (k) => (e) => { setFilters((f) => ({ ...f, [k]: e.target.value })); setPage(1); };
   const hasFilter = Object.keys(emptyFilters).some((k) => filters[k]);
@@ -474,7 +475,10 @@ export default function UsersPage({ initial, selfId }) {
 
   return (
     <>
-      <PageTitle>使用者管理</PageTitle>
+      <div className="flex items-start justify-between gap-3">
+        <PageTitle>使用者管理</PageTitle>
+        <DeletePasswordSetting />
+      </div>
 
       <Card className="mb-4 space-y-3 p-4">
         <div className="flex items-end gap-3">
@@ -521,9 +525,9 @@ export default function UsersPage({ initial, selfId }) {
         <Card className="mb-3 p-3">
           {confirmDel ? (
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm">刪除 {picked.size} 位使用者的帳號與所有資料（含社群照片），無法復原。確認請輸入「刪除」</p>
-              <div className="w-28"><input className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} /></div>
-              <Button variant="danger" disabled={delBusy || delText !== '刪除'} onClick={deletePicked}>確認刪除</Button>
+              <p className="text-sm">刪除 {picked.size} 位使用者的帳號與所有資料（含社群照片），無法復原。確認請輸入刪除密碼</p>
+              <div className="w-36"><input type="password" autoComplete="off" className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} /></div>
+              <Button variant="danger" disabled={delBusy || !delText} onClick={deletePicked}>確認刪除</Button>
               <Button variant="outline" onClick={() => { setConfirmDel(false); setDelText(''); }}>取消</Button>
             </div>
           ) : (
@@ -537,9 +541,12 @@ export default function UsersPage({ initial, selfId }) {
       )}
       <Notice msg={delMsg} />
 
-      <Card className="overflow-hidden">
+      {data && <Pager total={data.total} page={page} pages={pages} setPage={setPage} pageSize={pageSize} setPageSize={(n) => { setPageSize(n); setPage(1); try { localStorage.setItem('yy_admin_page_size', String(n)); } catch { /* ignore */ } }} />}
+
+      {/* 列表固定高度、可以捲動,表頭停在上方 */}
+      <Card className="max-h-[65vh] overflow-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
+          <thead className="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground shadow-[0_1px_0_var(--color-border)]">
             <tr>
               <th className="w-10 pl-4 py-2.5">
                 <input type="checkbox" aria-label="全選這一頁" checked={allPicked} disabled={pickable.length === 0}
@@ -586,20 +593,83 @@ export default function UsersPage({ initial, selfId }) {
         </table>
       </Card>
 
-      {data && (
-        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-          <span>共 {data.total} 人</span>
-          {pages > 1 && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="num">{page} / {pages}</span>
-              <Button variant="outline" disabled={page >= pages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          )}
-        </div>
-      )}
+      {data && <div className="mt-3"><Pager total={data.total} page={page} pages={pages} setPage={setPage} /></div>}
 
       {editing && <EditPanel key={editing.id} user={editing} selfId={selfId} onClose={() => setEditing(null)} onSaved={onSaved} />}
     </>
+  );
+}
+
+// 修改刪除密碼(刪除勾選的使用者時要輸入;還沒改過時是「刪除」)
+function DeletePasswordSetting() {
+  const [open, setOpen] = useState(false);
+  const [info, setInfo] = useState(null);
+  const [form, setForm] = useState({ current: '', next: '', confirm: '' });
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api.getDeletePassword().then(setInfo).catch(() => {}); }, []);
+  async function save() {
+    if (form.next !== form.confirm) { setMsg({ ok: false, text: '兩次輸入的新密碼不一樣' }); return; }
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api.changeDeletePassword(form.current, form.next);
+      setInfo(r); setForm({ current: '', next: '', confirm: '' }); setOpen(false);
+      setMsg({ ok: true, text: '刪除密碼已更新' });
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
+    finally { setBusy(false); }
+  }
+  return (
+    <div className="text-right">
+      {!open ? (
+        <div className="flex items-center gap-3">
+          {msg && <span className={`text-xs ${msg.ok ? 'text-muted-foreground' : 'text-danger'}`}>{msg.text}</span>}
+          <span className="text-xs text-muted-foreground">
+            {info?.custom ? `刪除密碼更新於 ${String(info.updated_at || '').slice(0, 10)}` : '刪除密碼：預設「刪除」'}
+          </span>
+          <Button variant="outline" onClick={() => { setOpen(true); setMsg(null); }}>修改刪除密碼</Button>
+        </div>
+      ) : (
+        <Card className="p-3 text-left">
+          <div className="flex flex-wrap items-end gap-2">
+            <Field label="目前的刪除密碼" className="w-40"><input type="password" autoComplete="off" className={inputCls} value={form.current} onChange={(e) => setForm({ ...form, current: e.target.value })} /></Field>
+            <Field label="新的刪除密碼（至少 4 字）" className="w-44"><input type="password" autoComplete="off" className={inputCls} value={form.next} onChange={(e) => setForm({ ...form, next: e.target.value })} /></Field>
+            <Field label="再輸入一次" className="w-40"><input type="password" autoComplete="off" className={inputCls} value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} /></Field>
+            <Button onClick={save} disabled={busy || !form.current || !form.next}>儲存</Button>
+            <Button variant="outline" onClick={() => { setOpen(false); setMsg(null); setForm({ current: '', next: '', confirm: '' }); }}>取消</Button>
+          </div>
+          {msg && !msg.ok && <p className="mt-2 text-xs text-danger">{msg.text}</p>}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// 分頁列:共幾人、每頁筆數、上一頁/下一頁、跳到第幾頁
+function Pager({ total, page, pages, setPage, pageSize, setPageSize }) {
+  return (
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-3">
+        <span>共 {total} 人</span>
+        {setPageSize && (
+          <label className="flex items-center gap-1.5">
+            每頁
+            <select className="rounded-md border border-border bg-card px-2 py-1 text-sm" value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+              {[20, 50, 100].map((n) => <option key={n} value={n}>{n} 人</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      {pages > 1 && (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" disabled={page <= 1} onClick={() => setPage(1)}>第一頁</Button>
+          <Button variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <select className="num rounded-md border border-border bg-card px-2 py-1 text-sm" value={page} onChange={(e) => setPage(Number(e.target.value))}>
+            {Array.from({ length: pages }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} / {pages}</option>)}
+          </select>
+          <Button variant="outline" disabled={page >= pages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" disabled={page >= pages} onClick={() => setPage(pages)}>最後一頁</Button>
+        </div>
+      )}
+    </div>
   );
 }
