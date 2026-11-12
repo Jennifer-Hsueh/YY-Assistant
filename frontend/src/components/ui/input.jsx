@@ -6,6 +6,7 @@ const Input = forwardRef(function Input({ className, type, ...props }, ref) {
     <input
       ref={ref}
       type={type}
+      data-slot="input"
       className={cn(
         'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors',
         'placeholder:text-muted-foreground',

@@ -79,8 +79,8 @@ const COPY = {
       },
     ],
     themesTitle: '換一種心情的手帳',
-    themesText: '四種風格隨時切換，設定一次，手機和電腦都一樣。',
-    themes: ['米紙', '石墨灰', '莫蘭迪', '運動風'],
+    themesText: '七種風格隨時切換，從清爽到可愛、還有深色模式，設定一次，手機和電腦都一樣。',
+    themes: ['米紙', '石墨灰', '莫蘭迪', '海洋', '少女心', '黃檸檬', '小河狸'],
     plansTitle: '先免費用三個月',
     plansText: '試用期間可以使用全部功能。試用結束後，可以繼續免費使用基本功能，或選一個適合你的方案。不會自動扣款。',
     plans: [
@@ -173,8 +173,8 @@ const COPY = {
       },
     ],
     themesTitle: 'A notebook for every mood',
-    themesText: 'Switch between four styles anytime. Set it once and it follows you on every device.',
-    themes: ['Rice paper', 'Graphite', 'Morandi', 'Sporty'],
+    themesText: 'Switch between seven styles anytime, from clean to cute, plus a dark mode. Set it once and it follows you on every device.',
+    themes: ['Rice paper', 'Graphite', 'Morandi', 'Ocean', 'Sweetheart', 'Lemon', 'Beaver'],
     plansTitle: 'Free for your first three months',
     plansText: 'Use every feature during your trial. Afterward, keep using Basic for free, or pick the plan that fits you. Nothing renews automatically.',
     plans: [
@@ -202,7 +202,7 @@ const COPY = {
 };
 
 const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)', bookshelf: '#8A6A54', room: '#6E8B5D' };
-const THEMES = ['default', 'grey', 'morandi', 'sport'];
+const THEMES = ['default', 'grey', 'morandi', 'sport', 'macaron', 'lemon', 'beaver'];
 const PRICES = [[null, null], [69, 728], [69, 728], [69, 728], [79, 848], [109, 1208]];
 
 function Phone({ src, alt, className = '', eager = false }) {
@@ -357,7 +357,7 @@ export default function Landing() {
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.themesTitle}</h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-[15px] leading-[1.8] text-foreground/75">{T.themesText}</p>
-            <ul className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+            <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-7 lg:gap-4">
               {THEMES.map((th, i) => (
                 <li key={th} className="landing-lift reveal text-center" style={{ transitionDelay: `${i * 80}ms` }}>
                   <div className="landing-theme"><img src={shot(`theme-${th}`)} alt={T.themes[i]} width="390" height="520" loading="lazy" decoding="async" /></div>

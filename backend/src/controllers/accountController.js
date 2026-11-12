@@ -6,12 +6,15 @@ const cleanBank = (v) => { const s = String(v ?? '').trim().slice(0, 40); return
 
 async function listAccounts(req, res) {
   try {
-    const { data, error } = await supabase
-      .from('yy_accounts')
-      .select('*')
-      .eq('ledger_id', req.ledger.id)
+    const base = () => supabase.from('yy_accounts').select('*').eq('ledger_id', req.ledger.id);
+    let { data, error } = await base()
       .order('bank', { ascending: true, nullsFirst: false })
       .order('name', { ascending: true });
+    // 資料庫還沒加 bank 欄位(SQL 漏跑)時改用名稱排序,不讓帳戶整個讀不到
+    if (error && error.code === '42703') {
+      console.error('[accountController.listAccounts] 缺少 yy_accounts.bank 欄位,請在 Supabase 執行 SQL');
+      ({ data, error } = await base().order('name', { ascending: true }));
+    }
     if (error) throw error;
     return res.json({ accounts: data });
   } catch (err) {

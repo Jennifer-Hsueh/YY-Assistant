@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBeta } from '../lib/useBeta';
+import { isValidEmail } from '../lib/email';
 import { afterAuthPath } from '../lib/pendingInvite';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +30,7 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!agreed) return;
+    if (!isValidEmail(email)) { setError(A.badEmail); return; }
     setError('');
     setLoading(true);
     try {

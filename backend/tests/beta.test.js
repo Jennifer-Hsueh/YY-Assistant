@@ -87,14 +87,22 @@ const call = async (fn, { user = 'admin', body = {}, params = {} } = {}) => {
   db.yy_users.push({ id: 'admin', email: 'ad@x', role: 'admin' });
   let s = await betaStatus(); ok(s.limit === 50 && s.used === 0 && !s.full, 'default 50, admin not counted');
   let r = await call(adm.updateBetaSettings, { body: { limit: 2 } }); ok(r.json.beta.limit === 2, 'set limit 2');
-  r = await call(a.register, { body: { email: 'a@x', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg 1');
-  r = await call(a.register, { body: { email: 'b@x', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg 2');
+  r = await call(a.register, { body: { email: '123@123', password: '12345678', accept_terms: true } }); ok(r.status === 400 && r.json.code === 'INVALID_EMAIL', 'bad email rejected');
+  r = await call(a.register, { body: { email: 'a@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg 1');
+  r = await call(a.register, { body: { email: 'b@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg 2');
+  {
+    const uid = db.yy_users.find((u) => u.email === 'a@x.com').id;
+    let c = await call(a.changeEmail, { user: uid, body: { newEmail: 'bad@mail', password: '12345678' } }); ok(c.status === 400, 'change: bad format');
+    c = await call(a.changeEmail, { user: uid, body: { newEmail: 'b@x.com', password: '12345678' } }); ok(c.status === 409, 'change: taken');
+    c = await call(a.changeEmail, { user: uid, body: { newEmail: 'new@x.com', password: 'wrongpass' } }); ok(c.status === 400, 'change: wrong password');
+    c = await call(a.changeEmail, { user: uid, body: { newEmail: 'new@x.com', password: '12345678' } }); ok(c.status === 200 && c.json.user.email === 'new@x.com' && c.json.token, 'change: ok');
+  }
   r = await call(adm.getBetaSettings); ok(r.json.beta.used === 2 && r.json.beta.full, 'now full');
-  r = await call(a.register, { body: { email: 'c@x', password: '12345678', accept_terms: true } }); ok(r.status === 403 && r.json.code === 'BETA_FULL', 'reg 3 blocked');
+  r = await call(a.register, { body: { email: 'c@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 403 && r.json.code === 'BETA_FULL', 'reg 3 blocked');
   r = await call(adm.updateBetaSettings, { body: { limit: 5, open: false } }); ok(r.json.beta.full && !r.json.beta.open, 'closed');
-  r = await call(a.register, { body: { email: 'c@x', password: '12345678', accept_terms: true } }); ok(r.status === 403, 'closed blocks');
+  r = await call(a.register, { body: { email: 'c@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 403, 'closed blocks');
   r = await call(adm.updateBetaSettings, { body: { open: true } });
-  r = await call(a.register, { body: { email: 'c@x', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reopen allows');
+  r = await call(a.register, { body: { email: 'c@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reopen allows');
   r = await call(adm.updateBetaSettings, { body: { limit: 0 } }); ok(r.status === 400, 'limit 0 rejected');
   console.log(fails ? 'FAILED ' + fails : 'ALL OK');
 })();

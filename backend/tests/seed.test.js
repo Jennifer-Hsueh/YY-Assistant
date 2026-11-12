@@ -87,16 +87,16 @@ const call = async (fn, { user = 'admin', body = {}, params = {}, headers = {} }
 };
 const cc = require(B + 'controllers/categoryController.js');
 (async () => {
-  let r = await call(a.register, { body: { email: 'z@x', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg zh');
+  let r = await call(a.register, { body: { email: 'z@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg zh');
   const zid = r.json.user.id;
   r = await call(cc.listCategories, { user: zid }); const names = r.json.categories.map((c) => c.name);
   ok(names.length === 15 && names[0] === '餐飲' && names[14] === '約會', 'zh cats ordered ' + names.join(','));
   ok(db.yy_accounts.filter((x) => x.user_id === zid).map((x) => x.name).join() === '現金,銀行', 'zh accounts');
-  r = await call(a.register, { body: { email: 'e@x', password: '12345678', accept_terms: true }, headers: { 'x-lang': 'en' } }); const eid = r.json.user.id;
+  r = await call(a.register, { body: { email: 'e@x.com', password: '12345678', accept_terms: true }, headers: { 'x-lang': 'en' } }); const eid = r.json.user.id;
   ok(db.yy_categories.filter((x) => x.user_id === eid)[0].name === 'Food', 'en cats');
   ok(db.yy_categories.filter((x) => x.user_id === eid && x.type === 'event').length === 3, 'event cats');
   // seed failure doesn't break registration
   const orig = db.yy_categories; Object.defineProperty(db, 'yy_categories', { get() { throw new Error('boom'); }, configurable: true });
-  r = await call(a.register, { body: { email: 'f@x', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg ok when seed fails');
+  r = await call(a.register, { body: { email: 'f@x.com', password: '12345678', accept_terms: true } }); ok(r.status === 201, 'reg ok when seed fails');
   console.log(fails ? 'FAILED ' + fails : 'ALL PASS');
 })();

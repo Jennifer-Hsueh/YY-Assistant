@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings as SettingsIcon, Mail, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestPushToken, pushPermissionGranted } from '../lib/firebase';
@@ -12,6 +12,7 @@ import { Card, CardContent } from '../components/ui/card';
 import DataTransferCard from '../components/DataTransferCard';
 import BirthdayCard from '../components/BirthdayCard';
 import ChangePasswordCard from '../components/ChangePasswordCard';
+import ChangeEmailCard from '../components/ChangeEmailCard';
 import DeleteAccountCard from '../components/DeleteAccountCard';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { COUNTRY_CODES, countryName } from '../lib/helplines';
@@ -203,10 +204,7 @@ export default function Settings() {
               <Link to="/privacy" className="underline">{language === 'en' ? 'Privacy' : '隱私權政策'}</Link>
             </p>
           </div>
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mail className="h-4 w-4" />
-            {user?.email}
-          </p>
+          <ChangeEmailCard t={t} language={language} />
         </CardContent>
       </Card>
 
@@ -248,8 +246,11 @@ export default function Settings() {
                     {[
                       { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
                       { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
-                      { name: 'morandi', swatch: '#D2B35C', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
-                      { name: 'sport', swatch: '#1D4ED8', label: language === 'en' ? 'Sporty' : '運動風' },
+                      { name: 'morandi', swatch: '#DDD0C8', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
+                      { name: 'sport', swatch: '#163A80', label: language === 'en' ? 'Ocean' : '海洋' },
+                      { name: 'macaron', swatch: '#E8B4C6', label: language === 'en' ? 'Sweetheart' : '少女心' },
+                      { name: 'lemon', swatch: '#E8D27A', label: language === 'en' ? 'Lemon' : '黃檸檬' },
+                      { name: 'beaver', swatch: '#F4C95D', label: language === 'en' ? 'Beaver' : '小河狸' },
                     ].map(({ name, swatch, label }) => (
                       <SelectItem key={name} value={name}>
                         <span className="flex items-center gap-1.5">

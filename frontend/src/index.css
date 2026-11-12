@@ -28,10 +28,10 @@
   --background: #F5EFE3;
   /* 深炭灰 */
   --foreground: #2A2622;
-  --card: #FFFFFF;
+  --card: #FFFCF6;
   --card-foreground: #2A2622;
   /* 赤陶紅褐 — 主要 CTA 按鈕色 */
-  --primary: #C1666B;
+  --primary: #C4553F;
   --primary-foreground: #FBF8F2;
   /* 淡靛藍色調 — 次要按鈕 */
   --secondary: #DDE3EC;
@@ -49,11 +49,11 @@
   color-scheme: light;
 
   /* 手帳風格基礎色票 */
-  --ink: #33415C;
-  --income: #6E8B5D;
-  --expense: #C1666B;
+  --ink: #2F3E5C;
+  --income: #5F8A4C;
+  --expense: #C4553F;
   /* 琥珀棕金 — 原本的向日葵黃太亮,對比度不夠,改柔和一點 */
-  --highlight: #B08238;
+  --highlight: #C4962C;
 
   /* 各色的淡色底,用 color-mix 動態調淡,方便統一微調濃淡 */
   --income-bg: color-mix(in srgb, var(--income) 12%, white);
@@ -76,20 +76,20 @@
 
   /* 帳戶卡片預設色(使用者沒自訂顏色時輪流使用) */
   --acc-1: var(--income);
-  --acc-2: #4F46E5;
-  --acc-3: #059669;
-  --acc-4: #D97706;
-  --acc-5: #E11D48;
+  --acc-2: #2F3E5C;
+  --acc-3: #C4962C;
+  --acc-4: #C4553F;
+  --acc-5: #7A5C8E;
 
   /* 行事曆有行程日期的淡色底 */
-  --pastel-1: #DCE3F0;
-  --pastel-2: #E3EDDC;
-  --pastel-3: #F0E6DC;
-  --pastel-4: #EAE0F0;
-  --pastel-5: #DCEEF0;
-  --pastel-6: #F0E3DC;
+  --pastel-1: #F6E0D9;
+  --pastel-2: #E2ECD9;
+  --pastel-3: #DEE4EF;
+  --pastel-4: #F5EACB;
+  --pastel-5: #ECE2D5;
+  --pastel-6: #E7E0EC;
 
-  --dot-pattern: rgba(51, 65, 92, 0.1);
+  --dot-pattern: rgba(47, 62, 92, 0.1);
 }
 
 /* ───────── 石墨灰主題 ─────────
@@ -97,187 +97,502 @@
    炭黑 #2E3135 · 石灰 #7D8085 · 霧灰 #DCDCD9 · 紙灰 #F3F3F1
    (邊框、陰影用炭黑的透明度,不另算一色) */
 :root[data-theme="grey"] {
-  --g-ink: #2E3135;
-  --g-stone: #7D8085;
-  --g-mist: #DCDCD9;
-  --g-paper: #F3F3F1;
+  /* 石墨灰:深色模式。炭灰底、暖金色重點,收支用柔和的綠與珊瑚紅 */
+  color-scheme: dark;
+  --background: #1D1F22;
+  --foreground: #ECEAE6;
+  --card: #272A2E;
+  --card-foreground: #ECEAE6;
+  --primary: #E0B566;
+  --primary-foreground: #1D1F22;
+  --secondary: #32363B;
+  --secondary-foreground: #ECEAE6;
+  --muted: #2F3237;
+  --muted-foreground: #A0A5AB;
+  --accent: #33373C;
+  --accent-foreground: #ECEAE6;
+  --destructive: #EF8A7A;
+  --destructive-foreground: #1D1F22;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.18);
+  --ring: #E0B566;
 
-  --background: var(--g-mist);
-  --foreground: var(--g-ink);
-  --card: var(--g-paper);
-  --card-foreground: var(--g-ink);
-  --primary: var(--g-ink);
-  --primary-foreground: var(--g-paper);
-  --secondary: var(--g-mist);
-  --secondary-foreground: var(--g-ink);
-  --muted: var(--g-mist);
-  --muted-foreground: var(--g-stone);
-  --accent: var(--g-mist);
-  --accent-foreground: var(--g-ink);
-  --destructive: var(--g-ink);
-  --destructive-foreground: var(--g-paper);
-  --border: rgba(46, 49, 53, 0.14);
-  --input: rgba(46, 49, 53, 0.18);
-  --ring: var(--g-ink);
+  --ink: #C9D3E0;
+  --income: #7CC49A;
+  --expense: #EF8A7A;
+  --highlight: #E0B566;
+  --income-bg: #24322B;
+  --expense-bg: #3A2A28;
+  --highlight-bg: #3A3222;
 
-  --ink: var(--g-ink);
-  --income: var(--g-stone);
-  --expense: var(--g-ink);
-  --highlight: var(--g-stone);
+  --module-transactions: #EF8A7A;
+  --nav-active: #E0B566;
+  --module-transactions-bg: #33292A;
+  --module-accounts: #7CC49A;
+  --module-accounts-bg: #26302B;
+  --module-calendar: #8DB6E8;
+  --module-calendar-bg: #262D37;
+  --module-recurring: #E0B566;
+  --module-recurring-bg: #332E24;
+  --module-notes: #C3A9E3;
 
-  --income-bg: var(--g-mist);
-  --expense-bg: var(--g-mist);
-  --highlight-bg: var(--g-mist);
+  --acc-1: #3E6E57;
+  --acc-2: #3D5878;
+  --acc-3: #8A6A35;
+  --acc-4: #8A4A42;
+  --acc-5: #5E4B7D;
 
-  --module-transactions: var(--g-ink);
-  --module-transactions-bg: var(--g-mist);
-  --module-accounts: var(--g-stone);
-  --module-accounts-bg: var(--g-mist);
-  --module-calendar: var(--g-ink);
-  --module-calendar-bg: var(--g-mist);
-  --module-recurring: var(--g-stone);
-  --module-recurring-bg: var(--g-mist);
-  --module-notes: var(--g-ink);
-
-  --acc-1: var(--g-ink);
-  --acc-2: var(--g-stone);
-  --acc-3: var(--g-ink);
-  --acc-4: var(--g-stone);
-  --acc-5: var(--g-ink);
-
-  --pastel-1: var(--g-mist);
-  --pastel-2: var(--g-mist);
-  --pastel-3: var(--g-mist);
-  --pastel-4: var(--g-mist);
-  --pastel-5: var(--g-mist);
-  --pastel-6: var(--g-mist);
-
-  --dot-pattern: rgba(46, 49, 53, 0.07);
-
-  /* 寫死在畫面上的 Tailwind 色(收入綠、錯誤紅)也收斂進四色 */
-  --color-green-600: var(--g-stone);
-  --color-red-500: var(--g-ink);
-  --color-red-600: var(--g-ink);
+  --pastel-1: #262D37;
+  --pastel-2: #26302B;
+  --pastel-3: #332E24;
+  --pastel-4: #33292A;
+  --pastel-5: #2E2A35;
+  --pastel-6: #2A3032;
+  --dot-pattern: rgba(255, 255, 255, 0.05);
+  --color-green-600: #7CC49A;
+  --color-red-500: #EF8A7A;
+  --color-red-600: #EF8A7A;
 }
+/* 深色模式:程式裡寫死白色、黑字的地方改用主題顏色 */
+:root[data-theme="grey"] .bg-white { background-color: var(--card); }
+:root[data-theme="grey"] .text-black { color: var(--foreground); }
+:root[data-theme="grey"] [data-slot="input"],
+:root[data-theme="grey"] textarea,
+:root[data-theme="grey"] select { background-color: #1F2225; color: var(--foreground); }
 
 /* ───────── 莫蘭迪主題 ─────────
-   明亮的燕麥底,搭配霧感的鼠尾草綠、薰衣草紫、奶油黃 */
+   燕麥奶茶底(#DDD0C8)＋淺灰(#BEBEBE)主色與細框線 */
 :root[data-theme="morandi"] {
-  --background: #FFFFFF;
-  --foreground: #4F4B47;
-  /* 米紙的白色區塊 → 莫蘭迪紫;紅色區塊 → 莫蘭迪黃 */
-  --card: #EEE9F4;
-  --card-foreground: #4A4553;
-  --primary: #D2B35C;
-  --primary-foreground: #4A4036;
-  --secondary: #E7E2EF;
-  --secondary-foreground: #6F6488;
-  --muted: #E4DDEC;
-  --muted-foreground: #958E86;
-  --accent: #E8E2EF;
-  --accent-foreground: #6F6488;
-  --destructive: #C07A74;
+  --mr-rose: #BEBEBE;
+  --mr-blush: #DDD0C8;
+  --mr-line: #BEBEBE;
+
+  --background: var(--mr-blush);
+  --foreground: #4A3B3A;
+  --card: #FAF4F3;
+  --card-foreground: #4A3B3A;
+  --primary: var(--mr-rose);
+  --primary-foreground: #3F3A37;
+  --secondary: #F1E3E1;
+  --secondary-foreground: #6E5756;
+  --muted: #F1E3E1;
+  --muted-foreground: #8C7574;
+  --accent: #F4E8E6;
+  --accent-foreground: #4A3B3A;
+  --destructive: #A85A5E;
   --destructive-foreground: #FFFFFF;
-  --border: rgba(111, 100, 136, 0.16);
-  --input: rgba(111, 100, 136, 0.2);
-  --ring: #B89A45;
+  --border: rgba(150, 150, 150, 0.3);
+  --input: var(--mr-line);
+  --ring: var(--mr-rose);
 
-  --ink: #7A6F93;
-  --income: #8AA58A;
-  --expense: #D2B35C;
-  --highlight: #C99AB4;
-  --module-notes: #9A88B8;
-  /* 各模組:行事曆鼠尾草綠、記帳薰衣草紫、預算奶油黃、墨箋玫瑰紫 */
-  --module-calendar: #7FA27F;
-  --module-calendar-bg: color-mix(in srgb, #7FA27F 10%, white);
+  --ink: #7A5F5E;
+  --income: #7A8F72;
+  --expense: #B0666A;
+  --highlight: #A88A5E;
 
-  --acc-1: #8AA58A;
-  --acc-2: #A99BC9;
-  --acc-3: #D6B860;
-  --acc-4: #8FB0B8;
-  --acc-5: #D19A92;
+  --module-transactions: #B0666A;
+  --nav-active: #8E4F56;
+  --module-accounts: #7A8F72;
+  --module-calendar: #7A6F8C;
+  --module-calendar-bg: color-mix(in srgb, #7A6F8C 10%, white);
+  --module-recurring: #A88A5E;
+  --module-notes: #7A7472;
 
-  --pastel-1: #E9F0E6;
-  --pastel-2: #EEEAF5;
-  --pastel-3: #F7F0D9;
-  --pastel-4: #E6EFF1;
-  --pastel-5: #F5E6E3;
-  --pastel-6: #EFEBF5;
+  --acc-1: #9E9E9E;
+  --acc-2: #7A6F8C;
+  --acc-3: #7A8F72;
+  --acc-4: #B0666A;
+  --acc-5: #A88A5E;
 
-  --dot-pattern: rgba(122, 111, 147, 0.08);
-  --color-green-600: #6F9170;
-  --color-red-500: #C07A74;
-  --color-red-600: #C07A74;
+  --pastel-1: #F3E4E2;
+  --pastel-2: #EDE7DF;
+  --pastel-3: #F5E9E7;
+  --pastel-4: #EADCDB;
+  --pastel-5: #F2E7E3;
+  --pastel-6: #EFE2E0;
+  --dot-pattern: rgba(122, 95, 94, 0.1);
+  --color-green-600: #6E8466;
+  --color-red-500: #B0666A;
+  --color-red-600: #9C585C;
 }
+/* 莫蘭迪:跟小河狸一樣的貼紙框線(粗框＋下方實心陰影、膠囊按鈕),顏色用暖灰褐 */
+:root[data-theme="morandi"] { --mr-stroke: #8F7F77; }
+:root[data-theme="morandi"] [data-slot="card"] {
+  border: 2.5px solid var(--mr-stroke);
+  box-shadow: 0 4px 0 var(--mr-stroke);
+}
+:root[data-theme="morandi"] .border.bg-card { border-width: 2px; border-color: var(--mr-stroke); }
+:root[data-theme="morandi"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--mr-stroke); }
+:root[data-theme="morandi"] [data-slot="button"] {
+  border-radius: 9999px;
+  border: 2px solid var(--mr-stroke);
+  box-shadow: 0 2.5px 0 var(--mr-stroke);
+  font-weight: 700;
+  transition: transform .08s, box-shadow .08s;
+}
+:root[data-theme="morandi"] [data-slot="button"][data-variant="ghost"],
+:root[data-theme="morandi"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
+:root[data-theme="morandi"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--mr-stroke); }
+:root[data-theme="morandi"] [data-slot="input"] { border: 2px solid var(--mr-stroke); border-radius: 0.9rem; }
+:root[data-theme="morandi"] header.bg-card\/95,
+:root[data-theme="morandi"] [data-slot="bottom-nav"],
+:root[data-theme="morandi"] [data-slot="sidebar"] { background: #C9B8AE; --muted-foreground: #66574F; }
+:root[data-theme="morandi"] header.bg-card\/95 { border-bottom: 2.5px solid var(--mr-stroke); }
+:root[data-theme="morandi"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--mr-stroke); }
+:root[data-theme="morandi"] [data-slot="sidebar"] { border-right: 2.5px solid var(--mr-stroke); }
 
-/* ───────── 運動風主題 ─────────
-   藍＋白為主,紅色當線條與色塊(像球衣的條紋) */
+/* ───────── 海洋主題(原「運動風」,代碼仍為 sport) ─────────
+   深海藍＋向日葵黃點綴,卡片藍色框線,上下列白色 */
 :root[data-theme="sport"] {
-  --sport-blue: #1D4ED8;
-  --sport-navy: #0B2A6B;
-  --sport-red: #E11D2E;
-  --sport-yellow: #F5B800;
+  --sp-blue: #163A80;
+  --sp-yellow: #FFC233;
 
-  --background: #E3EEFB;
-  --foreground: #0B2A6B;
-  --card: #F3F8FE;
-  --card-foreground: #0B2A6B;
-  --primary: var(--sport-blue);
+  --background: #DCE6F5;
+  --foreground: #0F1E3D;
+  --card: #FFFFFF;
+  --card-foreground: #0F1E3D;
+  --primary: var(--sp-blue);
   --primary-foreground: #FFFFFF;
-  --secondary: #E3ECFB;
-  --secondary-foreground: var(--sport-navy);
-  --muted: #E9EFF8;
-  --muted-foreground: #5A6B8C;
-  --accent: #EEF3FB;
-  --accent-foreground: var(--sport-navy);
-  --destructive: var(--sport-red);
+  --secondary: #E3EBF7;
+  --secondary-foreground: var(--sp-blue);
+  --muted: #E6EDF8;
+  --muted-foreground: #4F5F7E;
+  --accent: #FFF4D6;
+  --accent-foreground: var(--sp-blue);
+  --destructive: #D63A4A;
   --destructive-foreground: #FFFFFF;
-  --border: rgba(11, 42, 107, 0.14);
-  --input: rgba(11, 42, 107, 0.2);
-  --ring: var(--sport-blue);
-  --radius: 0.5rem;
+  --border: rgba(22, 58, 128, 0.18);
+  --input: var(--sp-blue);
+  --ring: var(--sp-blue);
+  --radius: 0.6rem;
 
-  --ink: var(--sport-navy);
-  --income: var(--sport-blue);
-  --expense: var(--sport-red);
-  --highlight: #2563EB;
-  --module-notes: #3B82F6;
+  --ink: var(--sp-blue);
+  --income: #1F8A5B;
+  --expense: #D63A4A;
+  --highlight: #E0A100;
 
-  --acc-1: var(--sport-blue);
-  --acc-2: var(--sport-red);
-  --acc-3: var(--sport-navy);
-  --acc-4: #3B82F6;
-  --acc-5: #F43F5E;
+  --module-transactions: #D63A4A;
+  --nav-active: var(--sp-blue);
+  --module-accounts: #1F8A5B;
+  --module-calendar: var(--sp-blue);
+  --module-calendar-bg: color-mix(in srgb, #163A80 9%, white);
+  --module-recurring: #E0A100;
+  --module-notes: #3D5FA8;
 
-  --pastel-1: #DBE7FD;
-  --pastel-2: #FDE2E4;
-  --pastel-3: #E8EFFC;
-  --pastel-4: #FFEFF0;
-  --pastel-5: #D6E4FB;
-  --pastel-6: #F9E3E5;
+  --acc-1: #163A80;
+  --acc-2: #2F64C4;
+  --acc-3: #E0A100;
+  --acc-4: #5B86D6;
+  --acc-5: #0F2A5C;
 
-  --color-green-600: var(--sport-blue);
-  --color-red-500: var(--sport-red);
-  --color-red-600: var(--sport-red);
+  --pastel-1: #E2EBFA;
+  --pastel-2: #FFF3D1;
+  --pastel-3: #D9E5F8;
+  --pastel-4: #FFF0C2;
+  --pastel-5: #E6EEFB;
+  --pastel-6: #FFF6DC;
+  --dot-pattern: rgba(22, 58, 128, 0.08);
+  --color-green-600: #1F8A5B;
+  --color-red-500: #D63A4A;
+  --color-red-600: #C02F3F;
 }
-/* 運動風:淡藍底,卡片上緣一條黃線,標題下方藍黃雙線,導覽列黃色線條 */
-:root[data-theme="sport"] body {
-  background-image: none;
+:root[data-theme="sport"] body { background-image: none; }
+:root[data-theme="sport"] [data-slot="card"],
+:root[data-theme="sport"] .border.bg-card {
+  border: 1px solid var(--sp-blue);
 }
-:root[data-theme="sport"] [data-slot="card"] {
-  border-top: 3px solid var(--sport-yellow);
+:root[data-theme="sport"] [data-slot="input"] { border: 1px solid var(--sp-blue); }
+:root[data-theme="sport"] header.bg-card\/95,
+:root[data-theme="sport"] [data-slot="bottom-nav"],
+:root[data-theme="sport"] [data-slot="sidebar"] { background: #EEF4FC; }
+
+/* ───────── 少女心主題(代碼 macaron) ─────────
+   霧粉紅底與上下列、淡紫卡片、天空藍文字;跟小河狸一樣的貼紙框線(粗框＋下方實心陰影),區塊像按鍵 */
+:root[data-theme="macaron"] {
+  --mc-pink: #FFE3EC;
+  --mc-mint: #D9A3B5;
+  --mc-sky: #DDF0FC;
+  --mc-lemon: #FFF1BC;
+  --mc-purple: #B48CF0;
+  --mc-line: #FFFFFF;
+
+  --background: #F6E5EA;
+  --foreground: #3B6F94;
+  --card: #F1ECF5;
+  --card-foreground: #3B6F94;
+  --primary: #C9708F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #DCE8F2;
+  --secondary-foreground: #3B6F94;
+  --muted: #F4E9C6;
+  --muted-foreground: #7895AA;
+  --accent: #DCE8F2;
+  --accent-foreground: #3B6F94;
+  --destructive: #E0557F;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.9);
+  --input: #FFFFFF;
+  --ring: #C9708F;
+  --radius: 1.25rem;
+
+  --ink: #3B6F94;
+  --income: #3E9A74;
+  --expense: #C9668A;
+  --highlight: #B58E22;
+
+  --module-transactions: #C9668A;
+  --nav-active: #3E8E6C;
+  --module-transactions-bg: #F5E1E7;
+  --module-accounts: #3E9A74;
+  --module-accounts-bg: #DCEEE5;
+  --module-calendar: #3F80B3;
+  --module-calendar-bg: #DCE8F2;
+  --module-recurring: #B58E22;
+  --module-recurring-bg: #F4E9C6;
+  --module-notes: #8C74B8;
+
+  --acc-1: #F59AB9;
+  --acc-2: #7FD9B5;
+  --acc-3: #8CCBF2;
+  --acc-4: #F5D25E;
+  --acc-5: #B985FF;
+
+  --pastel-1: #F5E1E7;
+  --pastel-2: #DCEEE5;
+  --pastel-3: #DCE8F2;
+  --pastel-4: #F4E9C6;
+  --pastel-5: #E8E1F2;
+  --pastel-6: #F1ECF5;
+  --dot-pattern: rgba(201, 112, 143, 0.1);
+  --color-green-600: #1E8E66;
+  --color-red-500: #E0557F;
+  --color-red-600: #CC4670;
 }
-:root[data-theme="sport"] .page-title-row {
-  padding-bottom: 6px;
-  border-bottom: 3px solid #FFFFFF;
-  margin-bottom: 1.25rem;
+:root[data-theme="macaron"] { --stk: #C27A93; }
+:root[data-theme="macaron"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 0 4px 0 var(--stk); }
+:root[data-theme="macaron"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
+:root[data-theme="macaron"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--stk); }
+:root[data-theme="macaron"] [data-slot="button"] {
+  border-radius: 9999px;
+  border: 2px solid var(--stk);
+  box-shadow: 0 2.5px 0 var(--stk);
+  font-weight: 700;
+  transition: transform .08s, box-shadow .08s;
 }
-:root[data-theme="sport"] [data-slot="sidebar"] {
-  background: #EDF4FC;
-  border-right: 4px solid #FFFFFF;
+:root[data-theme="macaron"] [data-slot="button"][data-variant="ghost"],
+:root[data-theme="macaron"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
+:root[data-theme="macaron"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--stk); }
+:root[data-theme="macaron"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
+:root[data-theme="macaron"] header.bg-card\/95,
+:root[data-theme="macaron"] [data-slot="bottom-nav"],
+:root[data-theme="macaron"] [data-slot="sidebar"] { background: #EDCBD6; --muted-foreground: #4E3346; --ink: #4E3346; --nav-active: #1F6E4D; color: #4E3346; }
+:root[data-theme="macaron"] header.bg-card\/95 { border-bottom: 2.5px solid var(--stk); }
+:root[data-theme="macaron"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--stk); }
+:root[data-theme="macaron"] [data-slot="sidebar"] { border-right: 2.5px solid var(--stk); }
+
+/* ───────── 黃檸檬主題 ─────────
+   奶油檸檬底與上下列、淡紫卡片、天空藍文字、薄荷綠選中分頁;貼紙框線同小河狸 */
+:root[data-theme="lemon"] {
+  --mc-pink: #FFE3EC;
+  --mc-mint: #D8C37C;
+  --mc-sky: #DDF0FC;
+  --mc-lemon: #FFF1BC;
+  --mc-purple: #B48CF0;
+  --mc-line: #FFFFFF;
+
+  --background: #F5EED5;
+  --foreground: #3B6F94;
+  --card: #F1ECF5;
+  --card-foreground: #3B6F94;
+  --primary: #C9A43A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #DCE8F2;
+  --secondary-foreground: #3B6F94;
+  --muted: #DCEEE5;
+  --muted-foreground: #7895AA;
+  --accent: #DCE8F2;
+  --accent-foreground: #3B6F94;
+  --destructive: #E0557F;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.9);
+  --input: #FFFFFF;
+  --ring: #C9A43A;
+  --radius: 1.25rem;
+
+  --ink: #3B6F94;
+  --income: #3E9A74;
+  --expense: #C9668A;
+  --highlight: #B58E22;
+
+  --module-transactions: #C9668A;
+  --nav-active: #C2557F;
+  --module-transactions-bg: #F5E1E7;
+  --module-accounts: #3E9A74;
+  --module-accounts-bg: #DCEEE5;
+  --module-calendar: #3F80B3;
+  --module-calendar-bg: #DCE8F2;
+  --module-recurring: #B58E22;
+  --module-recurring-bg: #F4E9C6;
+  --module-notes: #8C74B8;
+
+  --acc-1: #F59AB9;
+  --acc-2: #7FD9B5;
+  --acc-3: #8CCBF2;
+  --acc-4: #F5D25E;
+  --acc-5: #B985FF;
+
+  --pastel-1: #F5E1E7;
+  --pastel-2: #DCEEE5;
+  --pastel-3: #DCE8F2;
+  --pastel-4: #F4E9C6;
+  --pastel-5: #E8E1F2;
+  --pastel-6: #F1ECF5;
+  --dot-pattern: rgba(170, 140, 50, 0.1);
+  --color-green-600: #1E8E66;
+  --color-red-500: #E0557F;
+  --color-red-600: #CC4670;
 }
-:root[data-theme="sport"] [data-slot="bottom-nav"] {
-  border-top: 3px solid var(--sport-yellow);
+:root[data-theme="lemon"] { --stk: #B8973F; }
+:root[data-theme="lemon"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 0 4px 0 var(--stk); }
+:root[data-theme="lemon"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
+:root[data-theme="lemon"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--stk); }
+:root[data-theme="lemon"] [data-slot="button"] {
+  border-radius: 9999px;
+  border: 2px solid var(--stk);
+  box-shadow: 0 2.5px 0 var(--stk);
+  font-weight: 700;
+  transition: transform .08s, box-shadow .08s;
+}
+:root[data-theme="lemon"] [data-slot="button"][data-variant="ghost"],
+:root[data-theme="lemon"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
+:root[data-theme="lemon"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--stk); }
+:root[data-theme="lemon"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
+:root[data-theme="lemon"] header.bg-card\/95,
+:root[data-theme="lemon"] [data-slot="bottom-nav"],
+:root[data-theme="lemon"] [data-slot="sidebar"] { background: #EDE0AE; --muted-foreground: #45391F; --ink: #45391F; --nav-active: #B0386A; color: #45391F; }
+:root[data-theme="lemon"] header.bg-card\/95 { border-bottom: 2.5px solid var(--stk); }
+:root[data-theme="lemon"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--stk); }
+:root[data-theme="lemon"] [data-slot="sidebar"] { border-right: 2.5px solid var(--stk); }
+
+/* ───────── 小河狸主題 ─────────
+   像貼紙的可愛風:奶油底、深棕粗框線、圓角、按鈕下方一條實心陰影;
+   蜂蜜黃主色,天空藍、薄荷綠、珊瑚粉當輔色;頁面標題前有小河狸 */
+:root[data-theme="beaver"] {
+  --bv-line: #4A3426;
+  --bv-honey: #F4C95D;
+  --bv-sky: #CFE6F5;
+  --bv-mint: #CFE8C9;
+  --bv-coral: #F6C9C0;
+
+  --background: #FBF3E2;
+  --foreground: #3E2C21;
+  --card: #FFFDF7;
+  --card-foreground: #3E2C21;
+  --primary: var(--bv-honey);
+  --primary-foreground: #3E2C21;
+  --secondary: var(--bv-sky);
+  --secondary-foreground: #2F4B63;
+  --muted: #F4E9D3;
+  --muted-foreground: #8C7866;
+  --accent: #F8EBCD;
+  --accent-foreground: #3E2C21;
+  --destructive: #D9685A;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(74, 52, 38, 0.22);
+  --input: var(--bv-line);
+  --ring: var(--bv-line);
+  --radius: 1.1rem;
+
+  --ink: #6B4A33;
+  --income: #5E9F5E;
+  --expense: #D9685A;
+  --highlight: #D79A2B;
+
+  --module-transactions: #D9685A;
+  --nav-active: #B8562F;
+  --module-transactions-bg: #FCE8E3;
+  --module-accounts: #5E9F5E;
+  --module-accounts-bg: #E9F4E5;
+  --module-calendar: #4F86B0;
+  --module-calendar-bg: #E6F1F9;
+  --module-recurring: #D79A2B;
+  --module-recurring-bg: #FCF0D3;
+  --module-notes: #8A6A54;
+
+  --acc-1: #E8A93A;
+  --acc-2: #6FA8D0;
+  --acc-3: #79B26F;
+  --acc-4: #E58C7C;
+  --acc-5: #A88BCB;
+
+  --pastel-1: #FCEFC8;
+  --pastel-2: #DDEEF8;
+  --pastel-3: #E2F1DD;
+  --pastel-4: #FBE1DB;
+  --pastel-5: #ECE3F6;
+  --pastel-6: #F8E7CF;
+
+  --dot-pattern: rgba(74, 52, 38, 0.1);
+  --color-green-600: #4E8C4E;
+  --color-red-500: #D9685A;
+  --color-red-600: #D9685A;
+}
+/* 卡片:粗框線＋下方實心陰影,像貼紙 */
+:root[data-theme="beaver"] [data-slot="card"] {
+  border: 2.5px solid var(--bv-line);
+  box-shadow: 0 4px 0 var(--bv-line);
+}
+/* 按鈕:圓滾滾的膠囊、框線、按下去會往下沉 */
+:root[data-theme="beaver"] [data-slot="button"] {
+  border-radius: 9999px;
+  border: 2px solid var(--bv-line);
+  box-shadow: 0 2.5px 0 var(--bv-line);
+  font-weight: 700;
+  transition: transform .08s, box-shadow .08s;
+}
+:root[data-theme="beaver"] [data-slot="button"][data-variant="ghost"],
+:root[data-theme="beaver"] [data-slot="button"][data-variant="link"] {
+  border-color: transparent;
+  box-shadow: none;
+}
+:root[data-theme="beaver"] [data-slot="button"]:active {
+  transform: translateY(2px);
+  box-shadow: 0 0.5px 0 var(--bv-line);
+}
+/* 輸入框:粗框、圓角、奶油白底 */
+:root[data-theme="beaver"] [data-slot="input"] {
+  border: 2px solid var(--bv-line);
+  border-radius: 0.9rem;
+  background: #FFFDF7;
+}
+/* 頁面標題前的小河狸 */
+:root[data-theme="beaver"] .page-title::before {
+  content: "";
+  display: inline-block;
+  width: 1.9em;
+  height: 1.5em;
+  margin-right: 0.35em;
+  vertical-align: -0.35em;
+  background: url("/logo-mark-144.png") center / contain no-repeat;
+}
+:root[data-theme="beaver"] .border.bg-card {
+  border-width: 2px;
+  border-color: var(--bv-line);
+}
+:root[data-theme="beaver"] .border.bg-card.shadow-sm {
+  box-shadow: 0 3px 0 var(--bv-line);
+}
+:root[data-theme="beaver"] header.bg-card\/95 {
+  background: #FFF8E8;
+  border-bottom: 2.5px solid var(--bv-line);
+}
+:root[data-theme="beaver"] [data-slot="sidebar"] {
+  background: #FFF8E8;
+  border-right: 2.5px solid var(--bv-line);
+}
+:root[data-theme="beaver"] [data-slot="bottom-nav"] {
+  background: #FFF8E8;
+  border-top: 2.5px solid var(--bv-line);
 }
 
 html {

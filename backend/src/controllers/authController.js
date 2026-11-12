@@ -13,6 +13,10 @@ const { removeUserFolder } = require('../services/communityImages');
 const SALT_ROUNDS = 10;
 const RESET_TOKEN_TTL_MINUTES = 30;
 
+// Email 格式:@ 前後都要有字、網域要有「.」(例如 name@gmail.com),不能有空白
+const EMAIL_RE = /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/;
+const isValidEmail = (v) => typeof v === 'string' && v.length <= 254 && EMAIL_RE.test(v);
+
 function signToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email },
@@ -23,9 +27,13 @@ function signToken(user) {
 
 async function register(req, res) {
   try {
-    const { email, password, accept_terms } = req.body;
+    const { password, accept_terms } = req.body;
+    const email = String(req.body.email || '').trim();
     if (!email || !password) {
       return res.status(400).json({ error: '請輸入 Email 和密碼' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Email 格式不正確', code: 'INVALID_EMAIL' });
     }
     if (accept_terms !== true) {
       return res.status(400).json({ error: '請先閱讀並同意使用條款與隱私權政策' });
@@ -249,6 +257,44 @@ async function changePassword(req, res) {
   }
 }
 
+// 修改 Email:確認密碼後換成新的 Email(格式要正確、不能和別人重複),回傳新的登入憑證
+async function changeEmail(req, res) {
+  try {
+    const { password } = req.body || {};
+    const newEmail = String(req.body?.newEmail || '').trim();
+    if (!newEmail || !password) return res.status(400).json({ error: '請輸入新的 Email 和目前密碼' });
+    if (!isValidEmail(newEmail)) return res.status(400).json({ error: 'Email 格式不正確', code: 'INVALID_EMAIL' });
+    const { data: user, error } = await supabase
+      .from('yy_users')
+      .select('id, email, password_hash')
+      .eq('id', req.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(400).json({ error: '目前密碼不正確', code: 'wrong_password' });
+    }
+    if (newEmail.toLowerCase() === String(user.email).toLowerCase()) {
+      return res.status(400).json({ error: '新的 Email 和目前的一樣' });
+    }
+    const { data: taken } = await supabase.from('yy_users').select('id').eq('email', newEmail).maybeSingle();
+    if (taken) return res.status(409).json({ error: '這個 Email 已經註冊過了' });
+    const { data: updated, error: upErr } = await supabase
+      .from('yy_users')
+      .update({ email: newEmail })
+      .eq('id', user.id)
+      .select('id, email, created_at')
+      .single();
+    if (upErr) {
+      if (upErr.code === '23505') return res.status(409).json({ error: '這個 Email 已經註冊過了' });
+      throw upErr;
+    }
+    return res.json({ user: updated, token: signToken(updated) });
+  } catch (err) {
+    console.error('[authController.changeEmail]', err);
+    return res.status(500).json({ error: '修改 Email 失敗，請稍後再試' });
+  }
+}
+
 // 刪除帳號(App Store 規定要提供):確認密碼後刪除帳號與所有資料。
 // 繳費紀錄依稅法保留,只留下 Email 快照;管理員帳號不能從 App 刪除
 async function deleteAccount(req, res) {
@@ -291,4 +337,4 @@ async function deleteAccount(req, res) {
   }
 }
 
-module.exports = { register, login, requestPasswordReset, resetPassword, changePassword, deleteAccount };
+module.exports = { register, login, requestPasswordReset, resetPassword, changePassword, deleteAccount, changeEmail };

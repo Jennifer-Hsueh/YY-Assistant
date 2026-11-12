@@ -10,6 +10,7 @@ import { useBeta } from '../lib/useBeta';
 import { EventInvites } from '../components/EventPeople';
 import { AnnivIcon } from './Anniversaries';
 import { api } from '../lib/api';
+import { occurrencesBetween } from '../lib/recurrence';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
@@ -77,16 +78,22 @@ export default function Home() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       try {
-        const [{ events }, { transactions }, { accounts }, { budgets }, { moods }] = await Promise.all([
+        // 帳戶、預算、心情、循環行程讀取失敗時不影響其他卡片(避免整頁空白)
+        const [{ events }, { transactions }, { accounts }, { budgets }, { moods }, { recurring_items: recItems }] = await Promise.all([
           api.listEvents({ from: dayStart.toISOString(), to: dayEnd.toISOString() }),
           api.listTransactions({ from: monthStart.toISOString(), to: monthEnd.toISOString() }),
-          api.listAccounts(),
+          api.listAccounts().catch(() => ({ accounts: [] })),
           api.listBudgets().catch(() => ({ budgets: [] })),
           api.listMoods({ from: todayKey, to: todayKey }).catch(() => ({ moods: [] })),
+          api.listRecurringItems().catch(() => ({ recurring_items: [] })),
         ]);
+        // 今天有輪到的循環行程(全天,前面加 🔁)
+        const recurringToday = (recItems || [])
+          .filter((i) => i.kind === 'event' && i.is_active && occurrencesBetween(i, todayKey, todayKey).length)
+          .map((i) => ({ id: `rec-${i.id}`, recurring: true, title: i.title, start_at: new Date(`${todayKey}T00:00:00`).toISOString(), color: null }));
         const rates = await loadRates(api, accounts);
         setOverview({
-          events: events.slice().sort((a, b) => a.start_at.localeCompare(b.start_at)),
+          events: [...recurringToday, ...events].sort((a, b) => a.start_at.localeCompare(b.start_at)),
           totals: monthTotals(transactions, accounts, rates, todayKey.slice(0, 7), todayKey),
           budgets,
         });
@@ -244,7 +251,7 @@ export default function Home() {
                   <li key={ev.id} className="flex items-center gap-2 text-sm">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: ev.color || '#9CA3AF' }} />
                     <span className="w-12 shrink-0 font-amount text-xs text-muted-foreground">{timeOf(ev.start_at)}</span>
-                    <span className="truncate">{ev.title}</span>
+                    <span className="truncate">{ev.recurring ? '🔁 ' : ''}{ev.title}</span>
                     {ev.remind_before_minutes != null && <span className="ml-auto text-xs">🔔</span>}
                   </li>
                 ))}

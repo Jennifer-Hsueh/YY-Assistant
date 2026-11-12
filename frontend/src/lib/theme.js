@@ -1,6 +1,6 @@
-// 介面主題:'default'(米紙)、'grey'(石墨灰)、'morandi'(莫蘭迪)、'sport'(運動風)。
+// 介面主題:'default'(米紙)、'grey'(石墨灰)、'morandi'(莫蘭迪)、'sport'(海洋,原運動風)、'macaron'(少女心)、'lemon'(黃檸檬)、'beaver'(小河狸)。
 // 先存在 localStorage 讓畫面一打開就套用,登入後再以伺服器上的設定為準(Web / APP 共用)。
-export const THEMES = ['default', 'grey', 'morandi', 'sport'];
+export const THEMES = ['default', 'grey', 'morandi', 'sport', 'macaron', 'lemon', 'beaver'];
 const KEY = 'yy_theme';
 
 export function getStoredTheme() {

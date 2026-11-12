@@ -60,6 +60,13 @@ export function AuthProvider({ children }) {
     setUser(user);
   }, []);
 
+  // 修改 Email 後換成新的使用者資料與登入憑證
+  const updateUser = useCallback((next, token) => {
+    if (token) localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(next));
+    setUser(next);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -69,7 +76,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

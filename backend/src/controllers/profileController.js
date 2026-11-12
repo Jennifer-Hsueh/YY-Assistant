@@ -41,7 +41,7 @@ async function updateProfile(req, res) {
     const updates = {};
     if (username !== undefined) updates.username = username;
     if (theme !== undefined) {
-      if (!['default', 'grey', 'morandi', 'sport'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
+      if (!['default', 'grey', 'morandi', 'sport', 'macaron', 'lemon', 'beaver'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
       updates.theme = theme;
     }
     if (country !== undefined) {

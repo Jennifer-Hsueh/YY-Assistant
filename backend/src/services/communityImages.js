@@ -65,8 +65,16 @@ async function removeImages(keys) {
 // 刪除帳號時清掉這位使用者的所有照片
 async function removeUserFolder(userId) {
   try {
-    const { data } = await supabase.storage.from(BUCKET).list(userId, { limit: 1000 });
-    if (data?.length) await supabase.storage.from(BUCKET).remove(data.map((f) => `${userId}/${f.name}`));
+    // 一次最多列 1000 個檔案:刪完再列下一批,直到資料夾清空(照片超過 1000 張也刪得乾淨)
+    for (let round = 0; round < 100; round += 1) {
+      const { data, error } = await supabase.storage.from(BUCKET).list(userId, { limit: 1000 });
+      if (error) throw error;
+      const files = (data || []).filter((f) => f.id || f.metadata);
+      if (!files.length) break;
+      const { error: rmErr } = await supabase.storage.from(BUCKET).remove(files.map((f) => `${userId}/${f.name}`));
+      if (rmErr) throw rmErr;
+      if (files.length < 1000) break;
+    }
   } catch (err) {
     console.error('[communityImages] remove folder failed', err.message);
   }

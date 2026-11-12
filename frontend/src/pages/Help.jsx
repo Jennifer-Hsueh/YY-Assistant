@@ -109,7 +109,7 @@ const SECTIONS = {
       '看到不當內容請按文章下方的「檢舉」，並選擇原因。心情低落需要協助時，請撥打安心專線。',
     ] },
     { title: '主題與語言', items: [
-      '到「設定 → 介面設定」切換四種風格：米紙、石墨灰、莫蘭迪、運動風。設定會跟著帳號，換裝置也一樣。',
+      '到「設定 → 介面設定」切換七種風格：米紙、石墨灰（深色模式）、莫蘭迪、海洋、少女心、黃檸檬、小河狸。設定會跟著帳號，換裝置也一樣。',
       '畫面上方的「EN／中文」可以切換介面語言。',
     ] },
     { title: '通知', items: [
@@ -127,6 +127,7 @@ const SECTIONS = {
     { title: '資料與帳號', items: [
       '「設定 → 資料匯出 / 備份」可以匯出 Excel 或下載完整備份檔。',
       '忘記密碼：在登入頁點「忘記密碼？」，到信箱收重設連結（30 分鐘內有效）。',
+      '修改 Email：設定 → 帳戶資訊，Email 旁按「編輯」，輸入新的 Email 和目前密碼。請用收得到信的信箱，忘記密碼時才收得到重設信。',
       '「設定 → 刪除帳號」會永久刪除帳號和所有資料，無法復原。你在共同帳本記過的帳會保留給其他成員，顯示為「已刪除的成員」。',
     ] },
     { title: '常見問題', items: [
@@ -235,7 +236,7 @@ const SECTIONS = {
       'Report inappropriate posts with the Report link below them. If you are feeling low and need help, please call a helpline.',
     ] },
     { title: 'Themes and language', items: [
-      'Go to Settings → Interface to choose one of four styles: Rice paper, Graphite, Morandi or Sporty. It follows your account on every device.',
+      'Go to Settings → Interface to choose one of seven styles: Rice paper, Graphite (dark mode), Morandi, Ocean, Sweetheart, Lemon or Beaver. It follows your account on every device.',
       'Use EN / 中文 at the top to switch the language.',
     ] },
     { title: 'Notifications', items: [
@@ -253,6 +254,7 @@ const SECTIONS = {
     { title: 'Data and account', items: [
       'Settings → Export / backup lets you export to Excel or download a full backup.',
       'Forgot your password? Tap “Forgot password?” on the login page and check your email for a reset link (valid for 30 minutes).',
+      'Change your email: Settings → Account, tap “Edit” next to your email, then enter the new email and your current password. Use an inbox you can receive mail at, so password reset emails reach you.',
       'Settings → Delete account permanently deletes your account and data. Entries you made in shared ledgers stay for the other members, shown as “Deleted member”.',
     ] },
     { title: 'FAQ', items: [
