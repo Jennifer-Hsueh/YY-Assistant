@@ -219,20 +219,20 @@
 :root[data-theme="morandi"] { --mr-stroke: #8F7F77; }
 :root[data-theme="morandi"] [data-slot="card"] {
   border: 2.5px solid var(--mr-stroke);
-  box-shadow: 0 4px 0 var(--mr-stroke);
+  box-shadow: 1px 3px 0 var(--mr-stroke);
 }
 :root[data-theme="morandi"] .border.bg-card { border-width: 2px; border-color: var(--mr-stroke); }
-:root[data-theme="morandi"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--mr-stroke); }
+:root[data-theme="morandi"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--mr-stroke); }
 :root[data-theme="morandi"] [data-slot="button"] {
   border-radius: 9999px;
   border: 2px solid var(--mr-stroke);
-  box-shadow: 0 2.5px 0 var(--mr-stroke);
+  box-shadow: 1px 1.5px 0 var(--mr-stroke);
   font-weight: 700;
   transition: transform .08s, box-shadow .08s;
 }
 :root[data-theme="morandi"] [data-slot="button"][data-variant="ghost"],
 :root[data-theme="morandi"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="morandi"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--mr-stroke); }
+:root[data-theme="morandi"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--mr-stroke); }
 :root[data-theme="morandi"] [data-slot="input"] { border: 2px solid var(--mr-stroke); border-radius: 0.9rem; }
 :root[data-theme="morandi"] header.bg-card\/95,
 :root[data-theme="morandi"] [data-slot="bottom-nav"],
@@ -369,19 +369,19 @@
   --color-red-600: #CC4670;
 }
 :root[data-theme="macaron"] { --stk: #C27A93; }
-:root[data-theme="macaron"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 0 4px 0 var(--stk); }
+:root[data-theme="macaron"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 1px 3px 0 var(--stk); }
 :root[data-theme="macaron"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
-:root[data-theme="macaron"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--stk); }
+:root[data-theme="macaron"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--stk); }
 :root[data-theme="macaron"] [data-slot="button"] {
   border-radius: 9999px;
   border: 2px solid var(--stk);
-  box-shadow: 0 2.5px 0 var(--stk);
+  box-shadow: 1px 1.5px 0 var(--stk);
   font-weight: 700;
   transition: transform .08s, box-shadow .08s;
 }
 :root[data-theme="macaron"] [data-slot="button"][data-variant="ghost"],
 :root[data-theme="macaron"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="macaron"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--stk); }
+:root[data-theme="macaron"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--stk); }
 :root[data-theme="macaron"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
 :root[data-theme="macaron"] header.bg-card\/95,
 :root[data-theme="macaron"] [data-slot="bottom-nav"],
@@ -393,19 +393,20 @@
 /* ───────── 黃檸檬主題 ─────────
    奶油檸檬底與上下列、淡紫卡片、天空藍文字、薄荷綠選中分頁;貼紙框線同小河狸 */
 :root[data-theme="lemon"] {
-  --mc-pink: #FFE3EC;
-  --mc-mint: #D8C37C;
+  --mc-pink: #FFFFFF;
+  --mc-mint: #F0D25A;
   --mc-sky: #DDF0FC;
   --mc-lemon: #FFF1BC;
   --mc-purple: #B48CF0;
   --mc-line: #FFFFFF;
 
-  --background: #F5EED5;
+  --home-tint-transactions: #FFFFFF;
+  --background: #FFF8D9;
   --foreground: #3B6F94;
-  --card: #F1ECF5;
+  --card: #FFFFFF;
   --card-foreground: #3B6F94;
-  --primary: #C9A43A;
-  --primary-foreground: #FFFFFF;
+  --primary: #F2C230;
+  --primary-foreground: #4A3B12;
   --secondary: #DCE8F2;
   --secondary-foreground: #3B6F94;
   --muted: #DCEEE5;
@@ -416,7 +417,7 @@
   --destructive-foreground: #FFFFFF;
   --border: rgba(255, 255, 255, 0.9);
   --input: #FFFFFF;
-  --ring: #C9A43A;
+  --ring: #E0AE1A;
   --radius: 1.25rem;
 
   --ink: #3B6F94;
@@ -426,7 +427,7 @@
 
   --module-transactions: #C9668A;
   --nav-active: #C2557F;
-  --module-transactions-bg: #F5E1E7;
+  --module-transactions-bg: #FFFFFF;
   --module-accounts: #3E9A74;
   --module-accounts-bg: #DCEEE5;
   --module-calendar: #3F80B3;
@@ -441,35 +442,35 @@
   --acc-4: #F5D25E;
   --acc-5: #B985FF;
 
-  --pastel-1: #F5E1E7;
+  --pastel-1: #FFFFFF;
   --pastel-2: #DCEEE5;
   --pastel-3: #DCE8F2;
-  --pastel-4: #F4E9C6;
+  --pastel-4: #FFF1B8;
   --pastel-5: #E8E1F2;
   --pastel-6: #F1ECF5;
-  --dot-pattern: rgba(170, 140, 50, 0.1);
+  --dot-pattern: rgba(224, 174, 26, 0.12);
   --color-green-600: #1E8E66;
   --color-red-500: #E0557F;
   --color-red-600: #CC4670;
 }
-:root[data-theme="lemon"] { --stk: #B8973F; }
-:root[data-theme="lemon"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 0 4px 0 var(--stk); }
+:root[data-theme="lemon"] { --stk: #D2A21F; }
+:root[data-theme="lemon"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 1px 3px 0 var(--stk); }
 :root[data-theme="lemon"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
-:root[data-theme="lemon"] .border.bg-card.shadow-sm { box-shadow: 0 3px 0 var(--stk); }
+:root[data-theme="lemon"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--stk); }
 :root[data-theme="lemon"] [data-slot="button"] {
   border-radius: 9999px;
   border: 2px solid var(--stk);
-  box-shadow: 0 2.5px 0 var(--stk);
+  box-shadow: 1px 1.5px 0 var(--stk);
   font-weight: 700;
   transition: transform .08s, box-shadow .08s;
 }
 :root[data-theme="lemon"] [data-slot="button"][data-variant="ghost"],
 :root[data-theme="lemon"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="lemon"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0 0.5px 0 var(--stk); }
+:root[data-theme="lemon"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--stk); }
 :root[data-theme="lemon"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
 :root[data-theme="lemon"] header.bg-card\/95,
 :root[data-theme="lemon"] [data-slot="bottom-nav"],
-:root[data-theme="lemon"] [data-slot="sidebar"] { background: #EDE0AE; --muted-foreground: #45391F; --ink: #45391F; --nav-active: #B0386A; color: #45391F; }
+:root[data-theme="lemon"] [data-slot="sidebar"] { background: #FFE98A; --muted-foreground: #45391F; --ink: #45391F; --nav-active: #B0386A; color: #45391F; }
 :root[data-theme="lemon"] header.bg-card\/95 { border-bottom: 2.5px solid var(--stk); }
 :root[data-theme="lemon"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--stk); }
 :root[data-theme="lemon"] [data-slot="sidebar"] { border-right: 2.5px solid var(--stk); }
@@ -540,13 +541,13 @@
 /* 卡片:粗框線＋下方實心陰影,像貼紙 */
 :root[data-theme="beaver"] [data-slot="card"] {
   border: 2.5px solid var(--bv-line);
-  box-shadow: 0 4px 0 var(--bv-line);
+  box-shadow: 1px 3px 0 var(--bv-line);
 }
 /* 按鈕:圓滾滾的膠囊、框線、按下去會往下沉 */
 :root[data-theme="beaver"] [data-slot="button"] {
   border-radius: 9999px;
   border: 2px solid var(--bv-line);
-  box-shadow: 0 2.5px 0 var(--bv-line);
+  box-shadow: 1px 1.5px 0 var(--bv-line);
   font-weight: 700;
   transition: transform .08s, box-shadow .08s;
 }
@@ -557,7 +558,7 @@
 }
 :root[data-theme="beaver"] [data-slot="button"]:active {
   transform: translateY(2px);
-  box-shadow: 0 0.5px 0 var(--bv-line);
+  box-shadow: 0.5px 0 0 var(--bv-line);
 }
 /* 輸入框:粗框、圓角、奶油白底 */
 :root[data-theme="beaver"] [data-slot="input"] {
@@ -580,7 +581,7 @@
   border-color: var(--bv-line);
 }
 :root[data-theme="beaver"] .border.bg-card.shadow-sm {
-  box-shadow: 0 3px 0 var(--bv-line);
+  box-shadow: 1px 2px 0 var(--bv-line);
 }
 :root[data-theme="beaver"] header.bg-card\/95 {
   background: #FFF8E8;

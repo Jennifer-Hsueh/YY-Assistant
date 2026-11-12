@@ -60,10 +60,10 @@ export default function Sidebar() {
                 <li key={to}>
                   <NavLink
                     to={to}
-                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+                    className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
                     style={{
                       color: active ? color : 'var(--muted-foreground)',
-                      fontWeight: active ? 500 : 400,
+                      fontWeight: active ? 800 : 600,
                       backgroundColor: active ? 'var(--muted)' : undefined,
                     }}
                   >
@@ -80,8 +80,8 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(tab)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
-                  style={{ color: active ? color : 'var(--muted-foreground)', fontWeight: active ? 500 : 400 }}
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+                  style={{ color: active ? color : 'var(--muted-foreground)', fontWeight: active ? 800 : 600 }}
                 >
                   <Icon className="h-5 w-5" />
                   <span className="flex-1 text-left">{t(key)}</span>
@@ -95,10 +95,10 @@ export default function Sidebar() {
                         <NavLink
                           to={c.to}
                           end
-                          className="block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
+                          className="block rounded-md px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                           style={({ isActive }) => ({
                             color: isActive ? color : 'var(--muted-foreground)',
-                            fontWeight: isActive ? 500 : 400,
+                            fontWeight: isActive ? 800 : 600,
                             backgroundColor: isActive ? 'var(--muted)' : undefined,
                           })}
                         >
@@ -115,10 +115,10 @@ export default function Sidebar() {
           <li>
             <NavLink
               to="/announcements"
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
               style={({ isActive }) => ({
                 color: isActive ? 'var(--nav-active)' : 'var(--muted-foreground)',
-                fontWeight: isActive ? 500 : 400,
+                fontWeight: isActive ? 800 : 600,
                 backgroundColor: isActive ? 'var(--muted)' : undefined,
               })}
             >
@@ -130,10 +130,10 @@ export default function Sidebar() {
           <li>
             <NavLink
               to="/help"
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
               style={({ isActive }) => ({
                 color: isActive ? 'var(--nav-active)' : 'var(--muted-foreground)',
-                fontWeight: isActive ? 500 : 400,
+                fontWeight: isActive ? 800 : 600,
                 backgroundColor: isActive ? 'var(--muted)' : undefined,
               })}
             >

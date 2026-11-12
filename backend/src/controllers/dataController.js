@@ -267,7 +267,7 @@ async function importData(req, res) {
       .filter((r) => r.title && r.kind && r.next_trigger_date)
       .map((r) => ({
         user_id: uid,
-        ...pick(r, ['kind', 'title', 'amount', 'category', 'frequency', 'day_of_month', 'day_of_week', 'next_trigger_date', 'reminder_method', 'is_active', 'end_date']),
+        ...pick(r, ['kind', 'title', 'amount', 'category', 'frequency', 'day_of_month', 'day_of_week', 'next_trigger_date', 'reminder_method', 'is_active', 'end_date', 'start_time', 'end_time']),
         account_id: accountMap[r.account_id] || null,
         ledger_id: r.kind === 'event' ? null : ledgerOf(r),
       })));

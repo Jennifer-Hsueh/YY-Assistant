@@ -593,3 +593,7 @@ alter table yy_users add column if not exists shelf_styles smallint[] not null d
 
 -- batch114:帳戶加銀行名稱(選填)
 alter table yy_accounts add column if not exists bank text check (bank is null or char_length(bank) <= 40);
+
+-- batch117:循環行程可設時間(選填,HH:MM;不填為全天)
+alter table yy_recurring_items add column if not exists start_time text check (start_time is null or start_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+alter table yy_recurring_items add column if not exists end_time text check (end_time is null or end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');

@@ -11,7 +11,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import CalendarSubNav from '../components/CalendarSubNav';
 
-const emptyForm = { title: '', ...emptyRecurrence, reminder_method: 'push', end_date: '' };
+const emptyForm = { title: '', ...emptyRecurrence, start_time: '', end_time: '', reminder_method: 'push', end_date: '' };
 
 function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -76,6 +76,8 @@ export default function RecurringEvents() {
     setForm({
       title: item.title,
       ...recurrenceFromItem(item),
+      start_time: item.start_time || '',
+      end_time: item.end_time || '',
       reminder_method: item.reminder_method,
       end_date: item.end_date || '',
     });
@@ -91,10 +93,13 @@ export default function RecurringEvents() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title) return;
+    if (form.start_time && form.end_time && form.end_time <= form.start_time) return;
     const payload = {
       kind: 'event',
       title: form.title,
       ...recurrencePayload(form),
+      start_time: form.start_time || null,
+      end_time: form.start_time && form.end_time ? form.end_time : null,
       reminder_method: form.reminder_method,
       end_date: form.end_date || null,
     };
@@ -202,6 +207,7 @@ export default function RecurringEvents() {
             const muted = expired || !item.is_active;
             const details = [
               describeRecurrence(item, t),
+              item.start_time ? (item.end_time ? `${item.start_time}–${item.end_time}` : item.start_time) : t('home_all_day'),
               !expired && `${t('rec_next')}${item.next_trigger_date}`,
               item.end_date && `${t('rec_until')}${item.end_date}`,
             ].filter(Boolean).join(' · ');
@@ -255,6 +261,15 @@ export default function RecurringEvents() {
               )}
               <Input type="text" placeholder={t('rec_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               <RecurrenceFields form={form} setForm={setForm} t={t} />
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t('rec_time_label')}</label>
+                <div className="flex items-center gap-2">
+                  <Input type="time" className="min-w-0 flex-1" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value, end_time: e.target.value ? form.end_time : '' })} />
+                  <span className="text-muted-foreground">–</span>
+                  <Input type="time" className="min-w-0 flex-1" disabled={!form.start_time} value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} />
+                </div>
+                {form.start_time && form.end_time && form.end_time <= form.start_time && <p className="text-xs text-destructive">{t('rec_time_order')}</p>}
+              </div>
               <div className="flex gap-2">
                 <div className="min-w-0 flex-1 space-y-1">
                   <label className="text-xs text-muted-foreground">{t('rec_reminder_method_label')}</label>

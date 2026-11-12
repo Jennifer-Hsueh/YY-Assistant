@@ -132,7 +132,7 @@ async function runDailyRecurringScan() {
           let body;
           if (isLedger && item.amount) body = count > 1 ? `${item.title} 已自動記帳 ${count} 期` : `${item.title} 已自動記帳`;
           else if (isLedger) body = `${item.title} 到期提醒`;
-          else body = `${item.title} 今天`;
+          else body = item.start_time ? `${item.title} 今天 ${item.start_time}${item.end_time ? `–${item.end_time}` : ''}` : `${item.title} 今天`;
           await sendPushToUser(item.user_id, {
             channel: item.kind === 'event' ? 'calendar' : 'ledger',
             title: '循環提醒',

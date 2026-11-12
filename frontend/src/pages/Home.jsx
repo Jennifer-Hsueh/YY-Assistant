@@ -10,7 +10,7 @@ import { useBeta } from '../lib/useBeta';
 import { EventInvites } from '../components/EventPeople';
 import { AnnivIcon } from './Anniversaries';
 import { api } from '../lib/api';
-import { occurrencesBetween } from '../lib/recurrence';
+import { occurrencesBetween, occurrenceTimes } from '../lib/recurrence';
 import { Card, CardContent } from '../components/ui/card';
 import BudgetBars from '../components/BudgetBars';
 import { monthTotals, loadRates, ymd } from '../lib/budget';
@@ -90,7 +90,7 @@ export default function Home() {
         // 今天有輪到的循環行程(全天,前面加 🔁)
         const recurringToday = (recItems || [])
           .filter((i) => i.kind === 'event' && i.is_active && occurrencesBetween(i, todayKey, todayKey).length)
-          .map((i) => ({ id: `rec-${i.id}`, recurring: true, title: i.title, start_at: new Date(`${todayKey}T00:00:00`).toISOString(), color: null }));
+          .map((i) => ({ id: `rec-${i.id}`, recurring: true, title: i.title, ...occurrenceTimes(i, todayKey), color: null }));
         const rates = await loadRates(api, accounts);
         setOverview({
           events: [...recurringToday, ...events].sort((a, b) => a.start_at.localeCompare(b.start_at)),
@@ -262,7 +262,7 @@ export default function Home() {
         </Card>
 
         {/* 本月累積消費 */}
-        <Card className="relative z-10 border-none" style={tint('var(--module-transactions)')}>
+        <Card className="relative z-10 border-none" style={tint('var(--home-tint-transactions, var(--module-transactions))')}>
           <CardContent className="p-4 md:p-5">
             <CardTitle Icon={Wallet} color="var(--module-transactions)" title={`${t('home_month_spend')}${ledgerTag}`} to="/transactions" />
             {!overview ? (

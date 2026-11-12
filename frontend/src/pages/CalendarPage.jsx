@@ -17,7 +17,7 @@ import { AnnivIcon } from './Anniversaries';
 import Categories from './Categories';
 import MonthSwitcher from '../components/MonthSwitcher';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ymd, occurrencesBetween } from '../lib/recurrence';
+import { ymd, occurrencesBetween, occurrenceTimes } from '../lib/recurrence';
 
 // 行程日期一律用本地時間(台灣早上 8 點前的行程,UTC 日期會是前一天)
 const localKey = (iso) => ymd(new Date(iso));
@@ -249,7 +249,7 @@ export default function CalendarPage() {
   const rangeFrom = view === 'week' ? ymd(weekStart) : ymd(new Date(year, month, 1));
   const rangeTo = view === 'week' ? ymd(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6)) : ymd(new Date(year, month + 1, 0));
   const recurringEvents = recurring.flatMap((item) => occurrencesBetween(item, rangeFrom, rangeTo).map((d) => ({
-    id: `rec-${item.id}-${d}`, recurring: true, title: item.title, start_at: new Date(`${d}T00:00:00`).toISOString(), end_at: null, category: item.category || null, color: null, calendar_id: null,
+    id: `rec-${item.id}-${d}`, recurring: true, title: item.title, ...occurrenceTimes(item, d), category: item.category || null, color: null, calendar_id: null,
   })));
   const eventsByDay = [...events, ...recurringEvents].filter(inView).reduce((acc, ev) => {
     const start = new Date(localKey(ev.start_at) + 'T00:00:00');

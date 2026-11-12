@@ -27,6 +27,10 @@ async function listRecurringItems(req, res) {
   }
 }
 
+// 循環行程的時間(選填):HH:MM;不填 = 全天
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const cleanTime = (v) => (v && TIME_RE.test(String(v)) ? String(v) : null);
+
 async function createRecurringItem(req, res) {
   try {
     const {
@@ -41,6 +45,8 @@ async function createRecurringItem(req, res) {
       reminder_method, // user-configurable: 'push' | 'in_app' | 'both'
       account_id,
       end_date,
+      start_time,
+      end_time,
     } = req.body;
 
     if (!kind || !title || !frequency || !next_trigger_date) {
@@ -73,6 +79,7 @@ async function createRecurringItem(req, res) {
         reminder_method: reminder_method || 'push',
         account_id: account_id || null,
         end_date: end_date || null,
+        ...(kind === 'event' ? { start_time: cleanTime(start_time), end_time: cleanTime(start_time) ? cleanTime(end_time) : null } : {}),
         is_active: true,
       })
       .select()
@@ -94,6 +101,8 @@ async function updateRecurringItem(req, res) {
       'next_trigger_date', 'reminder_method', 'is_active', 'account_id', 'end_date']) {
       if (req.body[k] !== undefined) updates[k] = req.body[k];
     }
+    if (req.body.start_time !== undefined) updates.start_time = cleanTime(req.body.start_time);
+    if (req.body.end_time !== undefined) updates.end_time = updates.start_time === null ? null : cleanTime(req.body.end_time);
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nothing to update' });
     const item = await editableItem(req.user.id, id);
     if (!item) return res.status(404).json({ error: 'Recurring item not found' });

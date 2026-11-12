@@ -94,3 +94,11 @@ export function occurrencesBetween(item, fromKey, toKey) {
   }
   return out;
 }
+
+// 循環行程某一天的開始/結束時間(有設時間就用,沒有就是全天 00:00)
+export function occurrenceTimes(item, dayKey) {
+  const start = new Date(`${dayKey}T${item.start_time || '00:00'}:00`);
+  let end = null;
+  if (item.start_time && item.end_time && item.end_time > item.start_time) end = new Date(`${dayKey}T${item.end_time}:00`);
+  return { start_at: start.toISOString(), end_at: end ? end.toISOString() : null };
+}
