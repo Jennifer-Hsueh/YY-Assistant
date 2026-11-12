@@ -16,6 +16,8 @@ router.post('/founding/grant', c.grantFounding);
 router.get('/user-reports', c.listUserReports);
 router.put('/user-reports/:id', c.updateUserReport);
 router.post('/users/bulk-delete', c.bulkDeleteUsers);
+router.get('/settings/delete-password', c.getDeletePassword);
+router.put('/settings/delete-password', c.changeDeletePassword);
 router.get('/users', c.listUsers);
 router.put('/users/:id', c.updateUser);
 router.post('/users/:id/reset-link', c.createResetLink);

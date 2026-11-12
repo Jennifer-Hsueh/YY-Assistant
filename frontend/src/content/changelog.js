@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-12', short: ['框線一致', 'Tidier borders'], detail: ['輸入框、下拉選單框線一致，點選時不再出現雙框。', 'Inputs and dropdowns share one border, no double outline.'] },
   { date: '2026-11-12', short: ['循環行程時間', 'Repeat times'], detail: ['循環行程可設定開始與結束時間。', 'Repeating events can now have start and end times.'] },
   { date: '2026-11-12', short: ['七種新主題', 'Seven themes'], detail: ['主題重新配色，新增深色、少女心、黃檸檬、小河狸。', 'New colors, plus dark mode, Sweetheart, Lemon and Beaver.'] },
   { date: '2026-11-12', short: ['可改 Email', 'Change email'], detail: ['設定可修改 Email，註冊會檢查 Email 格式。', 'Change your email in Settings; sign-up checks the format.'] },

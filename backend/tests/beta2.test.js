@@ -105,6 +105,11 @@ const call = async (fn, { user = 'admin', body = {}, params = {} } = {}) => {
   r = await call(adm.bulkDeleteUsers, { body: { ids: ['u2', 'admin'], confirm: '刪除' } });
   ok(r.json.deleted === 1 && r.json.skipped === 1 && !db.yy_users.some((u) => u.id === 'u2') && db.yy_payments[0].user_email === 'u2@x', 'bulk delete skips admin, snapshots payment email');
   r = await call(adm.bulkDeleteUsers, { body: { ids: ['u1'], confirm: 'no' } }); ok(r.status === 400, 'bulk needs confirm');
+  r = await call(adm.changeDeletePassword, { body: { current: 'wrong', next: 'abcd1234' } }); ok(r.status === 400, 'change delete pw needs current');
+  r = await call(adm.changeDeletePassword, { body: { current: '刪除', next: 'ab' } }); ok(r.status === 400, 'new delete pw too short');
+  r = await call(adm.changeDeletePassword, { body: { current: '刪除', next: 'abcd1234' } }); ok(r.status === 200 && r.json.custom, 'change delete pw');
+  r = await call(adm.bulkDeleteUsers, { body: { ids: ['u1'], confirm: '刪除' } }); ok(r.status === 400, 'old delete pw rejected');
+  r = await call(adm.getDeletePassword, {}); ok(r.json.custom === true, 'delete pw info');
   r = await call(adm.updateBetaSettings, { body: { active: false } }); await beta.getBeta();
   r = await call(prof.getProfile, { user: 'u1' }); ok(!r.json.profile.ent.features.includes('export'), 'after beta, basic no export');
   const st = await beta.betaStatus(); ok(st.full === false, 'not full when not active');

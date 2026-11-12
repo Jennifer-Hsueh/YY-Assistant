@@ -5,8 +5,6 @@ const supabase = require('../config/supabase');
 // 結果也會顯示在 /health 的 schema 欄位。
 const REQUIRED = {
   yy_users: 'id, plan, addon_community, basic_choice, trial_ends_at, plan_expires_at, is_disabled, terms_version, terms_accepted_at, community_suspended_until, founding_member, founding_granted_at, friend_code, birthday_md, birthday_visible, notify_birthdays, friends_seen_at, shelf_styles',
-  yy_accounts: 'id, bank',
-  yy_recurring_items: 'id, start_time, end_time',
   yy_moments: 'id, user_id, date, image_key, caption, created_at',
   yy_slips: 'id, sender_id, recipient_id, content, read_at, sender_hidden, recipient_hidden',
   yy_calendars: 'id, user_id, name, color',
@@ -31,9 +29,9 @@ const REQUIRED = {
   yy_reminder_log: 'key',
   yy_anniversaries: 'id, remind, icon, recurring, show_years, show_age, year_known',
   yy_transactions: 'id, ledger_id',
-  yy_accounts: 'id, ledger_id',
+  yy_accounts: 'id, ledger_id, bank',
   yy_budgets: 'id, ledger_id',
-  yy_recurring_items: 'id, ledger_id',
+  yy_recurring_items: 'id, ledger_id, start_time, end_time',
   yy_user_blocks: 'blocker_id',
   yy_user_reports: 'id, status',
 };

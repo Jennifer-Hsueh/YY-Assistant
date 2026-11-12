@@ -39,6 +39,8 @@ export const api = {
   userReports: (status) => request(`/admin/user-reports?status=${status}`),
   setUserReport: (id, status) => request(`/admin/user-reports/${id}`, { method: 'PUT', body: { status } }),
   bulkDeleteUsers: (ids, confirm) => request('/admin/users/bulk-delete', { method: 'POST', body: { ids, confirm } }),
+  getDeletePassword: () => request('/admin/settings/delete-password'),
+  changeDeletePassword: (current, next) => request('/admin/settings/delete-password', { method: 'PUT', body: { current, next } }),
   users: (params) => request(`/admin/users${qs(params)}`),
   updateUser: (id, body) => request(`/admin/users/${id}`, { method: 'PUT', body }),
   moderation: (id) => request(`/admin/users/${id}/moderation`),
