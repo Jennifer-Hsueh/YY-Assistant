@@ -866,9 +866,10 @@ input[type="time"] {
 .landing-doodle { position: absolute; font-size: 26px; z-index: 0; opacity: .85; pointer-events: none; animation: landing-drift 7s ease-in-out infinite; }
 @keyframes landing-drift { 0%,100% { transform: translate(0, 0) rotate(-8deg); } 33% { transform: translate(8px, -14px) rotate(6deg); } 66% { transform: translate(-6px, -6px) rotate(-2deg); } }
 @media (max-width: 767px) { .landing-doodle { font-size: 20px; opacity: .6; } .landing-badge { right: -14px; width: 76px; height: 76px; } .landing-badge b { font-size: 14px; } .landing-badge span { font-size: 10px; } }
-/* 跑馬燈 */
-.landing-marquee { overflow: hidden; background: #2F3E5C; color: #FFF6DE; border-block: 3px solid #2A2622; transform: rotate(-1.2deg); margin: 0 -20px; padding: 10px 0; }
-.landing-marquee-track { display: flex; gap: 36px; width: max-content; animation: landing-marquee 32s linear infinite; font-weight: 700; font-size: 16px; white-space: nowrap; }
+/* 跑馬燈:淡奶油底、放正、溫馨的話,慢慢跑、每句間隔大 */
+.landing-marquee { overflow: hidden; background: #FFF6DA; color: #6B4E12; border-block: 2px dashed rgba(168, 122, 14, .35); padding: 12px 0; }
+.landing-marquee-track { display: flex; gap: 140px; width: max-content; padding-left: 140px; animation: landing-marquee 75s linear infinite; font-weight: 600; font-size: 16px; white-space: nowrap; }
+.landing-marquee:hover .landing-marquee-track { animation-play-state: paused; }
 @keyframes landing-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 /* 功能一覽卡片 */
 .landing .landing-card { border: 2px solid rgba(42, 38, 34, .85); box-shadow: 3px 4px 0 rgba(42, 38, 34, .85); }
@@ -896,3 +897,19 @@ input[type="time"] {
   .landing-blob, .landing-badge, .landing-doodle, .landing-marquee-track, .landing-section .landing-pair-back, .landing-float-up { animation: none; }
   .landing-float-up { display: none; }
 }
+/* 功能卡片可點:右下角小眼睛 */
+.landing-more { opacity: .55; transition: opacity .15s, transform .15s; }
+.landing-card:hover .landing-more { opacity: 1; transform: scale(1.2); }
+/* 功能導覽:分類按鈕、切換時淡入 */
+.landing-showcase { transition: background .4s ease; }
+.landing-tab { background: #fff; color: var(--sec); border: 2px solid var(--sec); transition: transform .12s, background .2s, color .2s; }
+.landing-tab:hover { transform: translateY(-2px); }
+.landing-tab.is-on { background: var(--sec); color: #fff; box-shadow: 2px 3px 0 rgba(42, 38, 34, .8); }
+.landing-swap { animation: landing-swap .45s ease; }
+@keyframes landing-swap { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* 跳出視窗 */
+.landing-modal { animation: landing-fade .2s ease; }
+.landing-modal-card { border: 3px solid #2A2622; box-shadow: 6px 8px 0 #2A2622; animation: landing-pop .28s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes landing-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes landing-pop { from { opacity: 0; transform: scale(.92) translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .landing-swap, .landing-modal, .landing-modal-card { animation: none; } }

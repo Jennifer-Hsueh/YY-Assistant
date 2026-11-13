@@ -33,9 +33,11 @@ const LINES = {
   },
 };
 
-export default function BeaverGuide({ lang }) {
+export default function BeaverGuide({ lang, nudge }) {
   const [key, setKey] = useState('hero');
   const [open, setOpen] = useState(true);
+  // 功能導覽換分類時,小河狸跟著介紹那一個
+  useEffect(() => { if (nudge) { setKey(nudge.key); setOpen(true); } }, [nudge]);
   useEffect(() => {
     const els = [...document.querySelectorAll('[data-guide]')];
     if (!els.length || !('IntersectionObserver' in window)) return undefined;

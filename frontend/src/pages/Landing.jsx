@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BrandMark, { BetaTag } from '../components/BrandMark';
 import { useBeta } from '../lib/useBeta';
@@ -27,7 +28,27 @@ const COPY = {
     homeAlt: 'YY手帳 首頁畫面',
     overviewTitle: '一本手帳，裝得下這些',
     badge: ['3 個月', '全功能免費'],
-    marquee: ['💰 記帳', '📅 行事曆', '🎂 紀念日', '📝 墨箋絮語', '💌 小紙條', '👥 共用帳本', '📚 月刊書櫃', '📷 日常時光', '🦫 小河狸的家', '🎨 七種主題'],
+    marquee: ['🌱 今天也辛苦了，記下一件小事就好', '☕ 慢慢來，日子會好好被收起來', '💌 想念一個人，就傳一張小紙條吧', '🌙 每一天，都值得被好好記得', '🦫 小河狸一直在這裡陪你'],
+    overviewMore: [
+      '現金、銀行、信用卡分帳戶記，還能依銀行查看餘額；每月總預算和分類預算一眼看清楚，外幣也能記。',
+      '旅遊、合買、家用開一本共同帳本，成員都能記帳、修改，有人記一筆就會通知其他人。',
+      '月檢視看整個月、週檢視排細節，行程用分類顏色區分；每週的課、每月的繳費日設成循環行程。',
+      '新增行程時邀請好友，對方按「加入」就一起出現在行事曆，誰改了時間大家都會收到通知。',
+      '全家或社團開一本共用行事曆，大家都能新增、修改，可以疊在一起看，也能分開切換。',
+      '生日、紀念日選個小圖示，每年自動提醒，還會算出第幾週年、幾歲；好友生日也會提醒你。',
+      '想到要做的事先寫下來，首頁就看得到，完成打個勾就好；按 Enter 一下就新增。',
+      '寫一句話給好友或共同帳本的家人，不管對方在哪一頁都會跳出來，還能直接回一張。',
+      '「晴空與雨天」聊心情、「養豬小能手」交流理財；可以匿名、只給好友看，或隱藏特定好友。',
+      '每月 1 號，小河狸把上個月的記帳、行程、心情和照片整理成一本書，挑封面、寫一句話就完成。',
+      '把今天的晚餐、路上的夕陽貼進手帳，寫一句話，只有自己看得到，每個月也會放進月刊。',
+      '月曆、待辦、窗外天氣、相框都會跟著你的日子變；點點書櫃、檯燈和小河狸，看看會發生什麼。',
+    ],
+    more: '看大圖',
+    showcaseTitle: '點點看，每個功能長什麼樣子',
+    showcaseHint: '點上面的分類切換，或點功能卡片看大圖',
+    close: '關閉',
+    prev: '上一個',
+    next: '下一個',
     overview: [
       ['📒', '記帳', '多帳戶、多幣別、預算'],
       ['👥', '共同帳本', '旅遊、家用一起記'],
@@ -123,7 +144,27 @@ const COPY = {
     homeAlt: 'YY Assistant home screen',
     overviewTitle: 'Everything in one notebook',
     badge: ['3 months', 'all free'],
-    marquee: ['💰 Ledger', '📅 Calendar', '🎂 Anniversaries', '📝 Ink Notes', '💌 Slips', '👥 Shared ledgers', '📚 Monthly books', '📷 Moments', '🦫 Beaver\'s home', '🎨 Seven themes'],
+    marquee: ['🌱 You did well today. One small note is enough', '☕ Take it slow, your days are kept safe here', '💌 Missing someone? Send them a little note', '🌙 Every day deserves to be remembered', '🦫 Beaver is always here with you'],
+    overviewMore: [
+      'Track cash, bank and card accounts, view balances by bank, and see monthly and category budgets at a glance, in any currency.',
+      'Open a shared ledger for trips, group buys or the household. Everyone can add and edit, and others get notified.',
+      'Month view for the big picture, week view for details. Set weekly classes or monthly bills as repeating events.',
+      'Invite friends when you add an event. Once they join, it shows on their calendar too, and changes notify everyone.',
+      'Share a calendar with family or a club. Everyone can add and edit, overlay it with yours or switch between them.',
+      'Pick an icon for birthdays and anniversaries. Get yearly reminders with years and ages, plus friends’ birthdays.',
+      'Jot down things to do and see them on Home. Tick them off when done; press Enter to add a new one.',
+      'Send a line to a friend or family member. It pops up on whatever page they are on, and they can reply right away.',
+      'Share feelings or money tips. Post anonymously, to friends only, or hide a post from certain friends.',
+      'On the 1st, Beaver turns last month’s money, plans, moods and photos into a book. Pick a cover, add a line, done.',
+      'Add tonight’s dinner or a sunset to your notebook with a line of words. Only you can see it, and it goes into your monthly book.',
+      'The calendar, to-dos, window weather and photo frame change with your days. Tap the shelf, lamp and Beaver to see what happens.',
+    ],
+    more: 'Take a look',
+    showcaseTitle: 'Tap around and see each feature',
+    showcaseHint: 'Switch with the tabs, or tap a feature card for a closer look',
+    close: 'Close',
+    prev: 'Previous',
+    next: 'Next',
     overview: [
       ['📒', 'Ledger', 'Accounts, currencies, budgets'],
       ['👥', 'Shared ledgers', 'Trips and home, together'],
@@ -210,6 +251,12 @@ const SECTION_COLOR = { ledger: '#C4553F', calendar: '#2F5E9E', home: '#A87A0E',
 const SECTION_BG = { ledger: '#FCE9E3', calendar: '#E4EEFA', home: '#FBF1CF', community: '#E2F2E4', bookshelf: '#F7E6DA', room: '#ECE5F6' };
 const SECTION_ICON = { ledger: '💰', calendar: '📅', home: '🏠', community: '💬', bookshelf: '📚', room: '🦫' };
 const CARD_BG = ['#FCE9E3', '#E4EEFA', '#FBF1CF', '#E2F2E4', '#F7E6DA', '#ECE5F6'];
+// 功能一覽 12 格 → 點了跳出的截圖與所屬段落(順序同 overview)
+const OVERVIEW_SHOTS = [
+  ['ledger', 'ledger'], ['shared', 'ledger'], ['calendar', 'calendar'], ['calendar', 'calendar'],
+  ['calendar', 'calendar'], ['anniv', 'calendar'], ['notes', 'home'], ['home2', 'home'],
+  ['community', 'community'], ['bookshelf', 'bookshelf'], ['moments', 'room'], ['room', 'room'],
+];
 // 開頭飄來飄去的小貼紙
 const DOODLES = [['✨', '6%', '18%', 0], ['💰', '44%', '8%', 1.2], ['📅', '90%', '14%', 2.1], ['💌', '82%', '78%', .6], ['⭐', '3%', '82%', 1.7], ['🌸', '50%', '90%', 2.6]];
 
@@ -228,6 +275,40 @@ function Phone({ src, alt, className = '', eager = false }) {
   return (
     <div className={`landing-phone ${className}`}>
       <img src={src} alt={alt} width="390" height="844" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+    </div>
+  );
+}
+
+// 點功能卡片跳出的視窗:大截圖＋說明,可以左右切換
+function FeatureModal({ T, idx, setIdx, shot }) {
+  const item = T.overview[idx];
+  const [shotName, secKey] = OVERVIEW_SHOTS[idx];
+  const sec = T.sections.find((s) => s.key === secKey);
+  const n = T.overview.length;
+  const go = useCallback((d) => setIdx((i) => (i + d + n) % n), [n, setIdx]);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setIdx(null); if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); };
+    window.addEventListener('keydown', onKey);
+    const { overflow } = document.body.style; document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; };
+  }, [go, setIdx]);
+  return (
+    <div className="landing-modal fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-label={item[1]} onClick={() => setIdx(null)}>
+      <div key={idx} className="landing-modal-card relative grid max-h-[92vh] w-full max-w-3xl items-center gap-6 overflow-y-auto rounded-3xl p-5 md:grid-cols-[260px_1fr] md:p-8" style={{ background: SECTION_BG[secKey], '--sec': SECTION_COLOR[secKey] }} onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={() => setIdx(null)} aria-label={T.close} className="absolute right-3 top-3 rounded-full bg-white/80 p-1.5 hover:bg-white"><X className="h-5 w-5" /></button>
+        <Phone src={shot(shotName)} alt={item[1]} className="mx-auto w-[150px] md:w-[240px]" eager />
+        <div>
+          <p className="landing-tag mb-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"><span aria-hidden="true">{item[0]}</span>{item[1]}</p>
+          <h3 className="landing-serif text-[22px] leading-snug md:text-[26px]" style={{ color: 'var(--ink)' }}>{item[2]}</h3>
+          <p className="mt-3 text-[15px] leading-[1.85] text-foreground/80">{T.overviewMore[idx]}</p>
+          <ul className="mt-4 flex flex-wrap gap-2">{sec.points.map((pt) => <li key={pt} className="landing-chip rounded-full px-3 py-1 text-sm">{pt}</li>)}</ul>
+          <div className="mt-6 flex items-center justify-between">
+            <button type="button" onClick={() => go(-1)} className="landing-ghost inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold"><ChevronLeft className="h-4 w-4" />{T.prev}</button>
+            <span className="text-sm text-foreground/60 tabular-nums">{idx + 1} / {n}</span>
+            <button type="button" onClick={() => go(1)} className="landing-ghost inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold">{T.next}<ChevronRight className="h-4 w-4" /></button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -279,6 +360,11 @@ export default function Landing() {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [language]);
+
+  const [modal, setModal] = useState(null); // 功能卡片跳出視窗(第幾個)
+  const [tab, setTab] = useState(0); // 功能導覽目前的分類
+  const [nudge, setNudge] = useState(null); // 換分類時,導覽小河狸跟著換話
+  const pickTab = (i) => { setTab(i); setNudge({ key: T.sections[i].key, at: Date.now() }); };
 
   const smooth = () => (window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
 
@@ -346,10 +432,13 @@ export default function Landing() {
             <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}><span className="landing-mark">{T.overviewTitle}</span></h2>
             <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6">
               {T.overview.map(([emoji, name, desc], k) => (
-                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 6) * 70}ms`, background: CARD_BG[k % CARD_BG.length] }}>
-                  <span className="landing-emoji inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl leading-none">{emoji}</span>
-                  <p className="mt-2 font-semibold" style={{ color: 'var(--ink)' }}>{name}</p>
-                  <p className="mt-0.5 text-sm text-foreground/70">{desc}</p>
+                <li key={name} className="reveal" style={{ transitionDelay: `${(k % 6) * 70}ms` }}>
+                  <button type="button" onClick={() => setModal(k)} className="landing-card landing-lift h-full w-full rounded-2xl p-4 text-left" style={{ background: CARD_BG[k % CARD_BG.length] }}>
+                    <span className="landing-emoji inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl leading-none">{emoji}</span>
+                    <p className="mt-2 font-semibold" style={{ color: 'var(--ink)' }}>{name}</p>
+                    <p className="mt-0.5 text-sm text-foreground/70">{desc}</p>
+                    <span className="landing-more mt-2 inline-block text-xs font-bold" style={{ color: 'var(--ink)' }}>{T.more} ›</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -359,31 +448,40 @@ export default function Landing() {
         {/* 試玩區:不用註冊的小互動 */}
         <LandingPlay lang={language} full={full} />
 
-        {/* 各功能介紹:圖文左右交錯 */}
-        {T.sections.map((s, i) => (
-          <section key={s.key} data-guide={s.key} className="landing-section relative" style={{ background: SECTION_BG[s.key], '--sec': SECTION_COLOR[s.key] }}>
+        {/* 功能導覽:點分類切換(原本六大段落,改成一區互動切換,頁面短很多) */}
+        {(() => { const s = T.sections[tab]; return (
+          <section data-guide={s.key} className="landing-section landing-showcase relative" style={{ background: SECTION_BG[s.key], '--sec': SECTION_COLOR[s.key] }}>
             <Wave color={SECTION_BG[s.key]} />
-            <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 md:grid-cols-2 md:gap-16 md:px-8 md:py-20">
-              <div className={`reveal ${i % 2 ? 'md:order-2' : ''}`}>
-                <p className="landing-tag mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold">
-                  <span aria-hidden="true">{SECTION_ICON[s.key]}</span>
-                  {s.tag}
-                </p>
-                <h2 className="landing-serif text-[26px] leading-snug md:text-[34px]" style={{ color: 'var(--ink)' }}><span className="landing-mark landing-mark-sec">{s.title}</span></h2>
-                <p className="mt-4 max-w-lg text-[15px] leading-[1.9] text-foreground/80 md:text-[16px]">{s.text}</p>
-                <ul className="mt-5 flex flex-wrap gap-2">
-                  {s.points.map((pt) => (
-                    <li key={pt} className="landing-chip rounded-full px-3 py-1 text-sm">{pt}</li>
-                  ))}
-                </ul>
+            <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
+              <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}><span className="landing-mark">{T.showcaseTitle}</span></h2>
+              <div className="mt-6 flex flex-wrap justify-center gap-2" role="tablist">
+                {T.sections.map((x, i) => (
+                  <button key={x.key} type="button" role="tab" aria-selected={i === tab} onClick={() => pickTab(i)}
+                    className={`landing-tab rounded-full px-4 py-2 text-sm font-bold ${i === tab ? 'is-on' : ''}`} style={{ '--sec': SECTION_COLOR[x.key] }}>
+                    <span aria-hidden="true">{SECTION_ICON[x.key]}</span> {x.tag}
+                  </button>
+                ))}
               </div>
-              <div className={`landing-pair reveal ${i % 2 ? 'md:order-1' : ''}`} style={{ transitionDelay: '120ms' }}>
-                <Phone src={shot(s.shots[0])} alt={T.shotAlt(s.tag)} className="landing-pair-back" />
-                <Phone src={shot(s.shots[1])} alt={T.shotAlt(s.tag)} className="landing-pair-front" />
+              <div key={s.key} className="landing-swap mt-10 grid items-center gap-10 md:grid-cols-2 md:gap-16">
+                <div>
+                  <p className="landing-tag mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"><span aria-hidden="true">{SECTION_ICON[s.key]}</span>{s.tag}</p>
+                  <h3 className="landing-serif text-[26px] leading-snug md:text-[32px]" style={{ color: 'var(--ink)' }}><span className="landing-mark landing-mark-sec">{s.title}</span></h3>
+                  <p className="mt-4 max-w-lg text-[15px] leading-[1.9] text-foreground/80 md:text-[16px]">{s.text}</p>
+                  <ul className="mt-5 flex flex-wrap gap-2">{s.points.map((pt) => <li key={pt} className="landing-chip rounded-full px-3 py-1 text-sm">{pt}</li>)}</ul>
+                  <div className="mt-6 flex items-center gap-3">
+                    <button type="button" aria-label={T.prev} onClick={() => pickTab((tab + T.sections.length - 1) % T.sections.length)} className="landing-ghost rounded-full p-2.5"><ChevronLeft className="h-5 w-5" /></button>
+                    <span className="text-sm tabular-nums text-foreground/60">{tab + 1} / {T.sections.length}</span>
+                    <button type="button" aria-label={T.next} onClick={() => pickTab((tab + 1) % T.sections.length)} className="landing-ghost rounded-full p-2.5"><ChevronRight className="h-5 w-5" /></button>
+                  </div>
+                </div>
+                <div className="landing-pair">
+                  <Phone src={shot(s.shots[0])} alt={T.shotAlt(s.tag)} className="landing-pair-back" eager />
+                  <Phone src={shot(s.shots[1])} alt={T.shotAlt(s.tag)} className="landing-pair-front" eager />
+                </div>
               </div>
             </div>
           </section>
-        ))}
+        ); })()}
 
         {/* 主題 */}
         <section data-guide="themes" className="landing-band">
@@ -445,7 +543,8 @@ export default function Landing() {
         </section>
       </main>
 
-      <BeaverGuide lang={language} />
+      <BeaverGuide lang={language} nudge={nudge} />
+      {modal !== null && <FeatureModal T={T} idx={modal} setIdx={setModal} shot={shot} />}
       <footer className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-5 gap-y-2 px-5 py-6 text-sm text-muted-foreground md:px-8">
         <Link to="/terms" className="hover:underline">{T.terms}</Link>
         <Link to="/privacy" className="hover:underline">{T.privacy}</Link>
