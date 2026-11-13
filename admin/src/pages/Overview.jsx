@@ -108,6 +108,7 @@ function BetaCard() {
       {founding && (
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <p className="text-sm">創始會員 <span className="num font-semibold text-ink">{founding.total}</span> 位<span className="text-muted-foreground">（已發放 {founding.granted}）</span></p>
+          <p className="w-full order-last text-xs text-muted-foreground">測試期間每天 08:05 排程會自動標記用滿 5 天的人（不通知本人）；按下面按鈕可立即標記一次</p>
           <Button variant="outline" disabled={busy} onClick={() => foundingAction(api.markFounding, (r) => `新標記 ${r.marked} 位`)}>標記符合資格的使用者</Button>
           {granting ? (
             <>

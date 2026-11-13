@@ -89,7 +89,17 @@ app.get('/cron/recurring', async (req, res) => {
       console.error('[cron/monthlyBooks]', err);
       books = { error: true };
     }
-    return res.json({ status: 'ok', ...result, notices, books });
+    // 創始會員:測試期間每天自動標記用滿 5 天的人(只標記、不通知本人;正式上線發放一年全功能時才會通知)
+    let founding;
+    try {
+      const b = await require('./lib/beta').betaStatus();
+      founding = b.active ? await require('./lib/founding').markEligible() : { skipped: 'beta_ended' };
+      if (founding.marked) console.log(`[cron/founding] 新標記 ${founding.marked} 位創始會員`);
+    } catch (err) {
+      console.error('[cron/founding]', err);
+      founding = { error: true };
+    }
+    return res.json({ status: 'ok', ...result, notices, books, founding });
   } catch (err) {
     console.error('[cron/recurring]', err);
     return res.status(500).json({ error: 'Scan failed' });
