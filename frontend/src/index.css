@@ -843,3 +843,56 @@ input[type="time"] {
   background: #FFFFFF;
   color: #6B4E12;
 }
+
+/* ───────── 介紹頁:活潑版(2026-11-13) ───────── */
+.landing { overflow-x: hidden; }
+/* 螢光筆畫重點 */
+.landing-mark { background: linear-gradient(transparent 58%, #FFE27A 58%, #FFE27A 90%, transparent 90%); padding: 0 .12em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.landing-mark-sec { background: linear-gradient(transparent 60%, color-mix(in srgb, var(--sec) 22%, transparent) 60%, color-mix(in srgb, var(--sec) 22%, transparent) 92%, transparent 92%); }
+/* 按鍵:圓滾滾、下方實心陰影,滑過會跳一下 */
+.landing-cta { background: #C4553F; color: #fff; border: 2.5px solid #2A2622; box-shadow: 3px 4px 0 #2A2622; transition: transform .12s, box-shadow .12s; }
+.landing-cta:hover { transform: translate(-1px, -2px) rotate(-1.5deg); box-shadow: 4px 6px 0 #2A2622; }
+.landing-cta:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 #2A2622; }
+.landing-ghost { color: var(--ink); border: 2px dashed rgba(51, 65, 92, .35); background: rgba(255,255,255,.6); transition: transform .15s, background .15s; }
+.landing-ghost:hover { background: #fff; transform: translateY(-2px); }
+/* 開頭:背景圓斑、旋轉徽章、飄浮小貼紙 */
+.landing-blob { position: absolute; border-radius: 50%; filter: blur(2px); z-index: -1; animation: landing-blob 9s ease-in-out infinite; }
+.landing-blob-a { width: 78%; aspect-ratio: 1; background: #FFE4A8; left: -18%; top: 4%; }
+.landing-blob-b { width: 62%; aspect-ratio: 1; background: #CFE6F5; right: -16%; bottom: -2%; animation-delay: -4s; }
+@keyframes landing-blob { 0%,100% { border-radius: 46% 54% 52% 48% / 52% 46% 54% 48%; transform: translateY(0); } 50% { border-radius: 56% 44% 46% 54% / 44% 56% 44% 56%; transform: translateY(-10px); } }
+.landing-badge { position: absolute; right: -26px; top: 18%; width: 92px; height: 92px; border-radius: 50%; background: #C4553F; color: #fff; border: 3px solid #2A2622; box-shadow: 3px 4px 0 #2A2622; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; text-align: center; animation: landing-badge 6s ease-in-out infinite; z-index: 2; }
+.landing-badge b { font-size: 17px; } .landing-badge span { font-size: 11px; font-weight: 700; padding: 0 6px; }
+@keyframes landing-badge { 0%,100% { transform: rotate(-12deg) scale(1); } 50% { transform: rotate(8deg) scale(1.06); } }
+.landing-doodle { position: absolute; font-size: 26px; z-index: 0; opacity: .85; pointer-events: none; animation: landing-drift 7s ease-in-out infinite; }
+@keyframes landing-drift { 0%,100% { transform: translate(0, 0) rotate(-8deg); } 33% { transform: translate(8px, -14px) rotate(6deg); } 66% { transform: translate(-6px, -6px) rotate(-2deg); } }
+@media (max-width: 767px) { .landing-doodle { font-size: 20px; opacity: .6; } .landing-badge { right: -14px; width: 76px; height: 76px; } .landing-badge b { font-size: 14px; } .landing-badge span { font-size: 10px; } }
+/* 跑馬燈 */
+.landing-marquee { overflow: hidden; background: #2F3E5C; color: #FFF6DE; border-block: 3px solid #2A2622; transform: rotate(-1.2deg); margin: 0 -20px; padding: 10px 0; }
+.landing-marquee-track { display: flex; gap: 36px; width: max-content; animation: landing-marquee 32s linear infinite; font-weight: 700; font-size: 16px; white-space: nowrap; }
+@keyframes landing-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+/* 功能一覽卡片 */
+.landing .landing-card { border: 2px solid rgba(42, 38, 34, .85); box-shadow: 3px 4px 0 rgba(42, 38, 34, .85); }
+.landing .landing-lift:hover { transform: translateY(-5px) rotate(-1deg); }
+/* 各功能區:整段上色、上方波浪 */
+.landing-section { margin-top: 28px; }
+.landing-wave { position: absolute; left: 0; right: 0; top: -28px; width: 100%; height: 30px; display: block; }
+.landing-tag { background: var(--sec); color: #fff; box-shadow: 2px 3px 0 rgba(42, 38, 34, .8); transform: rotate(-2deg); }
+.landing-chip { background: #fff; color: var(--sec); border: 1.5px solid color-mix(in srgb, var(--sec) 45%, transparent); font-weight: 600; transition: transform .15s; }
+.landing-chip:hover { transform: translateY(-2px) rotate(-2deg); }
+.landing-section .landing-phone { box-shadow: 8px 10px 0 color-mix(in srgb, var(--sec) 35%, transparent), 0 22px 40px -22px rgba(51, 65, 92, .55); }
+.landing-section .landing-pair-back { animation: landing-float-back 6s ease-in-out infinite; }
+@keyframes landing-float-back { 0%,100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-6px); } }
+/* 主題卡片:歪一點點,滑過擺正 */
+.landing-tilt .landing-theme { transform: rotate(var(--tilt)); transition: transform .2s; }
+.landing-tilt:hover .landing-theme { transform: rotate(0) scale(1.04); }
+/* 方案:滑過那一列亮起來 */
+.landing-plan { transition: background .15s; border-radius: 8px; }
+.landing-plan:hover { background: #FFF3C7; }
+/* 結尾:往上飄的小愛心 */
+.landing-end { background: linear-gradient(180deg, #FBF1CF, #FCE9E3); }
+.landing-float-up { position: absolute; bottom: -30px; font-size: 24px; opacity: 0; animation: landing-float-up 7s ease-in infinite; pointer-events: none; }
+@keyframes landing-float-up { 0% { transform: translateY(0) rotate(0); opacity: 0; } 15% { opacity: .9; } 100% { transform: translateY(-420px) rotate(25deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .landing-blob, .landing-badge, .landing-doodle, .landing-marquee-track, .landing-section .landing-pair-back, .landing-float-up { animation: none; }
+  .landing-float-up { display: none; }
+}

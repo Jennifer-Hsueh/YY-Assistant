@@ -26,6 +26,8 @@ const COPY = {
     tryIt: '先玩玩看',
     homeAlt: 'YY手帳 首頁畫面',
     overviewTitle: '一本手帳，裝得下這些',
+    badge: ['3 個月', '全功能免費'],
+    marquee: ['💰 記帳', '📅 行事曆', '🎂 紀念日', '📝 墨箋絮語', '💌 小紙條', '👥 共用帳本', '📚 月刊書櫃', '📷 日常時光', '🦫 小河狸的家', '🎨 七種主題'],
     overview: [
       ['📒', '記帳', '多帳戶、多幣別、預算'],
       ['👥', '共同帳本', '旅遊、家用一起記'],
@@ -120,6 +122,8 @@ const COPY = {
     tryIt: 'Try it',
     homeAlt: 'YY Assistant home screen',
     overviewTitle: 'Everything in one notebook',
+    badge: ['3 months', 'all free'],
+    marquee: ['💰 Ledger', '📅 Calendar', '🎂 Anniversaries', '📝 Ink Notes', '💌 Slips', '👥 Shared ledgers', '📚 Monthly books', '📷 Moments', '🦫 Beaver\'s home', '🎨 Seven themes'],
     overview: [
       ['📒', 'Ledger', 'Accounts, currencies, budgets'],
       ['👥', 'Shared ledgers', 'Trips and home, together'],
@@ -201,7 +205,22 @@ const COPY = {
   },
 };
 
-const SECTION_COLOR = { ledger: 'var(--expense)', calendar: 'var(--ink)', home: '#B8901F', community: 'var(--income)', bookshelf: '#8A6A54', room: '#6E8B5D' };
+const SECTION_COLOR = { ledger: '#C4553F', calendar: '#2F5E9E', home: '#A87A0E', community: '#3F8A5A', bookshelf: '#9A5B3A', room: '#7A5BA8' };
+// 每一區的底色(粉彩)與標籤小圖示,讓頁面一段一段有變化
+const SECTION_BG = { ledger: '#FCE9E3', calendar: '#E4EEFA', home: '#FBF1CF', community: '#E2F2E4', bookshelf: '#F7E6DA', room: '#ECE5F6' };
+const SECTION_ICON = { ledger: '💰', calendar: '📅', home: '🏠', community: '💬', bookshelf: '📚', room: '🦫' };
+const CARD_BG = ['#FCE9E3', '#E4EEFA', '#FBF1CF', '#E2F2E4', '#F7E6DA', '#ECE5F6'];
+// 開頭飄來飄去的小貼紙
+const DOODLES = [['✨', '6%', '18%', 0], ['💰', '44%', '8%', 1.2], ['📅', '90%', '14%', 2.1], ['💌', '82%', '78%', .6], ['⭐', '3%', '82%', 1.7], ['🌸', '50%', '90%', 2.6]];
+
+// 起伏的分隔線(上一區的顏色 → 這一區的顏色)
+function Wave({ color, flip = false }) {
+  return (
+    <svg className={`landing-wave ${flip ? 'is-flip' : ''}`} viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 30 C 180 0, 360 60, 540 30 S 900 0, 1080 30 S 1300 60, 1440 30 L1440 60 L0 60 Z" fill={color} />
+    </svg>
+  );
+}
 const THEMES = ['default', 'grey', 'morandi', 'sport', 'macaron', 'lemon', 'beaver'];
 const PRICES = [[null, null], [69, 728], [69, 728], [69, 728], [79, 848], [109, 1208]];
 
@@ -218,7 +237,7 @@ function CTA({ className = '', label, full = false, fullLabel }) {
     return <span className={`inline-block rounded-lg border px-5 py-3 text-[15px] font-medium text-muted-foreground ${className}`} style={{ borderColor: 'rgba(51,65,92,.25)' }}>{fullLabel}</span>;
   }
   return (
-    <Link to="/register" className={`inline-block rounded-lg px-5 py-3 text-[15px] font-medium shadow-sm ${className}`} style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}>
+    <Link to="/register" className={`landing-cta inline-block rounded-full px-6 py-3 text-[16px] font-bold ${className}`}>
       {label}
     </Link>
   );
@@ -277,7 +296,10 @@ export default function Landing() {
 
       <main>
         {/* 開頭 */}
-        <section data-guide="hero" className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-14 pt-6 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-20 md:pt-12">
+        <section data-guide="hero" className="landing-hero relative mx-auto grid max-w-6xl items-center gap-10 px-5 pb-14 pt-6 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-20 md:pt-12">
+          {DOODLES.map(([e, x, y, d]) => (
+            <span key={e} className="landing-doodle" aria-hidden="true" style={{ left: x, top: y, animationDelay: `${d}s` }}>{e}</span>
+          ))}
           <div className="order-2 md:order-1">
             {beta?.active && (
               <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-foreground/75">
@@ -287,35 +309,45 @@ export default function Landing() {
             )}
             {beta?.active && !full && <p className="mb-4 text-sm font-medium" style={{ color: 'var(--ink)' }}>{T.foundingLine}</p>}
             <h1 className={`landing-serif landing-hero-title ${language === 'en' ? 'landing-hero-title-en' : ''}`} style={{ color: 'var(--ink)' }}>
-              {T.heroTitle[0]}<br />{T.heroTitle[1]}
+              {T.heroTitle[0]}<br /><span className="landing-mark">{T.heroTitle[1]}</span>
             </h1>
             <p className="mt-5 max-w-lg text-[16px] leading-[1.85] text-foreground/80 md:text-[17px]">{T.heroText}</p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <CTA label={T.cta} full={full} fullLabel={T.ctaFull} />
-              <button type="button" onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: smooth() })} className="rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
+              <button type="button" onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: smooth() })} className="landing-ghost rounded-full px-4 py-2.5 text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
                 {T.peek} ↓
               </button>
-              <button type="button" onClick={() => document.getElementById('play')?.scrollIntoView({ behavior: smooth() })} className="rounded-lg px-3 py-3 text-[15px] font-medium hover:bg-black/5" style={{ color: 'var(--ink)' }}>
+              <button type="button" onClick={() => document.getElementById('play')?.scrollIntoView({ behavior: smooth() })} className="landing-ghost rounded-full px-4 py-2.5 text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
                 {T.tryIt} 🦫
               </button>
             </div>
           </div>
           <div className="relative order-1 mx-auto md:order-2">
+            <span className="landing-blob landing-blob-a" aria-hidden="true" />
+            <span className="landing-blob landing-blob-b" aria-hidden="true" />
             <span className="landing-tape" aria-hidden="true" />
+            <span className="landing-badge" aria-hidden="true"><b>{T.badge[0]}</b><span>{T.badge[1]}</span></span>
             <Phone src={shot('home')} alt={T.homeAlt} className="landing-hero-phone w-[220px] md:w-[300px]" eager />
             {/* 小河狸從手機旁邊探出頭來 */}
             <img src="/reactions/cheer.webp" alt="" width="160" height="160" className="landing-peek absolute -left-12 bottom-10 h-20 w-20 md:-left-16 md:h-28 md:w-28" />
           </div>
         </section>
 
+        {/* 跑馬燈:功能名稱一直往左跑 */}
+        <div className="landing-marquee" aria-hidden="true">
+          <div className="landing-marquee-track">
+            {[...T.marquee, ...T.marquee].map((w, k) => <span key={k}>{w}</span>)}
+          </div>
+        </div>
+
         {/* 功能一覽 */}
         <section id="overview" data-guide="overview" className="landing-band scroll-mt-16">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
-            <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.overviewTitle}</h2>
+            <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}><span className="landing-mark">{T.overviewTitle}</span></h2>
             <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6">
               {T.overview.map(([emoji, name, desc], k) => (
-                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 6) * 70}ms` }}>
-                  <span className="landing-emoji inline-block text-2xl leading-none">{emoji}</span>
+                <li key={name} className="landing-card landing-lift reveal rounded-2xl p-4" style={{ transitionDelay: `${(k % 6) * 70}ms`, background: CARD_BG[k % CARD_BG.length] }}>
+                  <span className="landing-emoji inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl leading-none">{emoji}</span>
                   <p className="mt-2 font-semibold" style={{ color: 'var(--ink)' }}>{name}</p>
                   <p className="mt-0.5 text-sm text-foreground/70">{desc}</p>
                 </li>
@@ -329,18 +361,19 @@ export default function Landing() {
 
         {/* 各功能介紹:圖文左右交錯 */}
         {T.sections.map((s, i) => (
-          <section key={s.key} data-guide={s.key} className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-            <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+          <section key={s.key} data-guide={s.key} className="landing-section relative" style={{ background: SECTION_BG[s.key], '--sec': SECTION_COLOR[s.key] }}>
+            <Wave color={SECTION_BG[s.key]} />
+            <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 md:grid-cols-2 md:gap-16 md:px-8 md:py-20">
               <div className={`reveal ${i % 2 ? 'md:order-2' : ''}`}>
-                <p className="mb-3 flex items-center gap-2 text-sm font-medium" style={{ color: SECTION_COLOR[s.key] }}>
-                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: SECTION_COLOR[s.key] }} />
+                <p className="landing-tag mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold">
+                  <span aria-hidden="true">{SECTION_ICON[s.key]}</span>
                   {s.tag}
                 </p>
-                <h2 className="landing-serif text-[26px] leading-snug md:text-[34px]" style={{ color: 'var(--ink)' }}>{s.title}</h2>
+                <h2 className="landing-serif text-[26px] leading-snug md:text-[34px]" style={{ color: 'var(--ink)' }}><span className="landing-mark landing-mark-sec">{s.title}</span></h2>
                 <p className="mt-4 max-w-lg text-[15px] leading-[1.9] text-foreground/80 md:text-[16px]">{s.text}</p>
                 <ul className="mt-5 flex flex-wrap gap-2">
                   {s.points.map((pt) => (
-                    <li key={pt} className="rounded-full border px-3 py-1 text-sm text-foreground/75" style={{ borderColor: 'rgba(51,65,92,.2)', background: 'rgba(255,255,255,.6)' }}>{pt}</li>
+                    <li key={pt} className="landing-chip rounded-full px-3 py-1 text-sm">{pt}</li>
                   ))}
                 </ul>
               </div>
@@ -355,11 +388,11 @@ export default function Landing() {
         {/* 主題 */}
         <section data-guide="themes" className="landing-band">
           <div className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
-            <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}>{T.themesTitle}</h2>
+            <h2 className="landing-serif text-center text-[24px] md:text-[30px]" style={{ color: 'var(--ink)' }}><span className="landing-mark">{T.themesTitle}</span></h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-[15px] leading-[1.8] text-foreground/75">{T.themesText}</p>
             <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-7 lg:gap-4">
               {THEMES.map((th, i) => (
-                <li key={th} className="landing-lift reveal text-center" style={{ transitionDelay: `${i * 80}ms` }}>
+                <li key={th} className="landing-lift landing-tilt reveal text-center" style={{ transitionDelay: `${i * 80}ms`, '--tilt': `${i % 2 ? 2.5 : -2.5}deg` }}>
                   <div className="landing-theme"><img src={shot(`theme-${th}`)} alt={T.themes[i]} width="390" height="520" loading="lazy" decoding="async" /></div>
                   <p className="mt-2 text-sm font-medium" style={{ color: 'var(--ink)' }}>{T.themes[i]}</p>
                 </li>
@@ -370,11 +403,11 @@ export default function Landing() {
 
         {/* 方案 */}
         <section data-guide="plans" className="reveal mx-auto max-w-3xl px-5 py-14 md:px-8 md:py-20">
-          <h2 className="landing-serif text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}>{T.plansTitle}</h2>
+          <h2 className="landing-serif text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}><span className="landing-mark">{T.plansTitle}</span></h2>
           <p className="mt-3 text-[15px] leading-[1.8] text-foreground/80 md:text-[16px]">{T.plansText}</p>
           <ul className="mt-6 border-t-2" style={{ borderColor: 'var(--ink)' }}>
             {T.plans.map(([name, desc], pi) => { const [m, y] = PRICES[pi]; return (
-              <li key={name} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 border-b py-3 md:grid-cols-[180px_1fr_auto]" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
+              <li key={name} className="landing-plan grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 border-b px-2 py-3 md:grid-cols-[180px_1fr_auto]" style={{ borderColor: 'rgba(51,65,92,.15)' }}>
                 <span className="font-medium" style={{ color: 'var(--ink)' }}>{name}</span>
                 <span className="col-start-1 row-start-2 text-sm text-foreground/75 md:col-start-2 md:row-start-1 md:text-[15px]">{desc}</span>
                 <span className="row-span-2 self-center text-right tabular-nums md:col-start-3 md:row-span-1">
@@ -387,8 +420,11 @@ export default function Landing() {
         </section>
 
         {/* 結尾+在手機上使用 */}
-        <section data-guide="end" className="landing-band">
-          <div className="mx-auto max-w-3xl px-5 py-14 text-center md:px-8 md:py-20">
+        <section data-guide="end" className="landing-end relative overflow-hidden">
+          {['💖', '✨', '🌼', '⭐', '💌', '🍀'].map((e, k) => (
+            <span key={e} className="landing-float-up" aria-hidden="true" style={{ left: `${8 + k * 16}%`, animationDelay: `${k * 1.1}s` }}>{e}</span>
+          ))}
+          <div className="relative mx-auto max-w-3xl px-5 py-14 text-center md:px-8 md:py-20">
             <img src="/reactions/hug.webp" alt="" width="160" height="160" className="landing-bob mx-auto mb-2 h-24 w-24" />
             <h2 className="landing-serif text-[26px] md:text-[34px]" style={{ color: 'var(--ink)' }}>{T.endTitle}</h2>
             <CTA className="mt-6" label={T.cta} full={full} fullLabel={T.ctaFull} />
