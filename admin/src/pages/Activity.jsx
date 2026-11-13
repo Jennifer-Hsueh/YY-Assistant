@@ -62,7 +62,7 @@ export default function Activity() {
                 <td className="num px-3 py-2.5 text-right">{r.entry_days}</td>
                 <td className="px-3 py-2.5">
                   <span className="num mr-2">{Math.min(r.use_days, MIN_DAYS)} / {MIN_DAYS}{r.use_days > MIN_DAYS ? `（${r.use_days}）` : ''}</span>
-                  {r.founding_member ? <Badge tone="green">已標創始</Badge> : r.use_days >= MIN_DAYS ? <Badge tone="amber">符合，未標記</Badge> : null}
+                  {r.is_tester ? <span className="text-xs text-muted-foreground">測試員</span> : r.founding_member ? <Badge tone="green">已標創始</Badge> : r.founding_removed ? <span className="text-xs text-muted-foreground">已取消</span> : r.use_days >= MIN_DAYS ? <Badge tone="amber">符合，未標記</Badge> : null}
                 </td>
                 <td className="num px-3 py-2.5 text-muted-foreground">{r.last_entry || '—'}</td>
                 <td className="num px-3 py-2.5 text-muted-foreground">{r.last_active || '—'}</td>

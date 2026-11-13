@@ -22,7 +22,7 @@ const ENTRY_TABLES = [
 
 async function activity(req, res) {
   try {
-    const users = (await fetchCol('yy_users', 'id, email, username, role, created_at, last_active_at, founding_member, is_disabled'))
+    const users = (await fetchCol('yy_users', 'id, email, username, role, created_at, last_active_at, founding_member, founding_marked_at, is_disabled'))
       .filter((u) => u.role !== 'admin');
     const stat = new Map(users.map((u) => [u.id, { total: 0, last7: 0, entryDays: new Set(), allDays: new Set(), lastEntry: null }]));
     const since7 = Date.now() - 7 * 24 * 3600 * 1000;
@@ -50,6 +50,8 @@ async function activity(req, res) {
         created: u.created_at ? taipeiDay(u.created_at) : null,
         last_active: u.last_active_at ? taipeiDay(u.last_active_at) : null,
         founding_member: !!u.founding_member,
+        founding_removed: !u.founding_member && !!u.founding_marked_at,
+        is_tester: u.role === 'tester',
         total: s.total, last7: s.last7, entry_days: s.entryDays.size, use_days: s.allDays.size, last_entry: s.lastEntry,
       };
     }).sort((a, b) => b.last7 - a.last7 || b.total - a.total);

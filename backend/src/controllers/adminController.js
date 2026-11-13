@@ -203,8 +203,13 @@ async function updateUser(req, res) {
     }
     if (b.addon_community !== undefined) updates.addon_community = !!b.addon_community;
     if (b.founding_member !== undefined) {
-      updates.founding_member = !!b.founding_member;
-      updates.founding_marked_at = b.founding_member ? new Date().toISOString() : null;
+      // 表單每次都會送這個欄位,只有真的改變時才更新
+      const { data: cur } = await supabase.from('yy_users').select('founding_member').eq('id', id).maybeSingle();
+      if (!!cur?.founding_member !== !!b.founding_member) {
+        updates.founding_member = !!b.founding_member;
+        // 取消時也記下時間:代表「手動取消過」,每天的自動標記就不會再把他標回來
+        updates.founding_marked_at = new Date().toISOString();
+      }
     }
     if (b.basic_choice !== undefined) {
       if (b.basic_choice !== null && !['ledger', 'calendar'].includes(b.basic_choice)) return res.status(400).json({ error: '基本功能選項不正確' });

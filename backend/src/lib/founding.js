@@ -37,12 +37,17 @@ async function activeDayCounts() {
   return new Map([...days].map(([uid, set]) => [uid, set.size]));
 }
 
-// 標記符合資格的使用者(只會新增標記,不會取消;管理員不算)
+// 只有一般使用者有創始資格(管理員、測試員本來就不受方案限制)
+const isMember = (u) => (u.role || 'user') === 'user';
+// founding_marked_at 有值但 founding_member = false = 管理員手動取消過,之後不會再自動標記
+const wasRemoved = (u) => !u.founding_member && !!u.founding_marked_at;
+
+// 標記符合資格的使用者(只會新增標記,不會取消)
 async function markEligible() {
-  const users = await fetchCol('yy_users', 'id, role, is_disabled, founding_member');
+  const users = await fetchCol('yy_users', 'id, role, is_disabled, founding_member, founding_marked_at');
   const counts = await activeDayCounts();
   const ids = users
-    .filter((u) => u.role !== 'admin' && !u.is_disabled && !u.founding_member && (counts.get(u.id) || 0) >= MIN_DAYS)
+    .filter((u) => isMember(u) && !u.is_disabled && !u.founding_member && !wasRemoved(u) && (counts.get(u.id) || 0) >= MIN_DAYS)
     .map((u) => u.id);
   for (let i = 0; i < ids.length; i += 200) {
     const { error } = await supabase.from('yy_users')
@@ -54,8 +59,8 @@ async function markEligible() {
 }
 
 async function stats() {
-  const users = await fetchCol('yy_users', 'id, founding_member, founding_granted_at');
-  const f = users.filter((u) => u.founding_member);
+  const users = await fetchCol('yy_users', 'id, role, founding_member, founding_granted_at');
+  const f = users.filter((u) => u.founding_member && isMember(u));
   return { total: f.length, granted: f.filter((u) => u.founding_granted_at).length };
 }
 
@@ -63,10 +68,10 @@ async function stats() {
 async function grantAll(adminId, onGranted = () => {}) {
   const today = E.taipeiDate();
   const { data: users, error } = await supabase.from('yy_users')
-    .select('id, email, plan_expires_at, is_disabled, founding_member, founding_granted_at')
+    .select('id, email, role, plan_expires_at, is_disabled, founding_member, founding_granted_at')
     .eq('founding_member', true);
   if (error) throw error;
-  const targets = (users || []).filter((u) => !u.founding_granted_at && !u.is_disabled);
+  const targets = (users || []).filter((u) => isMember(u) && !u.founding_granted_at && !u.is_disabled);
   for (const u of targets) {
     const cur = u.plan_expires_at;
     const start = cur && E.addDays(cur, E.GRACE_DAYS) >= today ? cur : today;
@@ -92,4 +97,4 @@ async function grantAll(adminId, onGranted = () => {}) {
   return { granted: targets.length };
 }
 
-module.exports = { MIN_DAYS, CONTENT_TABLES, FREE_MONTHS, markEligible, stats, grantAll, activeDayCounts };
+module.exports = { isMember, wasRemoved, MIN_DAYS, CONTENT_TABLES, FREE_MONTHS, markEligible, stats, grantAll, activeDayCounts };

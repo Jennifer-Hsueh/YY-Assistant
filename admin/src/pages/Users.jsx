@@ -384,10 +384,10 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
             <input type="checkbox" checked={ADDON_PLANS.includes(form.plan) && form.addon_community} disabled={!ADDON_PLANS.includes(form.plan)} onChange={set('addon_community')} />
             加購社群
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          {form.role === 'user' && <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.founding_member} onChange={set('founding_member')} />
             創始會員{user.founding_granted_at && <span className="text-xs text-muted-foreground">（{user.founding_granted_at} 已發放一年全功能）</span>}
-          </label>
+          </label>}
           <p className="text-xs text-muted-foreground">試用結束日空白 = 註冊日起三個月;權限截止日空白 = 付費方案不限期。繳費請用下方「繳費紀錄」登記,會自動延長截止日。</p>
           {isSelf && <p className="text-xs text-muted-foreground">不能修改自己的身份,也不能停用自己。</p>}
           <Button className="w-full" disabled={busy} onClick={saveForm}>儲存變更</Button>
