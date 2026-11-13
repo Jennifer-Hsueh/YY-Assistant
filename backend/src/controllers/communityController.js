@@ -125,7 +125,10 @@ async function listPosts(req, res) {
       q = q.eq('board', board).eq('hidden', false).eq('hide_friends', false).in('user_id', ids)
         .or('visibility.eq.friends,and(visibility.eq.public,anonymous.eq.false)');
     } else if (BOARDS.includes(board)) {
-      q = q.eq('board', board).eq('visibility', 'public').eq('hidden', false);
+      // 全部:公開文章+好友(和自己)的「僅好友可見」文章
+      const ids = [req.user.id, ...(await F.friendIds(req.user.id))];
+      q = q.eq('board', board).eq('hidden', false)
+        .or(`visibility.eq.public,and(visibility.eq.friends,user_id.in.(${ids.join(',')}))`);
     } else {
       return res.status(400).json({ error: 'Invalid board' });
     }
