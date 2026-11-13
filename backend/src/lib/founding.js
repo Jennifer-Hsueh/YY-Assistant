@@ -4,9 +4,13 @@ const E = require('./entitlements');
 
 // 資格:測試期間有使用 5 天以上
 // 「有使用的日子」= 有開啟 App 的日子(yy_active_days,從 batch54 開始記錄)
-//                 + 有新增記帳、行程、記事、心情或文章的日子(可回溯到更早之前)
+//                 + 有新增記帳、行程、記事、文章、日常時光、紙條的日子 + 心情那天(和後台「使用狀況」頁算法一致)
 const MIN_DAYS = 5;
-const CONTENT_TABLES = ['yy_transactions', 'yy_events', 'yy_notes', 'yy_moods', 'yy_posts'];
+// [資料表, 使用者欄位];yy_moods 沒有 created_at,另外用 date 算
+const CONTENT_TABLES = [
+  ['yy_transactions', 'user_id'], ['yy_events', 'user_id'], ['yy_notes', 'user_id'],
+  ['yy_posts', 'user_id'], ['yy_moments', 'user_id'], ['yy_slips', 'sender_id'],
+];
 const FREE_MONTHS = 12;
 
 async function fetchCol(table, columns) {
@@ -26,9 +30,10 @@ async function activeDayCounts() {
   const days = new Map();
   const add = (uid, day) => { if (!days.has(uid)) days.set(uid, new Set()); days.get(uid).add(day); };
   for (const r of await fetchCol('yy_active_days', 'user_id, day')) add(r.user_id, r.day);
-  for (const t of CONTENT_TABLES) {
-    for (const r of await fetchCol(t, 'user_id, created_at')) if (r.created_at) add(r.user_id, taipeiDay(r.created_at));
+  for (const [t, col] of CONTENT_TABLES) {
+    for (const r of await fetchCol(t, `${col}, created_at`)) if (r.created_at) add(r[col], taipeiDay(r.created_at));
   }
+  for (const r of await fetchCol('yy_moods', 'user_id, date')) add(r.user_id, r.date);
   return new Map([...days].map(([uid, set]) => [uid, set.size]));
 }
 
