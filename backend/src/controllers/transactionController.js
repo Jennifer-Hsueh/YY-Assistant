@@ -2,6 +2,7 @@ const supabase = require('../config/supabase');
 const { checkBudgetAfterExpense } = require('../services/budgetAlert');
 const { activeUserIds } = require('../lib/ledgers');
 const { sendPushToUser } = require('../services/fcmService');
+const NB = require('../lib/negativeBalance');
 
 // 共同帳本:有人記一筆時通知其他成員
 async function notifyLedgerMembers(ledger, userId, tx) {
@@ -52,6 +53,11 @@ async function createTransaction(req, res) {
     }
     if (account_id && !(await accountInLedger(account_id, req.ledger.id))) {
       return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
+    // 會讓帳戶變成負數時不能儲存(帳戶勾了「允許負數」的除外)
+    if (account_id) {
+      const hit = await NB.findNegative(NB.addDelta({}, account_id, type === 'income' ? amount : -amount));
+      if (hit) return NB.reject(res, hit);
     }
 
     const { data: tx, error } = await supabase
@@ -108,6 +114,16 @@ async function updateTransaction(req, res) {
     }
     if (updates.account_id && !(await accountInLedger(updates.account_id, req.ledger.id))) {
       return res.status(400).json({ error: '帳戶不在這本帳本裡' });
+    }
+
+    // 改完會讓帳戶變成負數時不能儲存:先把舊的一筆退回、再算新的一筆
+    {
+      const next = { ...existing, ...updates };
+      const deltas = {};
+      if (existing.account_id) NB.addDelta(deltas, existing.account_id, existing.type === 'income' ? -existing.amount : existing.amount);
+      if (next.account_id) NB.addDelta(deltas, next.account_id, next.type === 'income' ? Number(next.amount) : -Number(next.amount));
+      const hit = await NB.findNegative(deltas);
+      if (hit) return NB.reject(res, hit);
     }
 
     // Reverse the old amount from its account, then apply the new one —

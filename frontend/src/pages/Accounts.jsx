@@ -38,6 +38,16 @@ function BankInput({ value, onChange, options, t }) {
   );
 }
 
+// 允許負數:信用卡等帳戶,記帳後餘額可以是負的;沒勾的帳戶記帳後會變負數時不能儲存
+function AllowNegative({ checked, onChange, t, id }) {
+  return (
+    <label htmlFor={id} className="flex cursor-pointer items-center gap-2 text-sm">
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />
+      {t('acc_allow_negative')}
+    </label>
+  );
+}
+
 function ColorPicker({ value, onChange, t }) {
   return (
     <div>
@@ -86,11 +96,13 @@ export default function Accounts() {
   const [newName, setNewName] = useState('');
   const [newCurrency, setNewCurrency] = useState('TWD');
   const [newColor, setNewColor] = useState(null);
+  const [newAllowNeg, setNewAllowNeg] = useState(false);
   const [newBank, setNewBank] = useState('');
   const [editBank, setEditBank] = useState('');
   // 手機版依銀行查看:'' = 全部
   const [bankFilter, setBankFilter] = useState('');
   const [editColor, setEditColor] = useState(null);
+  const [editAllowNeg, setEditAllowNeg] = useState(false);
 
   const [pickedId, setPickedId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -155,8 +167,14 @@ export default function Accounts() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!newName) return;
-    await api.createAccount({ name: newName, balance: Number(newBalance) || 0, currency: newCurrency, color: newColor, bank: newBank.trim() || null });
+    try {
+      await api.createAccount({ name: newName, balance: Number(newBalance) || 0, currency: newCurrency, color: newColor, bank: newBank.trim() || null, allow_negative: newAllowNeg });
+    } catch (err) {
+      if (err.code !== 'NEGATIVE_BALANCE') console.error(err); // 期初負數:提醒視窗已跳出
+      return;
+    }
     setNewName('');
+    setNewAllowNeg(false);
     setNewBank('');
     setNewBalance('');
     setNewColor(null);
@@ -168,6 +186,7 @@ export default function Accounts() {
     setEditName(acc.name);
     setEditColor(acc.color || null);
     setEditBank(acc.bank || '');
+    setEditAllowNeg(!!acc.allow_negative);
     setEditBalance(String(Number(acc.balance)));
   }
 
@@ -175,7 +194,7 @@ export default function Accounts() {
     if (!editName.trim()) return;
     setActionError('');
     try {
-      await api.updateAccount(pickedId, { name: editName.trim(), color: editColor, bank: editBank.trim() || null });
+      await api.updateAccount(pickedId, { name: editName.trim(), color: editColor, bank: editBank.trim() || null, allow_negative: editAllowNeg });
       // 餘額有改 → 記一筆「餘額調整」,帳戶餘額由記帳紀錄自動更新(統計分析不會計入)
       const acc = accounts.find((a) => a.id === pickedId);
       const delta = Math.round((Number(editBalance) - Number(acc?.balance || 0)) * 100) / 100;
@@ -192,6 +211,7 @@ export default function Accounts() {
       switchMode('edit', { keep: true });
       load();
     } catch (err) {
+      if (err.code === 'NEGATIVE_BALANCE') { load(); return; } // 帳戶名稱等已存好,只有餘額調整被擋(提醒視窗已跳出)
       console.error(err);
       setActionError(t('acc_update_failed'));
     }
@@ -386,6 +406,7 @@ export default function Accounts() {
               </div>
               <BankInput value={newBank} onChange={setNewBank} options={bankOptions} t={t} />
               <Input type="number" step="0.01" inputMode="decimal" placeholder={t('acc_opening_balance')} value={newBalance} onChange={(e) => setNewBalance(e.target.value)} />
+              <AllowNegative checked={newAllowNeg} onChange={setNewAllowNeg} t={t} id="acc-new-allow-negative" />
               <ColorPicker value={newColor} onChange={setNewColor} t={t} />
             </form>
           )}
@@ -402,6 +423,7 @@ export default function Accounts() {
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
                     {accountLabel(acc)}
+                    {acc.allow_negative && <span className="rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground">{t('acc_negative_tag')}</span>}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>
@@ -418,6 +440,7 @@ export default function Accounts() {
                 <label className="text-xs text-muted-foreground">{t('acc_current_balance')}（{accounts.find((a) => a.id === pickedId)?.currency || 'TWD'}）</label>
                 <Input type="number" step="0.01" inputMode="decimal" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
               </div>
+              <AllowNegative checked={editAllowNeg} onChange={setEditAllowNeg} t={t} id="acc-edit-allow-negative" />
               <ColorPicker value={editColor} onChange={setEditColor} t={t} />
               {editDeleteOpen ? (
                 <div className="space-y-2 rounded-md border border-border p-2">
@@ -450,6 +473,7 @@ export default function Accounts() {
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cardColor(acc, accounts.indexOf(acc)) }} />
                     {accountLabel(acc)}
+                    {acc.allow_negative && <span className="rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground">{t('acc_negative_tag')}</span>}
                   </span>
                   <span className="text-muted-foreground">{acc.currency || 'TWD'} {Number(acc.balance).toLocaleString()}</span>
                 </button>

@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const NB = require('../lib/negativeBalance');
 
 const isHexColor = (v) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 // 銀行名稱:選填,自由輸入(前端提供常見銀行與自己用過的名稱當建議),最多 40 字
@@ -28,10 +29,16 @@ async function createAccount(req, res) {
     const { name, balance, currency, color, bank } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
     if (color != null && !isHexColor(color)) return res.status(400).json({ error: 'Invalid color' });
+    const allowNegative = !!req.body.allow_negative;
+    if (!allowNegative && Number(balance) < 0) {
+      return res.status(400).json({ error: '期初餘額不能是負數（信用卡等帳戶請勾選「允許負數」）', code: 'NEGATIVE_BALANCE' });
+    }
 
+    const row = { user_id: req.user.id, ledger_id: req.ledger.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null, bank: cleanBank(bank) };
+    if (allowNegative) row.allow_negative = true; // 沒勾就不送這個欄位(SQL 還沒跑時也能新增帳戶)
     const { data, error } = await supabase
       .from('yy_accounts')
-      .insert({ user_id: req.user.id, ledger_id: req.ledger.id, name, balance: balance || 0, currency: currency || 'TWD', color: color || null, bank: cleanBank(bank) })
+      .insert(row)
       .select()
       .single();
     if (error) throw error;
@@ -64,6 +71,7 @@ async function updateAccount(req, res) {
     if (currency !== undefined) updates.currency = currency;
     if (color !== undefined) updates.color = color;
     if (bank !== undefined) updates.bank = cleanBank(bank);
+    if (req.body.allow_negative !== undefined) updates.allow_negative = !!req.body.allow_negative;
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'Nothing to update' });
     }
@@ -139,6 +147,10 @@ async function transferBetweenAccounts(req, res) {
     }
 
     const creditedAmount = Number(amount) * rate;
+
+    // 轉出後會變成負數時不能轉(帳戶勾了「允許負數」的除外)
+    const hit = await NB.findNegative({ [from_account_id]: -Number(amount) });
+    if (hit) return NB.reject(res, hit);
 
     await supabase.from('yy_accounts').update({ balance: Number(from.balance) - Number(amount) }).eq('id', from_account_id);
     await supabase.from('yy_accounts').update({ balance: Number(to.balance) + creditedAmount }).eq('id', to_account_id);

@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-16', short: ['餘額不足提醒', 'Balance check'], detail: ['記帳會讓帳戶變負數時會提醒且無法儲存；信用卡可勾「允許負數」。', 'Entries that would make an account negative are blocked; tick “Allow negative” for cards.'] },
   { date: '2026-11-13', short: ['社群全部更完整', 'Fuller "All" feed'], detail: ['社群「全部」也會顯示好友的僅好友可見文章。', '“All” now includes friends-only posts from your friends.'] },
   { date: '2026-11-12', short: ['框線一致', 'Tidier borders'], detail: ['輸入框、下拉選單框線一致，點選時不再出現雙框。', 'Inputs and dropdowns share one border, no double outline.'] },
   { date: '2026-11-12', short: ['循環行程時間', 'Repeat times'], detail: ['循環行程可設定開始與結束時間。', 'Repeating events can now have start and end times.'] },

@@ -73,7 +73,7 @@ export default function FloatingAddButton() {
       });
       done(t('qa_tx_saved'));
     } catch (err) {
-      console.error(err);
+      if (err.code !== 'NEGATIVE_BALANCE') console.error(err); // 會變負數時由提醒視窗說明
     } finally {
       setSaving(false);
     }

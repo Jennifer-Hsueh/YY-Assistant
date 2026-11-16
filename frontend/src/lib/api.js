@@ -94,6 +94,11 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       localStorage.removeItem(LEDGER_KEY);
       window.dispatchEvent(new Event('yy:ledger-reset'));
     }
+    // 記帳後帳戶會變成負數:跳出提醒視窗(NegativeBalanceModal)
+    if (data.code === 'NEGATIVE_BALANCE') {
+      err.account = data.account;
+      window.dispatchEvent(new CustomEvent('yy:negative-balance', { detail: { account: data.account } }));
+    }
         if (data.code === 'PLAN_REQUIRED') {
       window.dispatchEvent(new Event('yy:plan-changed'));
       window.dispatchEvent(new CustomEvent('yy:plan-locked', { detail: { feature: data.feature } }));

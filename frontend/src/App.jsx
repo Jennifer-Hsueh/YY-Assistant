@@ -11,6 +11,7 @@ import SlipPopup from './components/SlipPopup';
 import Sidebar from './components/Sidebar';
 import FloatingAddButton from './components/FloatingAddButton';
 import { PlanLockModal } from './components/PlanNotice';
+import NegativeBalanceModal from './components/NegativeBalanceModal';
 import TermsConsentModal from './components/TermsConsentModal';
 import SafetyNotice from './components/SafetyNotice';
 import StagingRibbon from './components/StagingRibbon';
@@ -83,6 +84,7 @@ function ProtectedLayout({ children }) {
       <BeaverBubble />
       <SlipPopup />
       <PlanLockModal />
+      <NegativeBalanceModal />
       <TermsConsentModal />
       <SafetyNotice />
     </div>

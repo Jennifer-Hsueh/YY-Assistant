@@ -1,5 +1,6 @@
 // 英文介面的錯誤訊息:前端送 X-Lang: en 時,把常見的中文訊息換成英文(其他維持原文)
 const EN = {
+  '期初餘額不能是負數（信用卡等帳戶請勾選「允許負數」）': 'Opening balance cannot be negative (tick “Allow negative” for credit cards)',
   '讀取匯款回報失敗': 'Could not load your reports',
   '上傳失敗': 'Upload failed',
   '匯款日期不正確': 'Invalid transfer date',
@@ -111,6 +112,7 @@ const EN = {
 const PATTERNS = [
   [/^嘗試次數過多,請約 (\d+) 分鐘後再試$/, (m) => `Too many attempts. Please try again in about ${m[1]} minutes.`],
   [/^社群功能暫停到 (.+)，期間只能發表僅自己可見的文章$/, (m) => `Community is paused until ${m[1]}. You can still write private posts.`],
+  [/^「(.+)」的餘額會變成 (.+)，無法儲存$/, (m) => `This would make “${m[1]}” ${m[2]}. Not saved.`],
 ];
 
 function translate(text) {

@@ -198,10 +198,16 @@ export default function Transactions() {
       occurred_at: occurredAtIso,
     };
 
-    if (actionMode === 'edit' && activeId) {
-      await api.updateTransaction(activeId, payload);
-    } else {
-      await api.createTransaction(payload);
+    try {
+      if (actionMode === 'edit' && activeId) {
+        await api.updateTransaction(activeId, payload);
+      } else {
+        await api.createTransaction(payload);
+      }
+    } catch (err) {
+      // 會變成負數:提醒視窗已跳出,表單保留讓使用者修改
+      if (err.code === 'NEGATIVE_BALANCE') return;
+      throw err;
     }
     resetAfterAction();
     load();
@@ -262,6 +268,7 @@ export default function Transactions() {
       setTransfer(emptyTransfer);
       load();
     } catch (err) {
+      if (err.code === 'NEGATIVE_BALANCE') return; // 提醒視窗已跳出
       console.error(err);
       setTransferError(t('tx_transfer_error_fail'));
     }

@@ -29,7 +29,7 @@ const REQUIRED = {
   yy_reminder_log: 'key',
   yy_anniversaries: 'id, remind, icon, recurring, show_years, show_age, year_known',
   yy_transactions: 'id, ledger_id',
-  yy_accounts: 'id, ledger_id, bank',
+  yy_accounts: 'id, ledger_id, bank, allow_negative',
   yy_budgets: 'id, ledger_id',
   yy_recurring_items: 'id, ledger_id, start_time, end_time',
   yy_user_blocks: 'blocker_id',
