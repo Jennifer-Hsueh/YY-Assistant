@@ -132,6 +132,8 @@ export default function App() {
           <LedgerRoutes>
             <Route path="/terms" element={<Legal doc="terms" />} />
             <Route path="/privacy" element={<Legal doc="privacy" />} />
+            {/* 刪除帳號說明(公開,Google Play 規定) */}
+            <Route path="/delete-account" element={<Legal doc="deleteAccount" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

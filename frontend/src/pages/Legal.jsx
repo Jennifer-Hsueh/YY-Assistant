@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { TERMS, PRIVACY, UPDATED } from '../content/legal';
-import { TERMS_EN, PRIVACY_EN } from '../content/legal.en';
+import { TERMS, PRIVACY, UPDATED, DELETE_ACCOUNT } from '../content/legal';
+import { TERMS_EN, PRIVACY_EN, DELETE_ACCOUNT_EN } from '../content/legal.en';
 import { useAuthText, AuthLangSwitch } from '../lib/authText';
 import { hidePricing } from '../lib/platform';
 
-const DOCS = { zh: { terms: TERMS, privacy: PRIVACY }, en: { terms: TERMS_EN, privacy: PRIVACY_EN } };
+const DOCS = { zh: { terms: TERMS, privacy: PRIVACY, deleteAccount: DELETE_ACCOUNT }, en: { terms: TERMS_EN, privacy: PRIVACY_EN, deleteAccount: DELETE_ACCOUNT_EN } };
 const show = (b) => !(hidePricing && b?.noIOS);
 
 function Block({ b }) {

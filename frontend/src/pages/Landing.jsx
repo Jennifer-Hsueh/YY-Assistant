@@ -125,6 +125,7 @@ const COPY = {
     endTitle: '今天開始，把日子好好收起來',
     terms: '使用條款',
     privacy: '隱私權政策',
+    deleteAcc: '刪除帳號',
     contact: '聯絡我們',
     shotAlt: (name) => `YY手帳 ${name}畫面`,
   },
@@ -241,6 +242,7 @@ const COPY = {
     endTitle: 'Start keeping your days today',
     terms: 'Terms of use',
     privacy: 'Privacy policy',
+    deleteAcc: 'Delete account',
     contact: 'Contact us',
     shotAlt: (name) => `YY Assistant ${name} screen`,
   },
@@ -548,6 +550,7 @@ export default function Landing() {
       <footer className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-5 gap-y-2 px-5 py-6 text-sm text-muted-foreground md:px-8">
         <Link to="/terms" className="hover:underline">{T.terms}</Link>
         <Link to="/privacy" className="hover:underline">{T.privacy}</Link>
+        <Link to="/delete-account" className="hover:underline">{T.deleteAcc}</Link>
         <a href="mailto:happybusybeaver@gmail.com" className="hover:underline">{T.contact}</a>
         <span>© 2026 YY手帳</span>
       </footer>

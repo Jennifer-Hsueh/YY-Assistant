@@ -193,3 +193,43 @@ export const PRIVACY_EN = {
     { p: 'If the operator of the Service changes (for example, it is transferred to a company or studio), your account and data will be transferred to the new operator and will continue to be handled under this policy. We will announce this in advance and ask you to agree again.' },
   ],
 };
+
+// Delete account page (/delete-account), English version of DELETE_ACCOUNT in legal.js
+export const DELETE_ACCOUNT_EN = {
+  title: 'Delete your account and data',
+  blocks: [
+    { p: 'This page explains how to delete your YY Assistant account and data (Google Play developer: 歪歪手帳). The website and the app share the same account; deleting it on either one deletes the whole account.' },
+    { h: 'Option 1: Delete it yourself (immediate)' },
+    { ol: [
+      'Sign in to the YY Assistant app, or the website at https://yy-assistant-front.onrender.com.',
+      'Go to Settings and scroll to “Delete account” at the bottom.',
+      'Enter your password, type the confirmation text, and submit.',
+      'Your account is deleted right away and a confirmation email is sent to you.',
+    ] },
+    { h: 'Option 2: Ask us by email (if you cannot sign in)' },
+    { ul: [
+      'If you forgot your password, use “Forgot password” on the sign-in page, then follow option 1.',
+      'Or email happybusybeaver@gmail.com from your registered address with the subject “Delete account”. We may ask you to confirm it is you.',
+      'We complete the deletion and reply within 15 days.',
+    ] },
+    { h: 'What is deleted' },
+    { ul: [
+      'Your account and profile: email, nickname, birthday, country, settings, and push notification devices.',
+      'Ledger entries, accounts, budgets, recurring entries, and categories.',
+      'Events, anniversaries, Ink Notes, and moods.',
+      'Community posts, comments and reactions, daily moments, and all photos.',
+      'Monthly books and your friend connections.',
+    ] },
+    { h: 'What is kept' },
+    { ul: [
+      'Payment records: kept for 3 years (with the email at the time) for billing questions and disputes, or longer if the law requires.',
+      'Entries you added to shared ledgers: kept for the other members, shown as “Deleted member”.',
+      'Notes you sent to others: still visible to the recipient, shown as from “Deleted member”.',
+      'Bug reports: kept to fix issues, no longer linked to your account.',
+      'Weekly system backups: removed automatically after at most 8 weeks; used only to recover from system failures.',
+    ] },
+    { p: 'Deletion cannot be undone. To keep a copy, download a backup first from Settings → Export / backup.' },
+    { p: 'To delete only some data and keep your account: most data can be deleted in the app, or use Settings → Clear all data, or email us.' },
+    { p: 'Questions? Email happybusybeaver@gmail.com.' },
+  ],
+};
