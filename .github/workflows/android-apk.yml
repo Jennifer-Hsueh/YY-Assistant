@@ -38,7 +38,10 @@ jobs:
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          # 設定檔裡的 package_name 要和 App ID(yy.assistant.tw)相同,不同時跳過,避免整個建置失敗
+          if [ -n "$GOOGLE_SERVICES_JSON" ] && ! printf '%s' "$GOOGLE_SERVICES_JSON" | grep -q '"package_name": *"yy.assistant.tw"'; then
+            echo "::warning::GOOGLE_SERVICES_JSON 不是 yy.assistant.tw 的設定檔(請到 Firebase 新增這個 Android App 後更新),這次建置沒有推播"
+          elif [ -n "$GOOGLE_SERVICES_JSON" ]; then
             printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
             echo "VITE_NATIVE_PUSH=1" >> "$GITHUB_ENV"
             echo "已加入 google-services.json(推播開啟)"

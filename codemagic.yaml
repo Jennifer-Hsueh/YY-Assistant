@@ -15,7 +15,7 @@ workflows:
         - firebase
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.yyassistant.app
+        bundle_identifier: yy.assistant.tw
       node: 22
       xcode: latest
       vars:
