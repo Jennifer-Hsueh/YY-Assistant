@@ -33,7 +33,7 @@ export const api = {
   overview: () => request('/admin/overview'),
   beta: () => request('/admin/settings/beta'),
   setBeta: (body) => request('/admin/settings/beta', { method: 'PUT', body }),
-  clearBetaData: (confirm) => request('/admin/beta/clear-data', { method: 'POST', body: { confirm } }),
+  clearUserData: (id, confirm) => request(`/admin/users/${id}/clear-data`, { method: 'POST', body: { confirm } }),
   markFounding: () => request('/admin/founding/mark', { method: 'POST', body: {} }),
   grantFounding: () => request('/admin/founding/grant', { method: 'POST', body: {} }),
   userReports: (status) => request(`/admin/user-reports?status=${status}`),

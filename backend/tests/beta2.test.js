@@ -37,7 +37,9 @@ function run(st) {
   if (st.op === 'insert' && st.table === 'yy_plan_notices' && rows.some((r) => ['user_id','kind','ref_date','threshold'].every((k) => r[k] === st.payload[k]))) {
     return { data: null, error: { code: '23505', message: 'dup' } };
   }
-  if (st.op === 'insert') {
+  if (st.op === 'insert' && Array.isArray(st.payload)) {
+    out = st.payload.map((p) => ({ id: 'id' + (++seq), ...p })); rows.push(...out);
+  } else if (st.op === 'insert') {
     const r = { id: 'id' + (++seq), created_at: new Date(Date.now() + seq).toISOString(), hidden: false, ...(st.table === 'yy_notes' ? { is_done: false, done_at: null } : {}), ...st.payload };
     if (st.table === 'yy_posts') r.updated_at = r.created_at;
     rows.push(r); out = [r];
@@ -99,9 +101,22 @@ const call = async (fn, { user = 'admin', body = {}, params = {} } = {}) => {
   r = await call(adm.updateBetaSettings, { body: { ends_at: '2026-12-31' } });
   ok(r.json.beta.ends_at === '2026-12-31' && db.yy_announcements.some((a) => a.title.includes('2026/12/31') && a.is_important), 'end date announces');
   const n = db.yy_announcements.length; await call(adm.updateBetaSettings, { body: { ends_at: '2026-12-31' } }); ok(db.yy_announcements.length === n, 'same date no duplicate');
-  r = await call(adm.clearBetaData, { body: { confirm: 'x' } }); ok(r.status === 400, 'clear needs confirm');
-  r = await call(adm.clearBetaData, { body: { confirm: '清空測試資料' } });
-  ok(r.status === 200 && uploads[0].startsWith('beta-end/') && db.yy_transactions.length === 1 && db.yy_transactions[0].user_id === 'admin' && db.yy_notes.length === 0 && db.yy_posts.length === 1 && db.yy_post_comments.length === 0 && db.yy_users.length === 3 && removed.includes('u1'), 'clear keeps accounts & admin data: ' + JSON.stringify(r.json.counts));
+  // 清空單一使用者:私人帳本清掉、共用帳本保留,補回預設分類與帳戶
+  db.yy_ledgers = [{ id: 'L1', user_id: 'u1', is_default: true, name: '日常' }, { id: 'L2', user_id: 'u1', is_default: false, name: '家用' }];
+  db.yy_ledger_members = [{ ledger_id: 'L2', user_id: 'u2', status: 'active' }];
+  db.yy_transactions.push({ id: 't3', user_id: 'u1', ledger_id: 'L1' }, { id: 't4', user_id: 'u1', ledger_id: 'L2' });
+  db.yy_accounts.push({ id: 'a1', user_id: 'u1', ledger_id: 'L1', name: '舊帳戶', balance: 5 });
+  db.yy_moods.push({ user_id: 'u1', date: '2026-11-01', mood: 'sunny' });
+  db.yy_categories.push({ id: 'cat', user_id: 'u1', name: '自訂', type: 'expense' });
+  r = await call(adm.clearUserData, { params: { id: 'u1' }, body: { confirm: 'wrong@x' } }); ok(r.status === 400 && db.yy_moods.length === 1, 'clear user needs email confirm');
+  r = await call(adm.clearUserData, { params: { id: 'admin' }, body: { confirm: 'ad@x' } }); ok(r.status === 400, 'admin cannot be cleared');
+  r = await call(adm.clearUserData, { params: { id: 'u1' }, body: { confirm: 'U1@x' } });
+  const u1Ledgers = db.yy_ledgers.filter((l) => l.user_id === 'u1');
+  ok(r.status === 200 && uploads.some((p) => p.startsWith('user-clear/')) && removed.includes('u1'), 'clear user backs up first & removes photos: ' + JSON.stringify(r.json));
+  ok(!db.yy_transactions.some((t) => t.id === 't3') && db.yy_transactions.some((t) => t.id === 't4') && db.yy_transactions.some((t) => t.id === 't2'), 'private ledger cleared, shared ledger and others kept');
+  ok(!db.yy_posts.some((p) => p.id === 'p2') && db.yy_posts.some((p) => p.id === 'p1') && db.yy_post_comments.length === 0 && db.yy_moods.length === 0, 'own posts, comments, moods cleared');
+  ok(u1Ledgers.some((l) => l.id === 'L2') && u1Ledgers.some((l) => l.is_default && l.id !== 'L1') && db.yy_accounts.filter((a) => a.user_id === 'u1').length === 2 && !db.yy_accounts.some((a) => a.id === 'a1'), 'new default ledger with default accounts');
+  ok(db.yy_categories.filter((c) => c.user_id === 'u1').length > 3 && !db.yy_categories.some((c) => c.id === 'cat') && db.yy_users.length === 3, 'default categories back, account kept');
   r = await call(adm.bulkDeleteUsers, { body: { ids: ['u2', 'admin'], confirm: '刪除' } });
   ok(r.json.deleted === 1 && r.json.skipped === 1 && !db.yy_users.some((u) => u.id === 'u2') && db.yy_payments[0].user_email === 'u2@x', 'bulk delete skips admin, snapshots payment email');
   r = await call(adm.bulkDeleteUsers, { body: { ids: ['u1'], confirm: 'no' } }); ok(r.status === 400, 'bulk needs confirm');

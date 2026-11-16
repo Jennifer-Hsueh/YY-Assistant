@@ -279,6 +279,43 @@ function ResetLink({ user }) {
   );
 }
 
+// 清空這位使用者的資料(使用者要求時):先自動備份全站,再清掉他記錄的內容;帳號、方案、繳費、好友保留
+function ClearData({ user }) {
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  async function run() {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api.clearUserData(user.id, confirm);
+      const total = Object.values(r.counts || {}).reduce((x, y) => x + y, 0);
+      setMsg({ ok: true, text: `已清空 ${total} 筆資料${r.kept_shared_ledgers ? `（有成員的共用帳本 ${r.kept_shared_ledgers} 本保留）` : ''}。清空前的備份在「備份還原」：${r.backup}` });
+      setOpen(false); setConfirm('');
+    } catch (e) { setMsg({ ok: false, text: e.message }); } finally { setBusy(false); }
+  }
+  return (
+    <div className="mt-8 border-t border-border pt-5">
+      <p className="mb-2 text-sm font-medium">清空這位使用者的資料</p>
+      {open ? (
+        <div className="space-y-2 rounded-lg border border-danger/40 p-3">
+          <p className="text-sm">會先自動備份全站資料（「備份還原」的 user-clear 資料夾），再清空他的記帳、帳戶、行程、紀念日、心情、墨箋絮語、日常時光、月刊、社群文章與留言、照片，並放回預設分類與帳戶。</p>
+          <p className="text-xs text-muted-foreground">保留：帳號、方案、繳費紀錄、好友、公告、小紙條；有其他成員的共用帳本、共用行事曆的行程、有邀請成員的行程與紀念日也不動。</p>
+          <p className="text-sm">確認請輸入他的 Email：<span className="font-mono">{user.email}</span></p>
+          <div className="flex gap-2">
+            <input className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            <Button variant="danger" className="shrink-0 whitespace-nowrap" disabled={busy || confirm.trim().toLowerCase() !== String(user.email).toLowerCase()} onClick={run}>備份並清空</Button>
+            <Button variant="outline" className="shrink-0 whitespace-nowrap" onClick={() => { setOpen(false); setConfirm(''); }}>取消</Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" className="w-full text-danger" onClick={() => setOpen(true)}>清空資料（保留帳號）</Button>
+      )}
+      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-muted-foreground' : 'text-danger'}`}>{msg.text}</p>}
+    </div>
+  );
+}
+
 function EditPanel({ user, selfId, onClose, onSaved }) {
   const [form, setForm] = useState({
     role: user.role || 'user',
@@ -399,6 +436,7 @@ function EditPanel({ user, selfId, onClose, onSaved }) {
         <ResetLink key={`r-${user.id}`} user={user} />
 
         {!isSelf && <Moderation key={`m-${user.id}`} user={user} onUserChange={syncFrom} />}
+        {!isSelf && user.role !== 'admin' && <ClearData key={`c-${user.id}`} user={user} />}
 
         <div className="mt-8 border-t border-border pt-5">
           <p className="mb-2 text-sm font-medium">帳號狀態</p>

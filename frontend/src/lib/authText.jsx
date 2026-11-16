@@ -22,7 +22,7 @@ const TEXT = {
     registering: '建立中…',
     haveAccount: '已經有帳號?',
     betaFull: (n) => `目前 ${n} 位測試名額已滿，謝謝你的關注`,
-    betaInfo: (n, r) => `測試版開放 ${n} 位測試者，還有 ${r} 個名額。目前暫不限定測試結束日期，決定後會提前兩週通知，屆時請自行備份資料。`,
+    betaInfo: (n, r) => `測試版開放 ${n} 位測試者，還有 ${r} 個名額。測試期間的資料會保留到正式版，不用重新開始。`,
     foundingTitle: '🦫 創始會員福利：測試期間使用滿 5 天，正式上線後送你一年全功能',
     foundingTerms: [
       '有打開 App 或有記錄的日子都算，不必連續，同一天只算一次',
@@ -77,7 +77,7 @@ const TEXT = {
     registering: 'Creating…',
     haveAccount: 'Already have an account?',
     betaFull: (n) => `All ${n} beta spots are taken. Thanks for your interest.`,
-    betaInfo: (n, r) => `The beta is open to ${n} testers, ${r} spots left. There is no end date yet. We will give two weeks' notice before it ends, so you can back up your data.`,
+    betaInfo: (n, r) => `The beta is open to ${n} testers, ${r} spots left. Your beta data carries over to the full release.`,
     foundingTitle: '🦫 Founding member perk: use the app on 5 days during the beta, get 1 year of full access free after launch',
     foundingTerms: [
       'Any day you open the app or add a record counts. Days need not be in a row; each day counts once',

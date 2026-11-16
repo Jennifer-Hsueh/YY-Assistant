@@ -11,7 +11,6 @@ router.get('/overview', c.overview);
 router.get('/activity', require('../controllers/activityController').activity); // 【暫時】使用狀況
 router.get('/settings/beta', c.getBetaSettings);
 router.put('/settings/beta', c.updateBetaSettings);
-router.post('/beta/clear-data', c.clearBetaData);
 router.post('/founding/mark', c.markFounding);
 router.post('/founding/grant', c.grantFounding);
 router.get('/user-reports', c.listUserReports);
@@ -22,6 +21,7 @@ router.put('/settings/delete-password', c.changeDeletePassword);
 router.get('/users', c.listUsers);
 router.put('/users/:id', c.updateUser);
 router.post('/users/:id/reset-link', c.createResetLink);
+router.post('/users/:id/clear-data', c.clearUserData);
 router.get('/users/:id/moderation', c.listModeration);
 router.post('/users/:id/moderation', c.moderateUser);
 router.get('/users/:id/payments', c.listPayments);

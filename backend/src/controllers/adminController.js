@@ -14,7 +14,6 @@ const founding = require('../lib/founding');
 const deletePassword = require('../lib/deletePassword');
 const zlib = require('zlib');
 const { buildSnapshot, ensureBucket } = require('../services/backupService');
-const { USER_TABLES } = require('../services/restoreService');
 
 // 管理後台 API。所有路由都先經過 requireAuth + requireAdmin。
 const ROLES = ['user', 'tester', 'admin'];
@@ -344,40 +343,31 @@ async function bulkDeleteUsers(req, res) {
   }
 }
 
-// 測試結束:先備份全站資料(beta-end/,不會自動刪除),再清空所有非管理員使用者輸入的資料
-// 帳號本身、方案、繳費、公告、故障通報、處置紀錄保留
-async function clearBetaData(req, res) {
+// 清空單一使用者的資料(使用者要求、或客服處理時用):先備份全站到 user-clear/,再清掉他自己記錄的內容
+// 帳號、方案、繳費、好友、公告保留;共用的帳本、行事曆、行程、紀念日不動(見 lib/userDataClear.js)
+async function clearUserData(req, res) {
   try {
-    if ((req.body || {}).confirm !== '清空測試資料') return res.status(400).json({ error: '請輸入「清空測試資料」確認' });
-    // 清空前先標記創始會員(資格看測試期間的資料筆數,清空後就算不出來了)
-    const { marked } = await founding.markEligible();
+    const { id } = req.params;
+    const { data: user, error } = await supabase.from('yy_users').select('id, email, role').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (!user) return res.status(404).json({ error: '找不到這位使用者' });
+    if (user.role === 'admin') return res.status(400).json({ error: '管理員帳號不能清空' });
+    const confirm = String((req.body || {}).confirm || '').trim().toLowerCase();
+    if (!confirm || confirm !== String(user.email || '').toLowerCase()) return res.status(400).json({ error: '請輸入這位使用者的 Email 確認' });
+
     await ensureBucket();
-    const snap = await buildSnapshot('beta-end');
+    const snap = await buildSnapshot('user-clear');
     const ts = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
-    const path = `beta-end/yy-beta-end-${ts}.json.gz`;
+    const path = `user-clear/yy-user-clear-${ts}-${id.slice(0, 8)}.json.gz`;
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, zlib.gzipSync(Buffer.from(JSON.stringify(snap))), { contentType: 'application/gzip', upsert: true });
     if (upErr) throw upErr;
 
-    const users = await fetchAll('yy_users', 'id, role');
-    const ids = users.filter((u) => u.role !== 'admin').map((u) => u.id);
-    const counts = {};
-    // 子資料先刪(回應、留言、檢舉 → 文章 → 其他)
-    const order = ['yy_post_reactions', 'yy_post_comments', 'yy_post_reports', ...USER_TABLES.filter((t) => !['yy_post_reactions', 'yy_post_comments', 'yy_post_reports'].includes(t))];
-    for (const table of order) {
-      counts[table] = 0;
-      for (let i = 0; i < ids.length; i += 200) {
-        const chunk = ids.slice(i, i + 200);
-        const { data, error } = await supabase.from(table).delete().in('user_id', chunk).select('user_id');
-        if (error) throw error;
-        counts[table] += (data || []).length;
-      }
-    }
-    for (const id of ids) await communityImages.removeUserFolder(id);
-    for (const id of ids) forgetUserStatus(id);
-    console.log('[adminController.clearBetaData]', { path, users: ids.length, counts });
-    return res.json({ backup: path, users: ids.length, counts, founding_marked: marked });
+    const r = await require('../lib/userDataClear').clearUserData(id);
+    forgetUserStatus(id);
+    console.log('[adminController.clearUserData]', { id, path, ...r });
+    return res.json({ backup: path, ...r });
   } catch (err) {
-    return fail(res, 'clearBetaData', err, '清空失敗(已完成的部分不會還原,可用備份還原)');
+    return fail(res, 'clearUserData', err, '清空失敗(已完成的部分不會還原,可用備份還原)');
   }
 }
 
@@ -1019,7 +1009,7 @@ module.exports = {
   getDeletePassword,
   changeDeletePassword,
   listBugReports, updateBugReport, listBackups, backupSummary, downloadBackup, restoreBackup,
-  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearBetaData, markFounding, grantFounding, listUserReports, updateUserReport,
+  getBetaSettings, updateBetaSettings, bulkDeleteUsers, clearUserData, markFounding, grantFounding, listUserReports, updateUserReport,
   me, overview, listUsers, updateUser, createResetLink, moderateUser, listModeration, listPayments, createPayment, deletePayment,
   listPaymentReports, approvePaymentReport, rejectPaymentReport, listAllPayments,
   listAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,

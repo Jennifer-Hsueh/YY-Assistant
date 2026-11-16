@@ -16,7 +16,7 @@ function Stat({ label, value, hint, onClick, tone }) {
   );
 }
 
-// 測試版:名額、開放註冊、結束日(設定後自動發公告、App 顯示提醒)、結束測試、備份並清空測試資料
+// 測試版:名額、開放註冊、結束日(設定後自動發公告、App 顯示提醒)、結束測試;測試資料保留到正式版(要清空單一使用者到「使用者管理」)
 // 每月收款提醒:網路銷售勞務每月未達 5 萬元可暫免稅籍登記;超過 4 萬元先提醒
 export function RevenueNotice({ revenue }) {
   if (!revenue) return null;
@@ -42,8 +42,6 @@ function BetaCard() {
   const [endsAt, setEndsAt] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  const [clearing, setClearing] = useState(false);
-  const [confirmText, setConfirmText] = useState('');
   const [founding, setFounding] = useState(null);
   const [granting, setGranting] = useState(false);
   const sync = (beta) => { setB(beta); setLimit(String(beta.limit)); setEndsAt(beta.ends_at || ''); };
@@ -53,17 +51,6 @@ function BetaCard() {
     setBusy(true); setMsg(null);
     try { const { beta } = await api.setBeta(body); sync(beta); setMsg({ ok: true, text: okText }); }
     catch (e) { setMsg({ ok: false, text: e.message }); }
-    finally { setBusy(false); }
-  }
-  async function clearAll() {
-    setBusy(true); setMsg(null);
-    try {
-      const r = await api.clearBetaData(confirmText);
-      const total = Object.values(r.counts).reduce((x, y) => x + y, 0);
-      setMsg({ ok: true, text: `已備份到 ${r.backup}，並清空 ${r.users} 位使用者的 ${total} 筆資料（清空前新標記 ${r.founding_marked} 位創始會員）` });
-      load();
-      setClearing(false); setConfirmText('');
-    } catch (e) { setMsg({ ok: false, text: e.message }); }
     finally { setBusy(false); }
   }
   async function foundingAction(fn, okText) {
@@ -119,25 +106,10 @@ function BetaCard() {
           ) : (
             <Button variant="outline" disabled={busy || b.active || founding.total === founding.granted} onClick={() => setGranting(true)}>發放一年全功能</Button>
           )}
-          <p className="w-full text-xs text-muted-foreground">資格：一般使用者在測試期間有使用 5 天以上（開啟 App 或新增資料的日子）。清空測試資料前會自動標記；正式上線後才能發放，一年從發放日起算。</p>
+          <p className="w-full text-xs text-muted-foreground">資格：一般使用者在測試期間有使用 5 天以上（開啟 App 或新增資料的日子）。測試資料保留到正式版；正式上線後才能發放，一年從發放日起算。</p>
         </div>
       )}
 
-      <div className="mt-5 border-t border-border pt-4">
-        {clearing ? (
-          <div className="space-y-2 rounded-lg border border-danger/40 p-3">
-            <p className="text-sm">會先把全站資料備份到「備份還原」的 beta-end 資料夾，再清空所有使用者（不含管理員）的記帳、行事曆、記事、心情與社群資料。帳號、方案、繳費紀錄、公告與故障通報會保留。</p>
-            <p className="text-sm">確認請輸入「清空測試資料」</p>
-            <div className="flex gap-2">
-              <input className={inputCls} value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-              <Button variant="danger" className="shrink-0 whitespace-nowrap" disabled={busy || confirmText !== '清空測試資料'} onClick={clearAll}>備份並清空</Button>
-              <Button variant="outline" className="shrink-0 whitespace-nowrap" onClick={() => { setClearing(false); setConfirmText(''); }}>取消</Button>
-            </div>
-          </div>
-        ) : (
-          <Button variant="outline" className="text-danger" onClick={() => setClearing(true)}>備份並清空測試資料</Button>
-        )}
-      </div>
       <Notice msg={msg} />
     </Card>
   );

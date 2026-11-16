@@ -14,7 +14,7 @@ const SECTIONS = {
     { title: '測試版', beta: true, items: [
       '目前是測試版，開放有限名額的測試者使用，測試期間可以使用全部功能。',
       '測試期間使用滿 5 天，正式上線後送你一年全功能。',
-      '測試結束日決定後，會提前兩週以公告通知。結束前請到「設定 → 資料匯出 / 備份」下載備份檔。',
+      '測試期間的資料會保留到正式版，不用重新開始；正式上線前會以公告通知。',
       '使用上遇到問題或有建議，歡迎用「設定 → 故障通報」告訴我們。',
     ] },
     { title: '開始使用', web: true, items: [
@@ -141,7 +141,7 @@ const SECTIONS = {
     { title: 'Beta', beta: true, items: [
       'This is a beta open to a limited number of testers. You can use every feature during the beta.',
       'Use the app on 5 days during the beta and get one year of full access free after launch.',
-      'Once the end date is set, we will announce it two weeks ahead. Before it ends, download a backup from Settings → Export / backup.',
+      'Your data from the beta carries over to the full release. We will announce the launch ahead of time.',
       'If something goes wrong or you have ideas, tell us in Settings → Report an issue.',
     ] },
     { title: 'Getting started', web: true, items: [
