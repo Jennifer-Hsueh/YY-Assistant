@@ -225,7 +225,10 @@ export default function Bookshelf() {
                   className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''} ${isYearKey(b.ym) ? 'bk-year' : ''}`}
                   style={{ left: s.x * k, top: s.y * k, width: s.w * k, height: s.h * k }}>
                   <img src={`/bookshelf/book-${coverOf(b)}.webp`} alt="" draggable={false} />
-                  <span style={{ fontSize: Math.max(5, Math.min(s.w * k * 0.55, (s.h * k * 0.5) / 3.7)) }}>{ymLabel(b.ym)}</span>
+                  {/* 年鑑只有 4 個字(2026)、書也比較胖,年份字放大 */}
+                  <span style={{ fontSize: isYearKey(b.ym)
+                    ? Math.max(7, Math.min(s.w * k * 0.62, (s.h * k * 0.56) / 2.3))
+                    : Math.max(5, Math.min(s.w * k * 0.55, (s.h * k * 0.5) / 3.7)) }}>{ymLabel(b.ym)}</span>
                 </button>
               );
             })}
