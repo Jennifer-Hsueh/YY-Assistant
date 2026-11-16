@@ -1,17 +1,24 @@
 // 月刊書櫃:每月把記帳、行程、紀念日、心情、墨箋絮語、自己發的文章整理成一本書
 // 生命週期(台灣時間):每月 1 號產生上個月的草稿 → 7 號(含)以前可以換封面、寫一句話、按「完成」
 // → 8 號 0 點起自動定稿;定稿時把內容存成快照(data),之後固定不變
+// 年鑑:同一張表,ym 用 4 碼年份(例如 '2026');1/1 和 12 月月刊一起產生,1/7 以前可以改,1/8 自動定稿
 const supabase = require('../config/supabase');
 const { sendPushToUser } = require('./fcmService');
 
 const COVERS = 3;
 const MESSAGE_MAX = 60;
+const YEAR_MESSAGE_MAX = 200; // 年鑑「給自己的話」
 const EXCLUDED = ['轉帳', '餘額調整']; // 不算收支
 const PAGE = 1000;
 
 const pad = (n) => String(n).padStart(2, '0');
 const taipeiNow = (now = new Date()) => new Date(now.getTime() + 8 * 3600 * 1000); // 用 UTC 欄位讀台灣時間
 const isYm = (v) => typeof v === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
+const isYear = (v) => typeof v === 'string' && /^\d{4}$/.test(v);
+const isKey = (v) => isYm(v) || isYear(v); // 月刊 '2026-11' 或年鑑 '2026'
+// 書櫃排序:年鑑放在那一年 12 月月刊後面
+const sortKey = (k) => (isYear(k) ? `${k}-13` : k);
+const messageMax = (k) => (isYear(k) ? YEAR_MESSAGE_MAX : MESSAGE_MAX);
 const ymOf = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
 function addMonths(ym, n) {
   const [y, m] = ym.split('-').map(Number);
@@ -19,13 +26,15 @@ function addMonths(ym, n) {
   return ymOf(d);
 }
 const monthStart = (ym) => new Date(`${ym}-01T00:00:00+08:00`);
-// 定稿期限:下個月 8 號 0 點(台灣時間),也就是 7 號整天都還能改
-const deadlineOf = (ym) => new Date(`${addMonths(ym, 1)}-08T00:00:00+08:00`);
+// 這本書涵蓋到哪個月之前(月刊:下個月;年鑑:隔年 1 月)
+const endYm = (k) => (isYear(k) ? `${Number(k) + 1}-01` : addMonths(k, 1));
+// 定稿期限:下個月 8 號 0 點(台灣時間),也就是 7 號整天都還能改(年鑑:隔年 1/8)
+const deadlineOf = (k) => new Date(`${endYm(k)}-08T00:00:00+08:00`);
 const currentYm = (now = new Date()) => ymOf(taipeiNow(now));
 const previousYm = (now = new Date()) => addMonths(currentYm(now), -1);
 const localDate = (iso) => ymdOf(taipeiNow(new Date(iso)));
 const ymdOf = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-const defaultCover = (ym) => ((Number(ym.slice(5, 7)) - 1) % COVERS) + 1;
+const defaultCover = (k) => (isYear(k) ? 1 : ((Number(k.slice(5, 7)) - 1) % COVERS) + 1);
 
 async function fetchAll(build) {
   const out = [];
@@ -55,7 +64,7 @@ async function myLedgers(uid) {
   return all.map((l) => ({ ...l, shared: (ms || []).some((m) => m.ledger_id === l.id && m.status !== 'invited') }));
 }
 
-async function moneyOf(uid, from, to) {
+async function moneyOf(uid, from, to, full = false) {
   const ledgers = await myLedgers(uid);
   const ids = ledgers.map((l) => l.id);
   const [txs, accounts, cats] = await Promise.all([
@@ -72,12 +81,15 @@ async function moneyOf(uid, from, to) {
   const byCur = {};
   const top = {};
   const perLedger = new Map(ledgers.map((l) => [l.id, { name: l.name, shared: l.shared, income: 0, expense: 0, count: 0 }]));
+  const months = Array.from({ length: 12 }, (_, i) => ({ m: i + 1, income: 0, expense: 0 })); // 年鑑:每月台幣收支
   for (const t of counted) {
     const c = cur.get(t.account_id) || 'TWD';
     const amt = Number(t.amount) || 0;
     byCur[c] ||= { currency: c, income: 0, expense: 0 };
     byCur[c][t.type === 'income' ? 'income' : 'expense'] += amt;
     if (c !== 'TWD') continue; // 支出排名與各帳本只算台幣,外幣另外列出
+    const mo = months[Number(localDate(t.occurred_at).slice(5, 7)) - 1];
+    if (mo) mo[t.type === 'income' ? 'income' : 'expense'] += amt;
     if (t.type !== 'income') {
       const k = t.category || '';
       top[k] = (top[k] || 0) + amt;
@@ -86,6 +98,14 @@ async function moneyOf(uid, from, to) {
     if (pl) { pl[t.type === 'income' ? 'income' : 'expense'] += amt; pl.count += 1; }
   }
   const twd = byCur.TWD || { income: 0, expense: 0 };
+  const catList = Object.entries(top).map(([name, amount]) => ({ name, color: name ? color(name) : null, amount: round(amount) })).sort((a, b) => b.amount - a.amount);
+  if (full) {
+    return {
+      currency: 'TWD', income: round(twd.income), expense: round(twd.expense),
+      others: Object.values(byCur).filter((x) => x.currency !== 'TWD').map((x) => ({ ...x, income: round(x.income), expense: round(x.expense) })),
+      cats: catList, months: months.map((x) => ({ ...x, income: round(x.income), expense: round(x.expense) })), tx_count: counted.length,
+    };
+  }
   return {
     currency: 'TWD',
     income: round(twd.income),
@@ -190,8 +210,58 @@ async function buildBookData(uid, ym) {
   };
 }
 
+// ---------- 年鑑 ----------
+// 心情折線圖的高度(1 最低 ~ 5 最高)
+const MOOD_LEVEL = { sunny: 5, rainbow: 5, love: 5, flower: 4, cloudy: 3, exclaim: 3, question: 3, rainy: 2, storm: 1, angry: 1 };
+
+async function buildYearData(uid, year, createdAt) {
+  const from = monthStart(`${year}-01`).toISOString();
+  const to = monthStart(`${Number(year) + 1}-01`).toISOString();
+  // 年中才開始用:從註冊的月份算起
+  const joined = createdAt ? ymOf(taipeiNow(new Date(createdAt))) : `${year}-01`;
+  const since = joined > `${year}-01` && joined.startsWith(year) ? joined : `${year}-01`;
+  const yms = Array.from({ length: 12 }, (_, i) => `${year}-${pad(i + 1)}`);
+  const [money, events, moodRows, posts, momentRows, books, annivLists] = await Promise.all([
+    moneyOf(uid, from, to, true),
+    eventsOf(uid, from, to),
+    supabase.from('yy_moods').select('date, mood').eq('user_id', uid).gte('date', `${year}-01-01`).lt('date', `${Number(year) + 1}-01-01`),
+    fetchAll(() => supabase.from('yy_posts').select('board, mood, title, content, created_at').eq('user_id', uid)
+      .gte('created_at', from).lt('created_at', to).order('created_at')),
+    supabase.from('yy_moments').select('id, date, image_key').eq('user_id', uid).gte('date', `${year}-01-01`).lt('date', `${Number(year) + 1}-01-01`).order('id'),
+    supabase.from('yy_monthly_books').select('ym, message').eq('user_id', uid).like('ym', `${year}-%`),
+    Promise.all(yms.map((ym) => annivsOf(uid, ym))),
+  ]);
+  if (moodRows.error) throw moodRows.error;
+  if (books.error) throw books.error;
+  const moods = Object.fromEntries((moodRows.data || []).map((r) => [r.date, r.mood]));
+  // 日常時光:每個月挑一張(依月份固定挑)
+  const photos = {};
+  if (momentRows.error) console.error('[monthlyBook.year photos]', momentRows.error.message);
+  const byMonth = {};
+  for (const r of momentRows.data || []) (byMonth[r.date.slice(0, 7)] ||= []).push(r.image_key);
+  for (const [ym, keys] of Object.entries(byMonth)) {
+    const seed = [...ym].reduce((s, ch) => s * 31 + ch.charCodeAt(0), 7);
+    photos[ym] = keys[Math.abs(seed) % keys.length];
+  }
+  const eventsByMonth = Array(12).fill(0);
+  for (const e of events) eventsByMonth[Number(e.date.slice(5, 7)) - 1] += 1;
+  const messages = (books.data || []).filter((b) => b.message && isYm(b.ym)).map((b) => ({ ym: b.ym, message: b.message })).sort((a, b) => a.ym.localeCompare(b.ym));
+  const postList = posts.map((p) => ({ date: localDate(p.created_at), board: p.board, mood: p.mood || null, title: p.title || null, content: p.content, images: [] }));
+  return {
+    ym: year, kind: 'year', since, built_at: new Date().toISOString(),
+    money, moods, photos, messages, annivs: annivLists.flat(), events_by_month: eventsByMonth, posts: postList,
+    counts: { events: events.length, annivs: annivLists.flat().length, posts: postList.length, tx: money.tx_count, moods: Object.keys(moods).length },
+  };
+}
+
+async function buildFor(row) {
+  if (!isYear(row.ym)) return buildBookData(row.user_id, row.ym);
+  const { data: me } = await supabase.from('yy_users').select('created_at').eq('id', row.user_id).maybeSingle();
+  return buildYearData(row.user_id, row.ym, me?.created_at);
+}
+
 async function finalize(row) {
-  const data = await buildBookData(row.user_id, row.ym);
+  const data = await buildFor(row);
   const { data: saved, error } = await supabase.from('yy_monthly_books')
     .update({ status: 'final', data, cover: row.cover || defaultCover(row.ym), finalized_at: new Date().toISOString() })
     .eq('id', row.id).eq('status', 'draft').select('*').maybeSingle();
@@ -201,7 +271,7 @@ async function finalize(row) {
 
 // 使用者在那個月已經註冊才有那個月的書
 async function createDraft(uid, ym, userCreatedAt) {
-  if (userCreatedAt && new Date(userCreatedAt) >= monthStart(addMonths(ym, 1))) return null;
+  if (userCreatedAt && new Date(userCreatedAt) >= monthStart(endYm(ym))) return null;
   const { data, error } = await supabase.from('yy_monthly_books')
     .upsert({ user_id: uid, ym, status: 'draft' }, { onConflict: 'user_id,ym', ignoreDuplicates: true }).select('*');
   if (error) throw error;
@@ -213,6 +283,15 @@ async function ensureBooks(uid, now = new Date()) {
   const { data: me, error } = await supabase.from('yy_users').select('created_at').eq('id', uid).maybeSingle();
   if (error) throw error;
   await createDraft(uid, previousYm(now), me?.created_at);
+  // 年鑑:進入新的一年後補上去年的(1/1 排程沒跑到時)
+  // (年鑑失敗不影響月刊書櫃,例如 SQL 還沒跑)
+  try {
+    await createDraft(uid, String(Number(currentYm(now).slice(0, 4)) - 1), me?.created_at);
+    // 測試站預覽:Render 環境變數 YEARBOOK_PREVIEW=1 時,先產生今年的年鑑草稿(正式站不要設)
+    if (process.env.YEARBOOK_PREVIEW === '1') await createDraft(uid, currentYm(now).slice(0, 4), me?.created_at);
+  } catch (err) {
+    console.error('[monthlyBook.yearbook] 年鑑草稿建立失敗(是否已執行年鑑的 SQL?)', err.message);
+  }
   const { data: drafts, error: dErr } = await supabase.from('yy_monthly_books').select('*').eq('user_id', uid).eq('status', 'draft');
   if (dErr) throw dErr;
   for (const d of drafts || []) {
@@ -231,10 +310,15 @@ async function runMonthlyBooks(now = new Date()) {
     if (u.is_disabled) continue;
     try {
       const row = await createDraft(u.id, ym, u.created_at);
-      if (row) {
-        created += 1;
+      // 1/1:去年的年鑑和 12 月月刊一起產生
+      const yearRow = ym.endsWith('-12') ? await createDraft(u.id, ym.slice(0, 4), u.created_at) : null;
+      if (row || yearRow) {
+        created += (row ? 1 : 0) + (yearRow ? 1 : 0);
         const m = Number(ym.slice(5, 7));
-        pushes.push(sendPushToUser(u.id, { title: '📚 月刊書櫃', body: `你的 ${m} 月月刊整理好了，7 號以前可以挑封面、寫一句話`, data: { url: '/bookshelf' } })
+        const body = yearRow
+          ? `你的${row ? ` ${m} 月月刊和` : ''} ${ym.slice(0, 4)} 年鑑整理好了，7 號以前可以挑封面、寫給自己的話`
+          : `你的 ${m} 月月刊整理好了，7 號以前可以挑封面、寫一句話`;
+        pushes.push(sendPushToUser(u.id, { title: '📚 月刊書櫃', body, data: { url: '/bookshelf' } })
           .catch((err) => ({ sent: false, reason: err.message })));
       }
     } catch (err) {
@@ -262,6 +346,6 @@ async function runMonthlyBooks(now = new Date()) {
 }
 
 module.exports = {
-  COVERS, MESSAGE_MAX, isYm, addMonths, deadlineOf, currentYm, previousYm, defaultCover,
-  buildBookData, finalize, ensureBooks, runMonthlyBooks,
+  COVERS, MESSAGE_MAX, YEAR_MESSAGE_MAX, MOOD_LEVEL, isYm, isYear, isKey, sortKey, messageMax, addMonths, deadlineOf, currentYm, previousYm, defaultCover,
+  buildBookData, buildYearData, buildFor, finalize, ensureBooks, runMonthlyBooks,
 };

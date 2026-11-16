@@ -19,10 +19,11 @@ const brief = (r) => ({
   deadline: B.deadlineOf(r.ym).toISOString(), finalized_at: r.finalized_at || null,
 });
 
-// 書櫃樣式與容量(與前端 lib/bookshelf.js 的 shelfCapacity 一致:樹屋 21、單櫃 16、高櫃 24)
+// 書櫃樣式與容量(與前端 lib/bookshelf.js 的 shelfCapacity 一致:樹屋 21、單櫃 16、高櫃 24;只放月刊時)
 // 使用者一次只能選一個書櫃,放滿了才能選下一個;選過的依序存在 yy_users.shelf_styles
 const SHELF_CAPS = { 1: 21, 2: 16, 3: 24 };
-const capOf = (styles) => styles.reduce((n, s) => n + (SHELF_CAPS[s] || 0), 0);
+// 有年鑑(比較胖)時實際放得下的本數會少一點:依 lib/shelfLayout.js 的排法判斷是否放滿
+const { shelvesFull } = require('../lib/shelfLayout');
 
 async function shelfStyles(uid) {
   const { data, error } = await supabase.from('yy_users').select('shelf_styles').eq('id', uid).single();
@@ -35,10 +36,11 @@ async function list(req, res) {
   try {
     await B.ensureBooks(req.user.id);
     const { data, error } = await supabase.from('yy_monthly_books').select('ym, status, cover, message, finalized_at')
-      .eq('user_id', req.user.id).order('ym');
+      .eq('user_id', req.user.id);
     if (error) throw error;
     const shelves = await shelfStyles(req.user.id);
-    return res.json({ books: (data || []).map(brief), shelves });
+    const sorted = (data || []).sort((a, b) => B.sortKey(a.ym).localeCompare(B.sortKey(b.ym)));
+    return res.json({ books: sorted.map(brief), shelves });
   } catch (err) {
     return fail(res, 'list', err, '讀取書櫃失敗');
   }
@@ -48,11 +50,11 @@ async function list(req, res) {
 async function get(req, res) {
   try {
     const { ym } = req.params;
-    if (!B.isYm(ym)) return res.status(400).json({ error: '月份格式不正確' });
+    if (!B.isKey(ym)) return res.status(400).json({ error: '月份格式不正確' });
     await B.ensureBooks(req.user.id);
     const row = await rowOf(req.user.id, ym);
     if (!row) return res.status(404).json({ error: '找不到這本書' });
-    const data = row.status === 'final' && row.data ? row.data : await B.buildBookData(req.user.id, ym);
+    const data = row.status === 'final' && row.data ? row.data : await B.buildFor(row);
     const posts = await signPosts(data.posts || []);
     // 日常時光的照片:換成暫時網址(縮圖);照片已刪掉的那天就顯示心情
     const photoDays = Object.entries(data.photos || {});
@@ -66,7 +68,7 @@ async function get(req, res) {
 
 async function editable(req, res) {
   const { ym } = req.params;
-  if (!B.isYm(ym)) { res.status(400).json({ error: '月份格式不正確' }); return null; }
+  if (!B.isKey(ym)) { res.status(400).json({ error: '月份格式不正確' }); return null; }
   const row = await rowOf(req.user.id, ym);
   if (!row) { res.status(404).json({ error: '找不到這本書' }); return null; }
   if (row.status !== 'draft' || new Date() >= B.deadlineOf(ym)) { res.status(409).json({ error: '這本書已經定稿，不能再修改', code: 'BOOK_FINAL' }); return null; }
@@ -86,7 +88,8 @@ async function update(req, res) {
     }
     if (req.body.message !== undefined) {
       const m = String(req.body.message || '').replace(/\r\n/g, '\n').trim();
-      if ([...m].length > B.MESSAGE_MAX) return res.status(400).json({ error: `最多 ${B.MESSAGE_MAX} 個字` });
+      const max = B.messageMax(row.ym);
+      if ([...m].length > max) return res.status(400).json({ error: `最多 ${max} 個字` });
       patch.message = m || null;
     }
     const { data, error } = await supabase.from('yy_monthly_books').update(patch).eq('id', row.id).select('*').single();
@@ -115,9 +118,10 @@ async function pickShelf(req, res) {
     const style = Number(req.body.style);
     if (!SHELF_CAPS[style]) return res.status(400).json({ error: '書櫃不正確' });
     const styles = await shelfStyles(req.user.id);
-    const { count, error: cErr } = await supabase.from('yy_monthly_books').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id);
+    const { data: rows, error: cErr } = await supabase.from('yy_monthly_books').select('ym').eq('user_id', req.user.id);
     if (cErr) throw cErr;
-    if (styles.length && (count || 0) < capOf(styles)) {
+    const fats = (rows || []).map((r) => r.ym).sort((a, b) => B.sortKey(a).localeCompare(B.sortKey(b))).map(B.isYear);
+    if (styles.length && !shelvesFull(styles, fats)) {
       return res.status(409).json({ error: '目前的書櫃還沒放滿，放滿後才能選下一個', code: 'SHELF_NOT_FULL' });
     }
     const next = [...styles, style];

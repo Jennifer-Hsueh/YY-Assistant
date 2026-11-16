@@ -72,6 +72,7 @@ const SECTIONS = {
       '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
       { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
       '第一次打開時選一個書櫃（樹屋可放 21 本、單櫃 16 本、高櫃 24 本）。一次只能用一個書櫃，放滿了才能再選下一個，舊的書櫃會留著，可以切換查看。',
+      '每年 1 月 1 日，還會把去年整理成一本「年鑑」，和 12 月的月刊放在同一個書櫃（比較胖的那本）：年度收支與分類圓餅圖、每月支出、每個月的心情折線圖、每月一張日常時光、每月一句話、紀念日與行程、這一年發的所有文章，最後一頁寫給自己的話。1/7 以前可以挑封面、寫給自己的話，1/8 自動定稿。',
     ] },
     { title: '小河狸的家', items: [
       '網頁版在左側選單，手機版點右上角的沙發圖示。房間裡的東西都可以點：',
@@ -199,6 +200,7 @@ const SECTIONS = {
       'Until the 7th it’s a draft: pick a cover, write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
       { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
       'Choose a bookshelf the first time you open it (Treehouse holds 21 books, Classic 16, Tall 24). You use one shelf at a time and choose the next once it’s full; earlier shelves stay and you can switch between them.',
+      'On January 1st, Beaver also makes a Yearbook of the past year and puts it on the same shelf (the thicker one): yearly income and spending with a category pie chart, monthly spending, a mood line for each month, a moment photo for each month, your monthly notes, anniversaries and events, every post you wrote that year, and a last page with a note to yourself. Pick a cover and write your note until Jan 7; it’s finalized on Jan 8.',
     ] },
     { title: "Beaver's home", items: [
       'Find it in the left menu on the web, or tap the armchair icon at the top right on mobile. Everything in the room can be tapped:',

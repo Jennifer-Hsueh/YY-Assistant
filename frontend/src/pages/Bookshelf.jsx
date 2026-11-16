@@ -7,7 +7,7 @@ import { LibraryBig, ChevronLeft, ChevronRight, X, Download, Loader2, PencilLine
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { SHELVES, layoutBooks, shelfCapacity } from '../lib/bookshelf';
-import { COVERS, MESSAGE_MAX, coverSrc, paginate, spineColor, ymLabel } from '../lib/book';
+import { COVERS, MESSAGE_MAX, YEAR_MESSAGE_MAX, coverSrc, isYearKey, paginateAny, spineColor, viewsOf, ymLabel } from '../lib/book';
 import { isNative } from '../lib/platform';
 import BookPage from '../components/book/BookPages';
 import { Button } from '../components/ui/button';
@@ -21,7 +21,8 @@ const TEXT = {
     finish: '完成', finishAsk: '完成後就不能再修改了，確定嗎？', finishYes: '確定完成', cancel: '取消',
     pdf: '下載 PDF', making: '製作中…', pdfDraft: '完成後可以下載 PDF', pdfApp: 'PDF 請在網頁版下載',
     loadFail: '讀取失敗，請稍後再試', page: (a, b) => `${a} / ${b}`,
-    bookTitle: (ym) => `${ym.slice(0, 4)} 年 ${Number(ym.slice(5, 7))} 月`,
+    bookTitle: (ym) => (isYearKey(ym) ? `${ym} 年鑑` : `${ym.slice(0, 4)} 年 ${Number(ym.slice(5, 7))} 月`),
+    yearDraftNote: (y, d) => `${y} 年鑑還是草稿，${d} 以前可以挑封面、寫給自己的話。`, sayYear: '給自己的話（選填）',
   },
   en: {
     title: 'Monthly Bookshelf', empty: 'On the 1st of each month, Beaver turns last month into a book and puts it here.',
@@ -31,7 +32,8 @@ const TEXT = {
     finish: 'Finish', finishAsk: 'You can’t edit it after finishing. Continue?', finishYes: 'Finish', cancel: 'Cancel',
     pdf: 'Download PDF', making: 'Making…', pdfDraft: 'PDF is available after finishing', pdfApp: 'Please download the PDF on the web',
     loadFail: 'Couldn’t load. Please try again later.', page: (a, b) => `${a} / ${b}`,
-    bookTitle: (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', { year: 'numeric', month: 'long' }),
+    bookTitle: (ym) => (isYearKey(ym) ? `${ym} Yearbook` : new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', { year: 'numeric', month: 'long' })),
+    yearDraftNote: (y, d) => `Your ${y} yearbook is still a draft. Pick a cover and write to yourself before ${d}.`, sayYear: 'A note to myself (optional)',
   },
 };
 const MONTH_EN = (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', { month: 'long' });
@@ -80,17 +82,21 @@ export default function Bookshelf() {
   }).catch(() => setError(T.loadFail)), [T.loadFail]);
   useEffect(() => { load(); }, [load]);
 
-  // 書依月份順序放進選過的書櫃:第 1 個放滿才放第 2 個
+  // 書依月份順序放進選過的書櫃:第 1 個放滿才放第 2 個(年鑑比較胖,一個書櫃放的本數會少一點)
   const { groups, waiting, full } = useMemo(() => {
     const all = books || [];
     let at = 0;
     const g = shelves.map((id) => {
-      const cap = CAP[id] || 0;
-      const part = all.slice(at, at + cap);
-      at += cap;
-      return { id, cap, books: part };
+      const shelfDef = SHELVES.find((s) => s.id === id) || SHELVES[0];
+      const placed = layoutBooks(shelfDef, all.slice(at).map((b) => isYearKey(b.ym))).length;
+      const part = all.slice(at, at + placed);
+      at += placed;
+      return { id, cap: CAP[id] || 0, books: part, shelfDef };
     });
-    return { groups: g, waiting: all.slice(at), full: g.length > 0 && all.length >= at };
+    const last = g[g.length - 1];
+    // 放滿 = 還有書沒地方放,或最後一個書櫃再放一本也放不下
+    const lastFull = last ? layoutBooks(last.shelfDef, [...last.books.map((b) => isYearKey(b.ym)), false]).length <= last.books.length : false;
+    return { groups: g, waiting: all.slice(at), full: g.length > 0 && (all.length > at || lastFull) };
   }, [books, shelves]);
   const canPick = groups.length === 0 || full;
   const autoPage = groups.length === 0 || waiting.length > 0 ? 'new' : groups.length - 1;
@@ -107,10 +113,10 @@ export default function Bookshelf() {
 
   const shelf = group ? (SHELVES.find((s) => s.id === group.id) || SHELVES[0]) : null;
   const shelfBooks = group ? group.books : [];
-  const spots = shelf ? layoutBooks(shelf, shelfBooks.length) : [];
+  const spots = shelf ? layoutBooks(shelf, shelfBooks.map((b) => isYearKey(b.ym))) : [];
   const k = boxW / 1024;
-  const draft = (books || []).find((b) => b.status === 'draft');
-  const coverOf = (b) => b.cover || ((Number(b.ym.slice(5, 7)) - 1) % 3) + 1;
+  const drafts = (books || []).filter((b) => b.status === 'draft');
+  const coverOf = (b) => b.cover || (isYearKey(b.ym) ? 1 : ((Number(b.ym.slice(5, 7)) - 1) % 3) + 1);
 
   const confirmPick = async () => {
     setSaving(true);
@@ -161,13 +167,15 @@ export default function Bookshelf() {
         </div>
       )}
 
-      {draft && (
-        <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm">
+      {drafts.map((draft) => (
+        <div key={draft.ym} className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm">
           <PencilLine className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1">{T.draftNote(lang === 'en' ? MONTH_EN(draft.ym) : Number(draft.ym.slice(5, 7)), deadlineLabel(draft.deadline, lang))}</span>
+          <span className="min-w-0 flex-1">{isYearKey(draft.ym)
+            ? T.yearDraftNote(draft.ym, deadlineLabel(draft.deadline, lang))
+            : T.draftNote(lang === 'en' ? MONTH_EN(draft.ym) : Number(draft.ym.slice(5, 7)), deadlineLabel(draft.deadline, lang))}</span>
           <Button size="sm" variant="outline" onClick={() => setOpenYm(draft.ym)}>{T.open}</Button>
         </div>
-      )}
+      ))}
 
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
@@ -214,7 +222,7 @@ export default function Bookshelf() {
               const b = shelfBooks[i];
               return (
                 <button key={b.ym} type="button" onClick={() => setOpenYm(b.ym)} title={T.bookTitle(b.ym)}
-                  className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''}`}
+                  className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''} ${isYearKey(b.ym) ? 'bk-year' : ''}`}
                   style={{ left: s.x * k, top: s.y * k, width: s.w * k, height: s.h * k }}>
                   <img src={`/bookshelf/book-${coverOf(b)}.webp`} alt="" draggable={false} />
                   <span style={{ fontSize: Math.max(5, Math.min(s.w * k * 0.55, (s.h * k * 0.5) / 3.7)) }}>{ymLabel(b.ym)}</span>
@@ -246,8 +254,10 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
 
   const load = useCallback(() => api.getBook(ym).then(({ book }) => setBook(book)).catch(() => setErr(T.loadFail)), [ym, T.loadFail]);
   useEffect(() => { load(); }, [load]);
-  const pages = useMemo(() => (book ? paginate(book.data) : []), [book]);
-  const last = pages.length - 1;
+  const pages = useMemo(() => (book ? paginateAny(book.data) : []), [book]);
+  // 一個畫面:一頁,或左右對開兩頁(年鑑的「一年的心情」)
+  const views = useMemo(() => viewsOf(pages), [pages]);
+  const last = views.length - 1;
   const go = useCallback((d) => setIdx((i) => Math.min(Math.max(0, i + d), Math.max(0, last))), [last]);
 
   useEffect(() => {
@@ -291,12 +301,13 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
     return () => { cancelled = true; };
   }, [exporting, book, ym, T.loadFail]);
 
-  const availW = Math.min(vp.w - 24, 760);
-  const availH = vp.h - 128;
-  const scale = Math.max(0.3, Math.min(availW / 420, availH / 594));
   const isDraft = book?.status === 'draft';
-  const page = pages[Math.min(idx, last)];
-  const no = idx; // 封面不算頁碼
+  const view = views[Math.min(idx, Math.max(0, last))] || [0];
+  const pageW = 420 * view.length;
+  const availW = Math.min(vp.w - 24, view.length > 1 ? 1200 : 760);
+  const availH = vp.h - 128;
+  const scale = Math.max(0.2, Math.min(availW / pageW, availH / 594));
+  const pageLabel = view.length > 1 ? `${view[0] + 1}–${view[1] + 1}` : `${view[0] + 1}`;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-black/85 text-white" style={{ paddingTop: 'var(--sat, 0px)' }}>
@@ -328,9 +339,16 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
         {!book ? (
           err ? <p className="text-sm">{err}</p> : <Loader2 className="h-6 w-6 animate-spin" />
         ) : (
-          <div style={{ width: 420 * scale, height: 594 * scale }} className="shadow-2xl">
-            <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 420, height: 594 }}>
-              <BookPage book={book} page={page} no={no} lang={lang} />
+          <div style={{ width: pageW * scale, height: 594 * scale }} className="shadow-2xl">
+            <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: pageW, height: 594, display: 'flex' }}>
+              {/* 封面不算頁碼:頁碼 = 第幾頁(從 0 起) */}
+              {view.map((pi, j) => (
+                <div key={pi} style={{ width: 420, height: 594, position: 'relative' }}>
+                  <BookPage book={book} page={pages[pi]} no={pi} lang={lang} />
+                  {/* 對開時中間的書溝陰影 */}
+                  {view.length > 1 && <div style={{ position: 'absolute', top: 0, bottom: 0, width: 26, pointerEvents: 'none', [j === 0 ? 'right' : 'left']: 0, background: `linear-gradient(${j === 0 ? 'to left' : 'to right'}, rgba(0,0,0,.16), rgba(0,0,0,0))` }} />}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -339,7 +357,7 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
       {book && (
         <div className="flex items-center justify-center gap-4 px-3 pb-4 pt-2" style={{ paddingBottom: 'calc(1rem + var(--sab, 0px))' }}>
           <button type="button" disabled={idx === 0} onClick={() => go(-1)} className="rounded-full bg-white/15 p-2 disabled:opacity-30" aria-label="prev"><ChevronLeft className="h-5 w-5" /></button>
-          <span className="min-w-[4rem] text-center text-sm tabular-nums">{T.page(idx + 1, pages.length)}</span>
+          <span className="min-w-[4rem] text-center text-sm tabular-nums">{T.page(pageLabel, pages.length)}</span>
           <button type="button" disabled={idx >= last} onClick={() => go(1)} className="rounded-full bg-white/15 p-2 disabled:opacity-30" aria-label="next"><ChevronRight className="h-5 w-5" /></button>
         </div>
       )}
@@ -365,6 +383,8 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
 function DraftEditor({ book, T, onClose, onSaved, onFinished }) {
   const [cover, setCover] = useState(book.cover || book.default_cover || 1);
   const [message, setMessage] = useState(book.message || '');
+  const yearBook = isYearKey(book.ym);
+  const max = yearBook ? YEAR_MESSAGE_MAX : MESSAGE_MAX;
   const [busy, setBusy] = useState(false);
   const [ask, setAsk] = useState(false);
   const [err, setErr] = useState('');
@@ -403,8 +423,8 @@ function DraftEditor({ book, T, onClose, onSaved, onFinished }) {
           </div>
         </div>
         <div>
-          <p className="mb-1.5 flex justify-between text-xs text-muted-foreground"><span>{T.say}</span><span>{[...message].length}/{MESSAGE_MAX}</span></p>
-          <textarea rows={3} value={message} onChange={(e) => setMessage([...e.target.value].slice(0, MESSAGE_MAX).join(''))}
+          <p className="mb-1.5 flex justify-between text-xs text-muted-foreground"><span>{yearBook ? T.sayYear : T.say}</span><span>{[...message].length}/{max}</span></p>
+          <textarea rows={yearBook ? 5 : 3} value={message} onChange={(e) => setMessage([...e.target.value].slice(0, max).join(''))}
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm" />
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}

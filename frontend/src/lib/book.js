@@ -10,6 +10,8 @@ export const COVERS = [
 export const coverSrc = (id, small = false) => `/bookshelf/covers/cover-${id}${small ? '-s' : ''}.webp`;
 export const spineColor = (id) => COVERS.find((c) => c.id === id)?.spine || COVERS[0].spine;
 export const MESSAGE_MAX = 60;
+export const YEAR_MESSAGE_MAX = 200; // 年鑑「給自己的話」
+export const isYearKey = (k) => /^\d{4}$/.test(k || '');
 
 export const ymLabel = (ym) => ym.replace('-', '.');
 export const BOARD = {
@@ -94,4 +96,38 @@ export function monthCells(ym) {
   for (let d = 1; d <= days; d += 1) cells.push({ day: d, date: `${ym}-${String(d).padStart(2, '0')}` });
   while (cells.length % 7) cells.push(null);
   return cells;
+}
+
+// ---------- 年鑑 ----------
+// 心情折線圖的高度(1 最低 ~ 5 最高),與後端 MOOD_LEVEL 相同
+export const MOOD_LEVEL = { sunny: 5, rainbow: 5, love: 5, flower: 4, cloudy: 3, exclaim: 3, question: 3, rainy: 2, storm: 1, angry: 1 };
+
+// 年鑑分頁:封面 → 年度概況(圓餅圖)→ 一年的心情(第 2、3 頁,左右對開一次看完)→ 每月一覽 → 一年的時光
+// → 每月一句話 → 紀念日與行程 → 微光拾憶(全部,自動接頁)→ 給自己的話 → 封底
+export function paginateYear(data) {
+  const year = data.ym;
+  const startM = data.since && data.since.startsWith(year) ? Number(data.since.slice(5, 7)) : 1;
+  const months = Array.from({ length: 13 - startM }, (_, i) => `${year}-${String(startM + i).padStart(2, '0')}`);
+  // 心情固定放在第 2、3 頁(偶數頁在左、奇數頁在右),打開就是左右兩頁;月份平分到兩頁(每頁最多 6 個月)
+  const half = Math.ceil(months.length / 2);
+  const pages = [{ type: 'cover' }, { type: 'y_overview' },
+    { type: 'y_mood', items: months.slice(0, half), spread: 'L' }, { type: 'y_mood', items: months.slice(half), spread: 'R' },
+    { type: 'y_months' }];
+  if (Object.keys(data.photos || {}).length) pages.push({ type: 'y_photos', items: months });
+  chunk(data.messages || [], (m) => 34 + lines(m.message, 26) * 22).forEach((items, i) => pages.push({ type: 'y_messages', items, cont: i > 0 }));
+  pages.push({ type: 'y_dates' });
+  chunk(data.posts || [], (p) => 34 + (p.title ? 20 : 0) + lines(p.content, 30) * 20)
+    .forEach((items, i) => pages.push({ type: 'posts', items, cont: i > 0 }));
+  pages.push({ type: 'y_letter' }, { type: 'back' });
+  return pages;
+}
+export const paginateAny = (data) => (data?.kind === 'year' ? paginateYear(data) : paginate(data));
+
+// 閱讀時的畫面:一般一次一頁;標了 spread L/R 的兩頁並排成一個畫面(左右對開)
+export function viewsOf(pages) {
+  const views = [];
+  for (let i = 0; i < pages.length; i += 1) {
+    if (pages[i].spread === 'L' && pages[i + 1]?.spread === 'R') { views.push([i, i + 1]); i += 1; } else views.push([i]);
+  }
+  return views;
 }

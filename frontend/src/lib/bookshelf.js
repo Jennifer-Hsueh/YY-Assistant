@@ -7,6 +7,8 @@ export const BOOK_MIN = 2;
 export const BOOK_MAX = 4;
 
 export const BOOK_RATIO = 0.435;
+export const FAT = 1.6; // 年鑑比較胖
+// 後端 backend/src/lib/shelfLayout.js 用同樣的排法判斷書櫃是否放滿(改一邊要一起改另一邊)
 
 export const SHELVES = [
   {
@@ -54,21 +56,29 @@ export function cellCapacity(cell, bookW, gap = 3) {
   return Math.min(BOOK_MAX, Math.max(1, Math.floor((cell.w + gap) / (bookW + gap))));
 }
 
-// 把 n 本書依序排進書櫃,回傳每本書的位置(圖片像素);放不下的不回傳
+// 把書依序排進書櫃,回傳每本書的位置(圖片像素);放不下的不回傳
+// books:本數,或每本是不是年鑑的陣列(true = 年鑑,寬 FAT 倍)
+// 每格從左排到右:寬度放得下、而且不超過 4 本(或該格的 cap)才放
 // 書高:有 bh 用 bh,否則約格子高的 86%;書寬依書本圖比例
-export function layoutBooks(shelf, n) {
+export function layoutBooks(shelf, books) {
+  const fats = Array.isArray(books) ? books : Array(books).fill(false);
   const out = [];
-  let left = n;
+  let i = 0;
   for (const cell of shelf.cells) {
-    if (left <= 0) break;
+    if (i >= fats.length) break;
     const h = cell.bh || Math.round(cell.h * 0.86);
     const w = cell.bw || Math.round(h * BOOK_RATIO);
     const gap = cell.cap ? 0 : 3;
-    const take = Math.min(left, cellCapacity(cell, w, gap));
-    for (let i = 0; i < take; i += 1) {
-      out.push({ x: cell.x + i * (w + gap), y: cell.floor - h, w, h });
+    const maxN = cell.cap || BOOK_MAX;
+    let used = 0;
+    let n = 0;
+    while (i < fats.length && n < maxN) {
+      const bw = fats[i] ? Math.round(w * FAT) : w;
+      const need = used + (n ? gap : 0) + bw;
+      if (n > 0 && need > cell.w) break;
+      out.push({ x: cell.x + used + (n ? gap : 0), y: cell.floor - h, w: bw, h });
+      used = need; n += 1; i += 1;
     }
-    left -= take;
   }
   return out;
 }

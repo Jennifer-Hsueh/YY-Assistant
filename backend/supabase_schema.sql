@@ -540,6 +540,9 @@ create table if not exists yy_monthly_books (
   unique (user_id, ym)
 );
 alter table yy_monthly_books enable row level security;
+-- 年鑑(2026-11-16):同一張表,ym 用 4 碼年份(例如 '2026')
+alter table yy_monthly_books drop constraint if exists yy_monthly_books_ym_check;
+alter table yy_monthly_books add constraint yy_monthly_books_ym_check check (ym ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$');
 
 -- ---------- 共用行事曆(2026-10-30) ----------
 -- 建立者+已加入的成員都能看、新增、修改、刪除裡面的行程;邀請好友加入
