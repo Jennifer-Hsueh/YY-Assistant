@@ -1,1 +1,4 @@
 *.zip
+
+# 上傳金鑰絕對不要進 repo(放在自己電腦與備份處,GitHub Actions 用 Secrets)
+*.jks

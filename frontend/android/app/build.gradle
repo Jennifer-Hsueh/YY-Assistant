@@ -24,12 +24,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // 正式版(上傳 Google Play 的 AAB):用上傳金鑰簽章。金鑰不放在 repo,由 GitHub Actions 從 Secrets 解出來,
+        // 透過環境變數告訴這裡(見 .github/workflows/android-aab.yml);沒有設定時不簽章
+        if (System.getenv("ANDROID_KEYSTORE_FILE")) {
+            release {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_FILE"))
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
+            if (System.getenv("ANDROID_KEYSTORE_FILE")) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
