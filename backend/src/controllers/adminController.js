@@ -117,7 +117,9 @@ async function overview(req, res) {
     const curMonth = taipeiToday().slice(0, 7);
     const revenue = revenueInfo(curMonth, await monthRevenue(curMonth).catch(() => 0));
     const { count: payPending } = await supabase.from('yy_payment_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    const usage = await require('../lib/usage').getUsage().catch(() => ({ missing: true }));
     return res.json({
+      usage,
       revenue,
       paymentReportsPending: payPending || 0,
       users: {

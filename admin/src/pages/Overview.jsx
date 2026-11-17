@@ -17,6 +17,37 @@ function Stat({ label, value, hint, onClick, tone }) {
 }
 
 // 測試版:名額、開放註冊、結束日(設定後自動發公告、App 顯示提醒)、結束測試;測試資料保留到正式版(要清空單一使用者到「使用者管理」)
+// Supabase 用量:資料庫與檔案,和免費方案上限比較(超過 70% 黃色、90% 紅色)
+const BUCKET_NAMES = { 'yy-community': '社群與日常時光照片', 'yy-backups': '備份檔', 'yy-payment-proofs': '匯款截圖' };
+const mb = (b) => `${(b / 1048576).toFixed(b < 10485760 ? 1 : 0)} MB`;
+function UsageCard({ usage }) {
+  if (!usage) return null;
+  if (usage.missing) {
+    return <Card className="p-5"><p className="text-sm font-medium">Supabase 用量</p><p className="mt-1 text-xs text-warn">讀不到用量：請在 Supabase 執行用量的 SQL（yy_usage）</p></Card>;
+  }
+  const row = (name, x) => {
+    const bar = x.level === 'danger' ? 'bg-danger' : x.level === 'warn' ? 'bg-warn' : 'bg-ok';
+    const tone = x.level === 'danger' ? 'text-danger' : x.level === 'warn' ? 'text-warn' : 'text-muted-foreground';
+    return (
+      <div>
+        <div className="flex justify-between text-xs"><span>{name}</span><span className={tone}>{mb(x.bytes)} / {mb(x.limit)}（{x.pct}%）</span></div>
+        <div className="mt-1 h-1.5 rounded-full bg-muted"><div className={`h-1.5 rounded-full ${bar}`} style={{ width: `${Math.min(100, x.pct)}%` }} /></div>
+      </div>
+    );
+  };
+  const files = Object.entries(usage.buckets || {}).map(([k, v]) => `${BUCKET_NAMES[k] || k} ${mb(v.bytes)}（${v.files} 個）`).join('、');
+  return (
+    <Card className="space-y-2.5 p-5">
+      <p className="text-sm font-medium">Supabase 用量（免費方案）</p>
+      {row('資料庫', usage.db)}
+      {row('檔案', usage.storage)}
+      {files && <p className="text-xs text-muted-foreground">檔案：{files}</p>}
+      {usage.level !== 'ok' && <p className={`text-xs ${usage.level === 'danger' ? 'text-danger' : 'text-warn'}`}>{usage.level === 'danger' ? '已超過 90%，請盡快升級 Supabase Pro' : '已超過 70%，接近免費方案上限，可以開始準備升級 Supabase Pro'}</p>}
+      <p className="text-xs text-muted-foreground">每月流量（上限 5 GB）這裡查不到，請到 Supabase 後台的 Usage 查看</p>
+    </Card>
+  );
+}
+
 // 每月收款提醒:網路銷售勞務每月未達 5 萬元可暫免稅籍登記;超過 4 萬元先提醒
 export function RevenueNotice({ revenue }) {
   if (!revenue) return null;
@@ -234,6 +265,7 @@ export default function Overview({ go }) {
         </div>
       </Card>
       </div>
+      <div className="mt-3"><UsageCard usage={data.usage} /></div>
     </>
   );
 }

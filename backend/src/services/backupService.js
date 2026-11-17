@@ -99,8 +99,22 @@ async function notify(ok, info) {
   const html = ok
     ? `<div style="font-family:sans-serif"><p>每週備份完成:<b>${info.path}</b>(${info.size_kb} KB,共 ${info.rows} 筆,保留最近 ${info.kept} 份)</p><table>${rows}</table></div>`
     : `<div style="font-family:sans-serif"><p style="color:#b91c1c">每週備份失敗:${String(info).replace(/[<>&]/g, '')}</p><p>請到 Render 後端紀錄查看 [backup] 開頭的訊息。</p></div>`;
+  // 順便附上 Supabase 用量;超過 70% 時主旨加上提醒
+  let usageHtml = '';
+  let usageTag = '';
   try {
-    await sendEmail({ to, subject: ok ? `[YY手帳] 每週備份完成 ${stamp()}` : `[YY手帳] 每週備份失敗 ${stamp()}`, html });
+    const U = require('../lib/usage');
+    const u = await U.getUsage();
+    if (!u.missing) {
+      const line = (name, x) => `<li style="color:${x.level === 'danger' ? '#b91c1c' : x.level === 'warn' ? '#b45309' : 'inherit'}">${name}:${U.fmtMb(x.bytes)} / ${U.fmtMb(x.limit)}(${x.pct}%)</li>`;
+      usageHtml = `<p>Supabase 用量:</p><ul>${line('資料庫', u.db)}${line('檔案(照片、備份)', u.storage)}</ul>`;
+      if (u.level !== 'ok') usageTag = ` ⚠ 用量 ${Math.max(u.db.pct, u.storage.pct)}%`;
+    }
+  } catch (err) {
+    console.error('[backup] usage failed', err.message);
+  }
+  try {
+    await sendEmail({ to, subject: (ok ? `[YY手帳] 每週備份完成 ${stamp()}` : `[YY手帳] 每週備份失敗 ${stamp()}`) + usageTag, html: html + usageHtml });
   } catch (err) {
     console.error('[backup] notify email failed', err.message);
   }

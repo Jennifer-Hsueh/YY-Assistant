@@ -541,6 +541,16 @@ create table if not exists yy_monthly_books (
 );
 alter table yy_monthly_books enable row level security;
 -- 年鑑(2026-11-16):同一張表,ym 用 4 碼年份(例如 '2026')
+-- 後台用量(2026-11-17):資料庫大小與各 bucket 檔案大小;只給後端(service_role)呼叫
+create or replace function yy_usage() returns json language sql security definer set search_path = public, storage as $$
+  select json_build_object(
+    'db_bytes', pg_database_size(current_database()),
+    'buckets', coalesce((select json_object_agg(bucket_id, json_build_object('bytes', s, 'files', n))
+      from (select bucket_id, sum(coalesce((metadata->>'size')::bigint, 0)) as s, count(*) as n from storage.objects group by bucket_id) t), '{}'::json)
+  );
+$$;
+revoke all on function yy_usage() from public, anon, authenticated;
+grant execute on function yy_usage() to service_role;
 alter table yy_monthly_books drop constraint if exists yy_monthly_books_ym_check;
 alter table yy_monthly_books add constraint yy_monthly_books_ym_check check (ym ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$');
 
