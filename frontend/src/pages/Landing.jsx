@@ -158,6 +158,79 @@ const COPY = {
     },
     back: { kicker: 'THE END — AND YOUR FIRST PAGE', title: ['You’ve read this one.', 'Now write your own.'] },
   },
+  ja: {
+    docTitle: 'YY手帳｜毎日を、一冊の本にていねいに',
+    langSwitch: '日本語',
+    toToc: '‹ 目次へ',
+    login: 'ログイン',
+    cta: '無料ではじめる',
+    ctaFull: 'ベータ版は満員です',
+    betaLine: (limit, remaining) => `ベータ版：${limit} 名まで参加できます（残り ${remaining} 名）`,
+    betaFullLine: (limit) => `ベータ版の募集枠 ${limit} 名は満員になりました。ご関心ありがとうございます`,
+    foundingLine: '🦫 ベータ期間中に 5 日使うと、正式リリース後に全機能を 1 年間プレゼント',
+    cover: { kicker: 'A NOTEBOOK FOR EVERY DAY', title: ['YY', '手帳'], tag: ['毎日を、', '一冊の本にていねいに'], by: 'YY手帳', open: 'ひらく →', aria: 'この本をひらく' },
+    prev: '← 前へ',
+    next: '次へ →',
+    coverLabel: '表紙',
+    backLabel: '裏表紙',
+    zoom: '拡大',
+    zoomAria: (c) => `拡大：${c}`,
+    close: '閉じる',
+    tocRun: '目次',
+    tocTitle: '目次',
+    appendixMark: '付',
+    treeAlt: 'ビーバーのツリーハウス',
+    preface: {
+      run: 'はじめに',
+      title: 'ていねいに暮らすあなたへ',
+      intro: 'この小さな手帳には、あなたに寄りそうものがいくつか入っています。',
+      feats: ['家計簿：お金の行き先がはっきりわかる', 'カレンダー：約束も記念日も忘れない', 'To Do とひとことレター：細かな用事と伝えたい言葉を', 'ビーバーのおうち：気分が窓の外の天気に', '毎月一冊の本：ツリーハウスの本棚へ'],
+      paras: [
+        '毎日きちんと書かなくても大丈夫。忙しい日は少しだけ、疲れた日は今日の気分をひとつ選ぶだけで十分です。',
+        'ここに書いたことが、批判されたり責められたりすることはありません。うれしいことも、悲しいことも、口に出せないことも、安心して書いてください。ここは、あなただけの秘密の場所です。',
+        'あなたはもう十分がんばっています。あとは、この手帳がゆっくり受け止めます。',
+      ],
+    },
+    chapters: [
+      { run: '第一章', title: '家計簿をすっきりと', paras: ['日々の生活、旅行、家族のお金。家計簿を何冊にも分けて記録できます。口座は銀行ごとに並び、総資産がひと目でわかります。クレジットカードは「マイナスを許可」にできます。', '総予算とカテゴリ別の予算を決めておけば、使いすぎる前にお知らせします。家賃やサブスクなど毎月決まった支出は、繰り返し記録にしておけば自動で記帳されます。', '家族と使うなら共有家計簿を。誰がどれを記録したか、すぐにわかります。'], figs: [['ledger', '家計簿'], ['shared', '共有家計簿']] },
+      { run: '第二章', title: '予定と記念日', paras: ['月表示も週表示も見やすく、何日も続く旅行も入れられます。繰り返しの予定には時間を設定でき、時間になったらお知らせします。', '記念日はカウントダウンと周年を表示。友だちの誕生日は、ビーバーが前もって教えてくれます。', '家族みんなの予定は、ひとつの共有カレンダーにまとめられます。共有の予定に友だちを招待することもできます。'], figs: [['calendar', 'カレンダー・月表示']] },
+      { run: '第三章', title: 'To Do とひとことレター', paras: ['ホームの「墨箋メモ」は、思いついたときに書けるやることリスト。一行書いて Enter で追加、終わったらチェックを入れます。', '「ひとことレター」は、大切な人に送るひとこと。25 文字まで書けます。相手がアプリを開くと、そっと飛び出します。返事を書く、受け取る、破る、を選べます。', '「晩ごはんはおごるね」「家に着いたら教えて」。短くても、伝えることが大切な言葉があります。'], figs: [['home2', '墨箋メモとひとことレター'], ['slip', 'レターが届いたとき']] },
+      { run: '第四章', title: '毎月、一冊の本に', paras: ['毎月 1 日、ビーバーが先月を一冊の月刊ブックにまとめます。今月の概要、カレンダー、気分のカレンダー、写真、そしてあなたが書いた投稿。', '7 日までに表紙を選び、その月へのひとことを書くと完成して本棚に並びます。A5 サイズの PDF でダウンロードすることもできます。', '毎年 1 月には年鑑も。一年の収支の円グラフ、12 か月の気分、そして自分へのメッセージが入ります。'], figs: [['bookshelf', 'ツリーハウスの本棚']] },
+      { run: '第五章', title: 'ビーバーのおうちと日々のひとコマ', paras: ['ビーバーのおうちを開くと、今日の気分が窓の外の天気になります。晴れ、くもり、それとも小雨。', '毎日一枚の写真とひとことを残せば、それが「日々のひとコマ」。写真はビーバーのおうちの写真立てに飾られ、月刊ブックにも入ります。', '壁のカレンダー、机のやること、すみの本棚をタップして、今日がどんな一日だったか見てみましょう。'], figs: [['room', 'ビーバーのおうち'], ['moments', '日々のひとコマ']] },
+      { run: '第六章', title: 'やさしいコミュニティ', paras: ['「晴れと雨」で今日の気持ちを話すと、ビーバーのハグとみんなの応援が届きます。「ひかりのかけら」には、毎日の小さなしあわせを残しましょう。', '投稿ごとに、匿名・友だちのみ・自分だけ、を選べます。'], figs: [['community', '晴れと雨']] },
+    ],
+    plans: {
+      run: '付録',
+      title: 'プランと料金',
+      head: ['プラン', '月払い', '年払い'],
+      free: '無料',
+      rows: [
+        ['ベーシック', '家計簿かカレンダーのどちらか。毎月 1 回切り替え可'],
+        ['アドバンス A', '家計簿＋カレンダーの基本機能'],
+        ['アドバンス B', '家計簿＋繰り返し、通知、今日の気分、エクスポート'],
+        ['アドバンス C', 'カレンダー＋繰り返し、通知、今日の気分、エクスポート'],
+        ['アドバンス＋コミュニティ', 'A／B／C にコミュニティを追加'],
+        ['コンプリート', 'すべての機能（コミュニティ、日々のひとコマを含む）'],
+      ],
+      unit: '単位：台湾ドル（TWD）。年払い = 月額 × 12 − 100。',
+      notesRun: 'プランについて',
+      notes: [
+        ['最初の 3 か月は無料', '登録から 3 か月間、すべての機能を使えます。終了の 30 日前、10 日前、3 日前と当日にお知らせします。'],
+        ['そのあとも無料で使えます', '無料期間が終わるとベーシックになります。家計簿かカレンダーのどちらかを選び、毎月 1 回切り替えられます。データは消えず、アップグレードするとすぐに戻ります。'],
+        ['どのプランにもあるもの', '複数の家計簿、共有家計簿、共有カレンダー、記念日、友だち、ひとことレター、本棚、ビーバーのおうち。'],
+        ['自動で引き落とされません', 'お支払いは銀行振込です。「設定 → マイプラン」から振込を報告すると、1〜2 営業日で有効になります。期限後も 7 日間の猶予期間があります。'],
+      ],
+    },
+    colophon: {
+      name: 'YY手帳 Assistant',
+      lines: ['ウェブ版：yy-assistant-front.onrender.com', 'iPhone：Safari で開き、「共有」→「ホーム画面に追加」', 'Android：Chrome で開き、メニュー →「アプリをインストール」。Google Play にも近日公開', 'お問い合わせ：happybusybeaver@gmail.com'],
+      terms: '利用規約',
+      privacy: 'プライバシーポリシー',
+      deleteAcc: 'アカウントの削除',
+      copy: '© 2026 YY手帳',
+    },
+    back: { kicker: 'THE END — AND YOUR FIRST PAGE', title: ['読み終えたら、', '次はあなたの番です。'] },
+  },
 };
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
@@ -172,7 +245,8 @@ export default function Landing() {
   const { language } = useLanguage();
   const beta = useBeta();
   const full = !!beta?.full;
-  const en = language !== 'zh';
+  const en = language !== 'zh'; // 截圖：中文以外先用英文截圖
+  const latin = language === 'en'; // 英文才把章名改成 CHAPTER
   const T = COPY[language] || COPY.en;
   const shot = (name) => `/landing/book/${en ? 'en/' : ''}${name}.webp`;
 
@@ -205,6 +279,16 @@ export default function Landing() {
     }
     return () => { document.title = 'YY手帳'; };
   }, []);
+  useEffect(() => {
+    // 日文版用日本的明朝體(漢字字形才是日本的寫法)
+    const id = 'landing-book-font-ja';
+    if (language !== 'ja' || document.getElementById(id)) return;
+    const l = document.createElement('link');
+    l.id = id;
+    l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;900&display=swap';
+    document.head.appendChild(l);
+  }, [language]);
   useEffect(() => {
     document.title = T.docTitle;
     document.documentElement.lang = HTML_LANG[language] || 'zh-Hant';
@@ -278,8 +362,8 @@ export default function Landing() {
     // 2～7:各章(左頁文字、右頁畫面)
     ...T.chapters.map((c, i) => [
       <div key="l" className="yb-page l">
-        <div className="yb-run">{en ? '\u00a0' : c.run}</div>
-        <span className="yb-chap">{en ? c.run : `CHAPTER ${ROMAN[i]}`}</span>
+        <div className="yb-run">{latin ? '\u00a0' : c.run}</div>
+        <span className="yb-chap">{latin ? c.run : `CHAPTER ${ROMAN[i]}`}</span>
         <h2 className="yb-h">{c.title}</h2>
         {c.paras.map((p) => <p key={p} className="yb-body">{p}</p>)}
         <span className="yb-folio">{3 + i * 2}</span>
@@ -378,7 +462,7 @@ export default function Landing() {
               <span className="yb-cover-in">
                 <span>
                   <span className="num yb-cover-kicker" style={{ display: 'block' }}>{T.cover.kicker}</span>
-                  <span className={`serif yb-cover-title ${en ? 'is-en' : ''}`} style={{ display: 'block' }}>{T.cover.title[0]}<br />{T.cover.title[1]}</span>
+                  <span className={`serif yb-cover-title ${latin ? 'is-en' : ''}`} style={{ display: 'block' }}>{T.cover.title[0]}<br />{T.cover.title[1]}</span>
                 </span>
                 <span>
                   <span className="serif yb-cover-tag" style={{ display: 'block' }}>{T.cover.tag[0]}<br />{T.cover.tag[1]}</span>

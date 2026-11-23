@@ -134,6 +134,17 @@
 @keyframes yb-turnb { from { transform: perspective(1800px) rotateY(9deg) translateX(-30px); opacity: .2; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .yb-turn-f, .yb-turn-b { animation: none; } .yb-zoom { transition: none; } }
 
+/* 日文版:日本的明朝體與黑體、段落縮一字 */
+.ybook:lang(ja) { font-family: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif; }
+.ybook:lang(ja) .serif, .ybook:lang(ja) .yb-brand b, .ybook:lang(ja) .yb-h, .ybook:lang(ja) .yb-body, .ybook:lang(ja) .yb-toc,
+.ybook:lang(ja) .yb-feat li, .ybook:lang(ja) .yb-cap, .ybook:lang(ja) .yb-ptab, .ybook:lang(ja) .yb-ptab td.num, .ybook:lang(ja) .yb-pnote,
+.ybook:lang(ja) .yb-colo { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
+.ybook:lang(ja) .yb-body + .yb-body { text-indent: 1em; }
+.ybook:lang(ja) .yb-body { line-height: 2; }
+.ybook:lang(ja) .yb-pref .yb-body { font-size: 15px; line-height: 1.85; }
+.ybook:lang(ja) .yb-pnote dd { font-size: 14.5px; line-height: 1.8; }
+.ybook:lang(ja) .yb-h { font-size: 34px; }
+
 @media (max-width: 760px) {
   .yb-page { padding: 44px 24px 56px; height: auto; min-height: 560px; }
   .yb-page.l .yb-folio { left: 24px; }
