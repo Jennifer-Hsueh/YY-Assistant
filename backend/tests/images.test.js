@@ -97,7 +97,8 @@ const call = async (fn, { user = 'U', params = {}, query = {}, body = {} } = {})
 };
 const U = '11111111-1111-4111-8111-111111111111';
 const V = '22222222-2222-4222-8222-222222222222';
-const img = (n) => 'data:image/webp;base64,' + Buffer.alloc(n, 1).toString('base64');
+// 假的 WebP:開頭要有 RIFF....WEBP(後端會檢查檔案內容)
+const img = (n) => { const b = Buffer.alloc(Math.max(n, 16), 1); b.write('RIFF', 0, 'ascii'); b.write('WEBP', 8, 'ascii'); return 'data:image/webp;base64,' + b.toString('base64'); };
 (async () => {
   db.yy_users.push({ id: U, email: 'u@x', username: 'U', role: 'user' }, { id: V, email: 'v@x', role: 'user' });
   let r = await call(c.uploadImage, { user: U, body: { image: img(1000), thumb: img(100) } });
@@ -105,6 +106,7 @@ const img = (n) => 'data:image/webp;base64,' + Buffer.alloc(n, 1).toString('base
   const k1 = r.json.image.key;
   const k2 = (await call(c.uploadImage, { user: U, body: { image: img(1000), thumb: img(100) } })).json.image.key;
   r = await call(c.uploadImage, { user: U, body: { image: 'data:image/png;base64,AAAA', thumb: img(10) } }); ok(r.status === 400, 'png rejected');
+  r = await call(c.uploadImage, { user: U, body: { image: 'data:image/webp;base64,' + Buffer.from('<svg onload=alert(1)>').toString('base64'), thumb: img(10) } }); ok(r.status === 400, 'fake webp (not really an image) rejected');
   r = await call(c.uploadImage, { user: U, body: { image: img(2 * 1024 * 1024), thumb: img(10) } }); ok(r.status === 400, 'too big rejected');
   const kv = (await call(c.uploadImage, { user: V, body: { image: img(500), thumb: img(50) } })).json.image.key;
 

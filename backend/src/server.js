@@ -65,10 +65,20 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString(), schema: sc.ok === null ? 'checking' : sc.ok ? 'ok' : 'missing' });
 });
 
+// 排程用的金鑰檢查:網址 ?key= 或標頭 X-Cron-Key 都可以;用固定時間比對,避免被一個字一個字猜出來
+function cronKeyOk(req) {
+  const secret = process.env.CRON_SECRET;
+  const given = String(req.get('x-cron-key') || req.query.key || '');
+  if (!secret || !given) return false;
+  const a = require('crypto').createHash('sha256').update(given).digest();
+  const b = require('crypto').createHash('sha256').update(secret).digest();
+  return require('crypto').timingSafeEqual(a, b);
+}
+
 // Called daily by cron-job.org so recurring items run even if the 08:00 tick
 // was missed while the instance was asleep. Protected by CRON_SECRET.
 app.get('/cron/recurring', async (req, res) => {
-  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+  if (!cronKeyOk(req)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   try {
@@ -108,7 +118,7 @@ app.get('/cron/recurring', async (req, res) => {
 
 // 行程提醒:建議在 cron-job.org 設定每 5 分鐘呼叫一次(同時讓伺服器保持清醒)
 app.get('/cron/event-reminders', async (req, res) => {
-  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+  if (!cronKeyOk(req)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   try {
@@ -122,7 +132,7 @@ app.get('/cron/event-reminders', async (req, res) => {
 
 // 每週自動備份:建議在 cron-job.org 設定每週一次(例如週日 03:10 台灣時間)
 app.get('/cron/backup', async (req, res) => {
-  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+  if (!cronKeyOk(req)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   try {

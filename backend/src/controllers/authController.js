@@ -7,7 +7,7 @@ const supabase = require('../config/supabase');
 const { TERMS_VERSION } = require('../lib/terms');
 const { betaStatus } = require('../lib/beta');
 const { sendPasswordResetEmail, sendEmail } = require('../services/emailService');
-const { forgetUserStatus } = require('../middleware/auth');
+const { forgetUserStatus, pwVersion } = require('../middleware/auth');
 const { removeUserFolder } = require('../services/communityImages');
 
 const SALT_ROUNDS = 10;
@@ -17,9 +17,10 @@ const RESET_TOKEN_TTL_MINUTES = 30;
 const EMAIL_RE = /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/;
 const isValidEmail = (v) => typeof v === 'string' && v.length <= 254 && EMAIL_RE.test(v);
 
-function signToken(user) {
+// passwordHash:放密碼版本(pv),改密碼後舊憑證失效
+function signToken(user, passwordHash) {
   return jwt.sign(
-    { id: user.id, email: user.email },
+    { id: user.id, email: user.email, pv: pwVersion(passwordHash) || undefined },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
@@ -74,7 +75,7 @@ async function register(req, res) {
       console.error('[authController.register] seedDefaults', e.message);
     }
 
-    const token = signToken(user);
+    const token = signToken(user, password_hash);
     return res.status(201).json({ user, token });
   } catch (err) {
     console.error('[authController.register]', err);
@@ -115,7 +116,7 @@ async function login(req, res) {
       .update({ last_active_at: new Date().toISOString() })
       .eq('id', user.id);
 
-    const token = signToken(user);
+    const token = signToken(user, user.password_hash);
     return res.json({
       user: { id: user.id, email: user.email },
       token,
@@ -214,6 +215,7 @@ async function resetPassword(req, res) {
       .update({ password_hash })
       .eq('id', user.id);
     if (updateErr) throw updateErr;
+    forgetUserStatus(user.id); // 重設後,所有裝置上的舊登入憑證失效
 
     // Mark the token used so it can't be replayed.
     await supabase
@@ -250,7 +252,9 @@ async function changePassword(req, res) {
     const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     const { error: upErr } = await supabase.from('yy_users').update({ password_hash }).eq('id', req.user.id);
     if (upErr) throw upErr;
-    return res.json({ message: 'Password changed' });
+    // 其他裝置的登入憑證失效;這台裝置換一張新的
+    forgetUserStatus(req.user.id);
+    return res.json({ message: 'Password changed', token: signToken({ id: req.user.id, email: req.user.email }, password_hash) });
   } catch (err) {
     console.error('[authController.changePassword]', err);
     return res.status(500).json({ error: '修改密碼失敗，請稍後再試' });
@@ -288,7 +292,7 @@ async function changeEmail(req, res) {
       if (upErr.code === '23505') return res.status(409).json({ error: '這個 Email 已經註冊過了' });
       throw upErr;
     }
-    return res.json({ user: updated, token: signToken(updated) });
+    return res.json({ user: updated, token: signToken(updated, user.password_hash) });
   } catch (err) {
     console.error('[authController.changeEmail]', err);
     return res.status(500).json({ error: '修改 Email 失敗，請稍後再試' });

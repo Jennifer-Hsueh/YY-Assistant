@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
@@ -11,6 +12,7 @@ export default function ChangePasswordCard({ t }) {
   const [form, setForm] = useState({ current: '', next: '', confirm: '' });
   const [status, setStatus] = useState(null); // { ok, text }
   const [saving, setSaving] = useState(false);
+  const { user, updateUser } = useAuth();
 
   async function submit(e) {
     e.preventDefault();
@@ -19,7 +21,9 @@ export default function ChangePasswordCard({ t }) {
     setSaving(true);
     setStatus(null);
     try {
-      await api.changePassword(form.current, form.next);
+      const r = await api.changePassword(form.current, form.next);
+      // 改密碼後其他裝置會被登出;這台裝置換成新的登入憑證
+      if (r?.token && user) updateUser(user, r.token);
       setForm({ current: '', next: '', confirm: '' });
       setStatus({ ok: true, text: t('pw_changed') });
       setOpen(false);

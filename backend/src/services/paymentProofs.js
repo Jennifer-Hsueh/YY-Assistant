@@ -22,7 +22,12 @@ async function ensureBucket() {
 function parseDataUrl(s) {
   const m = /^data:(image\/(?:webp|jpeg));base64,([A-Za-z0-9+/=]+)$/.exec(String(s || ''));
   if (!m) return null;
-  return { type: m[1], buf: Buffer.from(m[2], 'base64') };
+  const buf = Buffer.from(m[2], 'base64');
+  // 檢查檔案內容真的是 JPEG／WebP(不只看宣稱的類型)
+  const isJpeg = buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  const isWebp = buf.length > 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+  if (m[1] === 'image/jpeg' ? !isJpeg : !isWebp) return null;
+  return { type: m[1], buf };
 }
 
 async function uploadProof(userId, dataUrl) {

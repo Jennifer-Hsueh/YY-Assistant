@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const supabase = require('../config/supabase');
 const { computeEntitlements, has } = require('../lib/entitlements');
 const { withBeta, getBeta } = require('../lib/beta');
@@ -17,6 +18,10 @@ function touchActiveDay(userId) {
   supabase.from('yy_active_days').upsert({ user_id: userId, day }, { onConflict: 'user_id,day', ignoreDuplicates: true })
     .then(({ error }) => { if (error) touchedDay.delete(userId); }, () => touchedDay.delete(userId));
 }
+
+// 密碼版本:密碼雜湊的指紋放進登入憑證(pv);改密碼或重設密碼後,舊的憑證(其他裝置)立刻失效
+// (只放雜湊的雜湊前 12 碼,看不出密碼;沒有 pv 的舊憑證照常可用到過期)
+const pwVersion = (hash) => (hash ? crypto.createHash('sha256').update(String(hash)).digest('hex').slice(0, 12) : null);
 
 function forgetUserStatus(userId) {
   statusCache.delete(userId);
@@ -38,7 +43,7 @@ async function loadStatus(userId) {
     .maybeSingle();
   // 查詢失敗(例如欄位還沒建立)時不擋人,也不快取
   if (error) throw new Error(error.message);
-  const entry = { at: Date.now(), exists: !!data, disabled: !!data?.is_disabled, row: data ? entitlementRow(data) : null };
+  const entry = { at: Date.now(), exists: !!data, disabled: !!data?.is_disabled, pv: pwVersion(data?.password_hash), row: data ? entitlementRow(data) : null };
   statusCache.set(userId, entry);
   if (data && !data.is_disabled) {
     touchActiveDay(userId);
@@ -75,6 +80,7 @@ async function requireAuth(req, res, next) {
     const status = await loadStatus(decoded.id);
     if (!status.exists) return res.status(401).json({ error: 'Invalid or expired token' });
     if (status.disabled) return res.status(401).json({ error: '帳號已停用', code: 'ACCOUNT_DISABLED' });
+    if (decoded.pv && status.pv && decoded.pv !== status.pv) return res.status(401).json({ error: 'Invalid or expired token' });
     if (status.row) req.ent = withBeta(computeEntitlements(status.row));
     getBeta().catch(() => {}); // 背景更新測試版設定(有快取)
   } catch (err) {
@@ -121,4 +127,4 @@ function writeRequires(...anyOf) {
   return (req, res, next) => (req.method === 'GET' ? next() : check(req, res, next));
 }
 
-module.exports = { requireAuth, requireAdmin, forgetUserStatus, requireFeature, writeRequires, planRequired };
+module.exports = { requireAuth, requireAdmin, forgetUserStatus, requireFeature, writeRequires, planRequired, pwVersion };
