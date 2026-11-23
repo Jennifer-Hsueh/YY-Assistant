@@ -15,6 +15,7 @@ const COPY = {
   zh: {
     docTitle: 'YY手帳 Assistant｜把每一天，好好收進一本書裡',
     langSwitch: 'EN',
+    toToc: '‹ 回目錄頁',
     login: '登入',
     cta: '免費開始',
     ctaFull: '測試名額已滿',
@@ -87,6 +88,7 @@ const COPY = {
   en: {
     docTitle: 'YY Assistant | Every day, kept neatly in a book',
     langSwitch: '中文',
+    toToc: '‹ Contents',
     login: 'Log in',
     cta: 'Start free',
     ctaFull: 'Beta is full',
@@ -349,7 +351,10 @@ export default function Landing() {
   return (
     <div className="ybook" lang={COPY[language] ? HTML_LANG[language] : 'en'}>
       <header className="yb-head">
-        <button type="button" className="yb-brand" onClick={() => go(0)} aria-label="YY手帳"><b>YY手帳</b><i className="num">Assistant</i></button>
+        <div className="yb-headl">
+          <button type="button" className="yb-btn yb-totoc" onClick={() => go(1)} disabled={page === 1} style={page === 1 ? { visibility: 'hidden' } : undefined}>{T.toToc}</button>
+          <button type="button" className="yb-brand" onClick={() => go(0)} aria-label="YY手帳"><b>YY手帳</b><i className="num">Assistant</i></button>
+        </div>
         <nav className="yb-nav">
           <LanguageMenu className="yb-btn" style={{ border: 0, background: 'none', padding: '0 8px', color: '#C9B994' }} />
           <Link to="/login" className="yb-btn">{T.login}</Link>
