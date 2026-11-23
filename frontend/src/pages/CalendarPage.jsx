@@ -25,11 +25,16 @@ const hhmm = (iso) => { const d = new Date(iso); return `${String(d.getHours()).
 const isMidnight = (iso) => hhmm(iso) === '00:00';
 const startOfWeek = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
 
-function pastelForDate(dateKey) {
-  // 顏色定義在 index.css(--pastel-1~6),石墨灰主題會自動換成灰階
-  let hash = 0;
-  for (let i = 0; i < dateKey.length; i++) hash = (hash * 31 + dateKey.charCodeAt(i)) % 6;
-  return `var(--pastel-${(Math.abs(hash) % 6) + 1})`;
+// 月曆格子裡的記事:用記事顏色的淡色當底(約兩成濃度),深色主題也看得清楚
+function tint(color, alpha = 0.22) {
+  const c = String(color || '#9CA3AF').trim();
+  let m = /^#([0-9a-f]{3})$/i.exec(c);
+  const hex = m ? m[1].split('').map((x) => x + x).join('') : (/^#([0-9a-f]{6})$/i.exec(c) || [])[1];
+  if (hex) {
+    const n = parseInt(hex, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+  }
+  return `color-mix(in srgb, ${c} ${Math.round(alpha * 100)}%, transparent)`;
 }
 
 const emptyFilters = { from: '', to: '', category: '', keyword: '' };
@@ -606,25 +611,22 @@ export default function CalendarPage() {
               const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const dayEvents = eventsByDay[dateKey] || [];
               const isSelected = selectedDay === dateKey;
-              const hasEvents = dayEvents.length > 0 || !!annivByDay[dateKey];
               return (
                 <button
                   type="button"
                   key={idx}
                   onClick={() => handleDayClick(dateKey)}
-                  className={`flex min-h-14 flex-col md:min-h-20 items-center gap-0.5 rounded-md py-1 text-xs ${isSelected ? 'ring-1 ring-primary' : 'hover:bg-muted/50'}`}
-                  style={hasEvents ? { backgroundColor: pastelForDate(dateKey) } : undefined}
+                  className={`flex min-h-14 flex-col md:min-h-20 items-center gap-0.5 rounded-md px-0.5 py-1 text-xs ${isSelected ? 'ring-1 ring-primary' : 'hover:bg-muted/50'}`}
                 >
                   <span>{day}</span>
                   {(annivByDay[dateKey] || []).slice(0, 1).map((a) => (
-                    <span key={a.id} title={a.title} className="flex w-full items-center gap-0.5 truncate px-0.5 text-xs text-black">
+                    <span key={a.id} title={a.title} className="flex w-full items-center gap-0.5 truncate px-0.5 text-xs text-foreground">
                       <AnnivIcon icon={a.icon} className="h-3.5 w-3.5 text-[10px]" />
                       <span className="truncate">{a.title}</span>
                     </span>
                   ))}
                   {dayEvents.slice(0, (annivByDay[dateKey] || []).length ? 1 : 2).map((ev) => (
-                    <span key={ev.id} title={ev.title} className="flex w-full items-center gap-1 truncate px-1 text-xs text-black">
-                      <span className="ml-0.5 h-[7.2px] w-[7.2px] shrink-0 rounded-full" style={{ backgroundColor: eventColor(ev) }} />
+                    <span key={ev.id} title={ev.title} className="flex w-full items-center truncate rounded-[4px] px-1 py-px text-xs text-foreground" style={{ backgroundColor: tint(eventColor(ev)), boxShadow: `inset 2px 0 0 ${eventColor(ev)}` }}>
                       <span className="truncate pl-0.5">{ev.source === 'google' ? '📅' : ''}{ev.recurring ? '🔁' : ''}{ev.title}</span>
                     </span>
                   ))}

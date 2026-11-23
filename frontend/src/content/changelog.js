@@ -1,6 +1,8 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-20', short: ['月曆記事上色', 'Colored events'], detail: ['月曆上的記事改用分類顏色當底色，一眼看出是哪一類。', 'Events on the month view now use their category color as a background.'] },
+  { date: '2026-11-20', short: ['介紹頁變成一本書', 'A book-style intro'], detail: ['網站介紹改成一本可以翻頁的小書，畫面可以點開放大。', 'The website intro is now a little book you can page through.'] },
   { date: '2026-11-19', short: ['帳號更安全', 'Safer account'], detail: ['修改或重設密碼後，其他裝置會自動登出。', 'Changing or resetting your password now signs out your other devices.'] },
   { date: '2026-11-16', short: ['資料保留到正式版', 'Data carries over'], detail: ['測試期間的資料會保留到正式版，不用重新開始。', 'Everything you record in the beta carries over to the full release.'] },
   { date: '2026-11-16', short: ['餘額不足提醒', 'Balance check'], detail: ['記帳會讓帳戶變負數時會提醒且無法儲存；信用卡可勾「允許負數」。', 'Entries that would make an account negative are blocked; tick “Allow negative” for cards.'] },
