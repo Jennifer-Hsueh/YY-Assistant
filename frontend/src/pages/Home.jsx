@@ -50,8 +50,10 @@ export default function Home() {
     api.listAnniversaries().then((d) => {
       const list = [
         ...d.anniversaries.map((a) => {
-          const en = t('home_date_locale').startsWith('en');
-          const n = a.years > 0 ? (a.show_age ? (en ? ` (age ${a.years})` : `（${a.years} 歲）`) : a.show_years ? (en ? ` (${a.years} yrs)` : `（${a.years} 週年）`) : '') : '';
+          const loc = t('home_date_locale');
+          const en = loc.startsWith('en');
+          const ja = loc.startsWith('ja');
+          const n = a.years > 0 ? (a.show_age ? (en ? ` (age ${a.years})` : ja ? `（${a.years} 歳）` : `（${a.years} 歲）`) : a.show_years ? (en ? ` (${a.years} yrs)` : ja ? `（${a.years} 周年）` : `（${a.years} 週年）`) : '') : '';
           return { key: `a${a.id}`, icon: <AnnivIcon icon={a.icon} className="h-5 w-5" />, title: `${a.title}${n}`, days: a.days_left };
         }),
         ...d.birthdays.map((b) => ({ key: `b${b.id}`, icon: '🎂', title: b.name || '—', days: b.days_left })),

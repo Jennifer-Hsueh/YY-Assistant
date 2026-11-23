@@ -39,7 +39,7 @@ export function beaverWords(data, lang = 'zh') {
   const c = data.counts || {};
   const top = moodRank(data.moods)[0];
   const month = Number(data.ym.slice(5, 7));
-  if (lang === 'en') {
+  if (lang !== 'zh') {
     const parts = [];
     const did = [c.tx ? `logged ${c.tx} entries` : null, c.events ? `planned ${c.events} events` : null].filter(Boolean);
     if (did.length) parts.push(`This month you ${did.join(' and ')}.`);

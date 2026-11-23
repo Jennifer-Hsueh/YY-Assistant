@@ -652,7 +652,7 @@ export default function CalendarPage() {
                   // 這一天是第幾週年/幾歲(看的是哪一年就算哪一年)
                   const n = a.year_known && a.recurring ? Number(selectedDay.slice(0, 4)) - Number(a.date.slice(0, 4)) : 0;
                   if (n <= 0 || !(a.show_age || a.show_years)) return null;
-                  return <span className="text-xs text-muted-foreground">{a.show_age ? (language === 'en' ? `age ${n}` : `${n} 歲`) : (language === 'en' ? `${n} yrs` : `${n} 週年`)}</span>;
+                  return <span className="text-xs text-muted-foreground">{a.show_age ? (language !== 'zh' ? `age ${n}` : `${n} 歲`) : (language !== 'zh' ? `${n} yrs` : `${n} 週年`)}</span>;
                 })()}
               </Link>
             ))}
@@ -900,7 +900,7 @@ export default function CalendarPage() {
                 </div>
                 {confirmDelete && (
                   <div className="space-y-2 rounded-md border border-border p-2">
-                    <p className="text-sm">{isMember ? (language === 'en' ? 'Leave this event? It will be removed from your calendar.' : '確定不參加這個行程？行程會從你的行事曆移除。') : activeEvent?.shared ? (language === 'en' ? 'Delete this event for everyone?' : '刪除後，所有參與者的這個行程都會一起刪除。') : t('cal_confirm_delete_title')}</p>
+                    <p className="text-sm">{isMember ? (language !== 'zh' ? 'Leave this event? It will be removed from your calendar.' : '確定不參加這個行程？行程會從你的行事曆移除。') : activeEvent?.shared ? (language !== 'zh' ? 'Delete this event for everyone?' : '刪除後，所有參與者的這個行程都會一起刪除。') : t('cal_confirm_delete_title')}</p>
                     <div className="flex gap-2">
                       <Button type="button" variant="destructive" className="flex-1" onClick={handleConfirmDelete}>{t('tx_confirm_delete')}</Button>
                       <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>{t('cancel')}</Button>

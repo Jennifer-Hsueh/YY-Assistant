@@ -57,7 +57,7 @@ export function yearsLabel(a, T) {
 
 export default function Anniversaries() {
   const { t, language } = useLanguage();
-  const T = TEXT[language] || TEXT.zh;
+  const T = TEXT[language] || TEXT.en;
   const { can } = usePlan();
   const writable = can('calendar');
   const [data, setData] = useState(null);

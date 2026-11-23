@@ -14,7 +14,7 @@ const pad = (n) => String(n).padStart(2, '0');
 // 設定頁:生日(月日)、公開給好友、好友生日提醒
 export default function BirthdayCard({ profile, onSaved }) {
   const { language } = useLanguage();
-  const T = TEXT[language] || TEXT.zh;
+  const T = TEXT[language] || TEXT.en;
   const [m, d] = (profile?.birthday_md || '-').split('-');
   const [month, setMonth] = useState(m || '');
   const [day, setDay] = useState(d || '');

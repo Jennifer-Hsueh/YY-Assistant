@@ -47,7 +47,7 @@ const STATUS_STYLE = {
 
 export default function PaymentReport() {
   const { language } = useLanguage();
-  const T = TEXT[language] || TEXT.zh;
+  const T = TEXT[language] || TEXT.en;
   const P = planText(language);
   const [reports, setReports] = useState([]);
   const [form, setForm] = useState(null);

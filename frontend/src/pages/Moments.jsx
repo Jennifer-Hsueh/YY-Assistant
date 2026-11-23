@@ -164,7 +164,7 @@ export default function Moments() {
             <div className="mt-3 flex items-start gap-3 text-white">
               <div className="min-w-0 flex-1">
                 <p className="font-amount text-sm opacity-80">{dayLabel(cur.date)}{dayList.length > 1 ? `　${(viewer.idx || 0) + 1}/${dayList.length}` : ''}</p>
-                {cur.caption && <p className="mt-1 text-[15px]" lang={language === 'en' ? 'en' : 'zh-Hant'}>{cur.caption}</p>}
+                {cur.caption && <p className="mt-1 text-[15px]" lang={language !== 'zh' ? 'en' : 'zh-Hant'}>{cur.caption}</p>}
               </div>
               {dayList.length > 1 && (
                 <div className="flex shrink-0 gap-1">

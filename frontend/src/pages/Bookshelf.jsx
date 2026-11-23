@@ -40,7 +40,7 @@ const MONTH_EN = (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', 
 const deadlineLabel = (iso, lang) => {
   // 期限是 8 號 0 點,顯示成 7 號
   const d = new Date(new Date(iso).getTime() - 60000);
-  return lang === 'en' ? d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : `${d.getMonth() + 1}/${d.getDate()}`;
+  return lang !== 'zh' ? d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
 const readShelf = () => { try { return Number(localStorage.getItem('yy_shelf')) || 1; } catch { return 1; } };
@@ -63,7 +63,7 @@ const PICK_TEXT = {
 
 export default function Bookshelf() {
   const { language } = useLanguage();
-  const lang = language === 'en' ? 'en' : 'zh';
+  const lang = language !== 'zh' ? 'en' : 'zh';
   const T = TEXT[lang];
   const P = PICK_TEXT[lang];
   const [books, setBooks] = useState(null);
@@ -146,7 +146,7 @@ export default function Bookshelf() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 pb-40 md:max-w-3xl md:px-8 md:py-10">
-      <Link to="/room" className="mb-2 inline-block text-xs text-muted-foreground underline">← {lang === 'en' ? "Beaver's home" : '小河狸的家'}</Link>
+      <Link to="/room" className="mb-2 inline-block text-xs text-muted-foreground underline">← {lang !== 'zh' ? "Beaver's home" : '小河狸的家'}</Link>
       <div className="page-title-row mb-3 flex items-center justify-between gap-2">
         <h1 className="page-title flex items-center gap-2 text-lg font-semibold">
           <LibraryBig className="h-5 w-5 md:hidden" />
@@ -172,7 +172,7 @@ export default function Bookshelf() {
           <PencilLine className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1">{isYearKey(draft.ym)
             ? T.yearDraftNote(draft.ym, deadlineLabel(draft.deadline, lang))
-            : T.draftNote(lang === 'en' ? MONTH_EN(draft.ym) : Number(draft.ym.slice(5, 7)), deadlineLabel(draft.deadline, lang))}</span>
+            : T.draftNote(lang !== 'zh' ? MONTH_EN(draft.ym) : Number(draft.ym.slice(5, 7)), deadlineLabel(draft.deadline, lang))}</span>
           <Button size="sm" variant="outline" onClick={() => setOpenYm(draft.ym)}>{T.open}</Button>
         </div>
       ))}

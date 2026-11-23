@@ -5,7 +5,7 @@ import { CHANGELOG } from '../content/changelog';
 
 // 公告頁的「更新紀錄」:最新一筆展開(約 30 字),其餘只顯示短標題(約 10 字),點一下展開
 export default function UpdateLog({ lang }) {
-  const i = lang === 'en' ? 1 : 0;
+  const i = lang !== 'zh' ? 1 : 0;
   const [open, setOpen] = useState(() => new Set([0]));
   const [all, setAll] = useState(false);
   const shown = all ? CHANGELOG : CHANGELOG.slice(0, 8);
@@ -14,7 +14,7 @@ export default function UpdateLog({ lang }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="mb-2 font-medium">🛠️ {lang === 'en' ? 'What’s new' : '更新紀錄'}</p>
+        <p className="mb-2 font-medium">🛠️ {lang !== 'zh' ? 'What’s new' : '更新紀錄'}</p>
         <ul className="divide-y divide-dashed divide-border">
           {shown.map((c, k) => (
             <li key={`${c.date}-${k}`}>
@@ -29,7 +29,7 @@ export default function UpdateLog({ lang }) {
         </ul>
         {CHANGELOG.length > 8 && (
           <button type="button" onClick={() => setAll((v) => !v)} className="mt-1 text-xs text-muted-foreground underline">
-            {all ? (lang === 'en' ? 'Show less' : '收起') : (lang === 'en' ? `Show all (${CHANGELOG.length})` : `顯示全部（${CHANGELOG.length}）`)}
+            {all ? (lang !== 'zh' ? 'Show less' : '收起') : (lang !== 'zh' ? `Show all (${CHANGELOG.length})` : `顯示全部（${CHANGELOG.length}）`)}
           </button>
         )}
       </CardContent>

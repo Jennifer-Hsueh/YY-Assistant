@@ -611,6 +611,10 @@ body {
   background-size: 14px 14px;
   color: var(--foreground);
 }
+/* 日文介面用日文字型(漢字字形才會是日本的寫法) */
+html:lang(ja) body {
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+}
 
 /* 金額數字統一用 Arial,搭配等寬數字方便對齊 */
 .font-amount {

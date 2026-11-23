@@ -34,11 +34,11 @@ function Block({ b }) {
 // 只有內容(註冊頁、同意視窗裡用)
 export function LegalContent({ doc, onDone }) {
   const { A, language } = useAuthText();
-  const d = (DOCS[language] || DOCS.zh)[doc];
+  const d = (DOCS[language] || DOCS.en)[doc];
   return (
     <article className="space-y-3 text-sm leading-relaxed">
       <h1 className="text-lg font-semibold">{d.title}</h1>
-      <p className="text-xs text-muted-foreground">{A.updated}{language === 'en' ? ': ' : '：'}{UPDATED.replace(/-/g, '/')}</p>
+      <p className="text-xs text-muted-foreground">{A.updated}{language !== 'zh' ? ': ' : '：'}{UPDATED.replace(/-/g, '/')}</p>
       {d.blocks.filter(show).map((b, i) => <Block key={i} b={b} />)}
       {onDone && (
         <div className="pt-4">

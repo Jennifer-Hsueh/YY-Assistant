@@ -43,7 +43,7 @@ export default function Transactions() {
   // 共同帳本:別人記的帳顯示記錄人
   const recorderName = (uid) => {
     if (!ledger?.shared && !(ledger?.members || []).length) return null;
-    if (!uid) return language === 'en' ? 'Former member' : '已刪除的成員';
+    if (!uid) return language !== 'zh' ? 'Former member' : '已刪除的成員';
     if (uid === user?.id) return null;
     if (ledger.owner?.id === uid) return ledger.owner.name || '?';
     return (ledger.members || []).find((m) => m.id === uid)?.name || '?';

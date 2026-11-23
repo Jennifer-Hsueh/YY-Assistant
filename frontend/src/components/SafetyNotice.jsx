@@ -28,7 +28,7 @@ export const SAFETY_ITEMS = {
 export function SafetyList({ lang }) {
   return (
     <ul className="space-y-3">
-      {(SAFETY_ITEMS[lang] || SAFETY_ITEMS.zh).map(([icon, title, text]) => (
+      {(SAFETY_ITEMS[lang] || SAFETY_ITEMS.en).map(([icon, title, text]) => (
         <li key={title} className="flex gap-3">
           <span className="text-xl leading-6">{icon}</span>
           <span className="min-w-0">
@@ -60,7 +60,7 @@ export default function SafetyNotice() {
     try { localStorage.setItem(KEY(user.id), new Date().toISOString()); } catch { /* 無痕模式 */ }
     setOpen(false);
   }
-  const en = language === 'en';
+  const en = language !== 'zh';
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4">
       <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl bg-card p-5 shadow-xl">

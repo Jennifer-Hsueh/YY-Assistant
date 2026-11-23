@@ -59,6 +59,7 @@ export function ConsentCheck({ checked, onChange, onOpen }) {
         <button type="button" className="mx-0.5 underline" onClick={(e) => { e.preventDefault(); onOpen('terms'); }}>{A.terms}</button>
         {A.and}
         <button type="button" className="mx-0.5 underline" onClick={(e) => { e.preventDefault(); onOpen('privacy'); }}>{A.privacy}</button>
+        {A.agreeAfter || ''}
       </span>
     </label>
   );

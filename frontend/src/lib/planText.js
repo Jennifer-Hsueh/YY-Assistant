@@ -84,4 +84,4 @@ const TEXT = {
   },
 };
 
-export const planText = (language) => TEXT[language] || TEXT.zh;
+export const planText = (language) => TEXT[language] || TEXT.en;

@@ -1,9 +1,10 @@
 import { ROUND_SRCSET } from './BrandMark';
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Languages, ChevronDown, Bell, HelpCircle } from 'lucide-react';
+import { LogOut, ChevronDown, Bell, HelpCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import LanguageMenu from './LanguageMenu';
 import { navTabs, isTabActive } from './navTabs';
 import { UnreadBadge } from './AnnouncementBell';
 import { useAnnStatus, navBadge } from '../lib/annStatus';
@@ -13,7 +14,7 @@ import { useSlipUnread, refreshSlipStatus } from '../lib/slipStatus';
 
 export default function Sidebar() {
   const { logout } = useAuth();
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const annStatus = useAnnStatus();
@@ -145,14 +146,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="flex items-center gap-4 border-t border-border px-5 py-4">
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          className="flex items-center gap-1 text-xs text-muted-foreground"
-        >
-          <Languages className="h-3.5 w-3.5" />
-          {language === 'zh' ? 'EN' : '中文'}
-        </button>
+        <LanguageMenu className="text-xs text-muted-foreground" />
         <button
           type="button"
           onClick={logout}

@@ -1,4 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
+import LanguageMenu from '../components/LanguageMenu';
 
 // 登入、註冊、忘記密碼、重設密碼、條款同意的中英文
 const TEXT = {
@@ -28,7 +29,7 @@ const TEXT = {
       '有打開 App 或有記錄的日子都算，不必連續，同一天只算一次',
       '一年從正式上線、開通那天開始計算',
       '限本人帳號使用，不能轉讓；違反使用規範者取消資格',
-      '測試結束時資料會清空，但創始會員資格會保留',
+      '測試期間的資料會保留到正式版，創始會員資格也會保留',
     ],
     agree: '我已閱讀並同意',
     and: '與',
@@ -83,7 +84,7 @@ const TEXT = {
       'Any day you open the app or add a record counts. Days need not be in a row; each day counts once',
       'The year starts on the day it is activated after launch',
       'For your own account only and not transferable. It may be revoked for violating the Terms',
-      'Beta data will be cleared when the beta ends, but your founding member status stays',
+      'Your beta data carries over to the full release, and so does your founding member status',
     ],
     agree: 'I have read and agree to the',
     and: 'and',
@@ -112,20 +113,72 @@ const TEXT = {
     close: 'Close',
     back: 'Back',
   },
+  ja: {
+    langSwitch: '日本語',
+    hello: 'おかえりなさい！',
+    helloNew: 'いっしょに記録しましょう！',
+    badEmail: 'メールアドレスの形式が正しくありません（例：name@gmail.com）',
+    login: 'ログイン',
+    loggingIn: 'ログイン中…',
+    email: 'メールアドレス',
+    password: 'パスワード',
+    passwordNew: 'パスワード（8 文字以上）',
+    expired: 'ログインの有効期限が切れました。もう一度ログインしてください。',
+    deleted: 'アカウントを削除しました。YY手帳をご利用いただきありがとうございました。',
+    disabled: 'このアカウントは停止されています。ご不明な点はお問い合わせください。',
+    forgot: 'パスワードを忘れた方',
+    noAccount: 'アカウントをお持ちでない方',
+    register: '新規登録',
+    registerTitle: 'アカウントを作成',
+    registering: '作成中…',
+    haveAccount: 'すでにアカウントをお持ちの方',
+    betaFull: (n) => `ベータ版の募集枠 ${n} 名は満員になりました。ご関心ありがとうございます。`,
+    betaInfo: (n, r) => `ベータ版は ${n} 名まで参加できます（残り ${r} 名）。ベータ期間中のデータは正式版にそのまま引き継がれます。`,
+    foundingTitle: '🦫 創設メンバー特典：ベータ期間中に 5 日使うと、正式リリース後に全機能を 1 年間プレゼント',
+    foundingTerms: [
+      'アプリを開いた日、記録した日がカウントされます。連続でなくてもよく、同じ日は 1 回だけ数えます',
+      '1 年間は正式リリース後、特典が有効になった日から数えます',
+      'ご本人のアカウントのみで、譲渡はできません。利用規約に違反した場合は取り消されます',
+      'ベータ期間中のデータは正式版に引き継がれ、創設メンバーの資格もそのまま残ります',
+    ],
+    agree: '',
+    agreeAfter: 'を読み、同意します',
+    and: 'と',
+    terms: '利用規約',
+    privacy: 'プライバシーポリシー',
+    forgotTitle: 'パスワードを忘れた方',
+    forgotDesc: 'メールアドレスを入力すると、パスワード再設定用のリンクをお送りします。',
+    sending: '送信中…',
+    sendLink: '再設定リンクを送る',
+    sentFallback: 'このメールアドレスのアカウントがある場合、パスワード再設定用のリンクをお送りしました。',
+    backToLogin: 'ログインに戻る',
+    resetTitle: '新しいパスワードを設定',
+    newPassword: '新しいパスワード（8 文字以上）',
+    resetting: '保存中…',
+    reset: 'パスワードを再設定',
+    resetDone: 'パスワードを再設定しました。ログイン画面に移動します…',
+    badLink: 'このリンクは無効か、有効期限が切れています。お手数ですが',
+    requestAgain: 'もう一度リクエストしてください',
+    consentTitle: '利用規約とプライバシーポリシー',
+    consentDesc: '続けるには、お読みのうえ同意してください。',
+    logout: 'ログアウト',
+    agreeContinue: '同意して続ける',
+    sendFailed: '送信できませんでした。しばらくしてからもう一度お試しください。',
+    updated: '最終更新日',
+    done: '読み終えました',
+    close: '閉じる',
+    back: '戻る',
+  },
 };
 
 export function useAuthText() {
   const { language, toggleLanguage } = useLanguage();
-  return { A: TEXT[language] || TEXT.zh, language, toggleLanguage };
+  return { A: TEXT[language] || TEXT.en, language, toggleLanguage };
 }
 
 // 登入／註冊等頁右上角的語言切換
 export function AuthLangSwitch() {
-  const { A, language, toggleLanguage } = useAuthText();
   return (
-    <button type="button" onClick={toggleLanguage} lang={language === 'en' ? 'zh-Hant' : 'en'}
-      className="fixed right-4 z-10 rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-black/5" style={{ color: 'var(--ink)', top: 'calc(var(--sat, 0px) + 12px)' }}>
-      {A.langSwitch}
-    </button>
+    <LanguageMenu className="fixed right-4 z-10 rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-black/5" style={{ color: 'var(--ink)', top: 'calc(var(--sat, 0px) + 12px)' }} />
   );
 }

@@ -44,7 +44,7 @@ const TEXT = {
     unnamed: 'No name',
   },
 };
-const useT = () => { const { language } = useLanguage(); return TEXT[language] || TEXT.zh; };
+const useT = () => { const { language } = useLanguage(); return TEXT[language] || TEXT.en; };
 
 // 成員清單+邀請好友(建立者可以移出成員)
 function Members({ l, run, busy }) {

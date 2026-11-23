@@ -9,7 +9,7 @@ import { Input } from './ui/input';
 // 設定 → 帳戶資訊:顯示 Email,點「修改」輸入新 Email＋目前密碼
 export default function ChangeEmailCard({ t, language }) {
   const { user, updateUser } = useAuth();
-  const en = language === 'en';
+  const en = language !== 'zh';
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [status, setStatus] = useState(null);

@@ -140,7 +140,7 @@ export default function Room() {
         {/* 月曆:今天的日期 */}
         <span className="pointer-events-none absolute flex flex-col items-center justify-center rounded-[2px] leading-none" style={{ ...box(cal), background: '#F8DEBA', color: '#5A3B22' }}>
           <b className="font-amount" style={{ fontSize: `${calW * 0.46}cqw` }}>{now.getDate()}</b>
-          <span style={{ fontSize: `${calW * 0.2}cqw`, marginTop: `${calW * 0.05}cqw` }}>{language === 'en' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()] : `週${weekday}`}</span>
+          <span style={{ fontSize: `${calW * 0.2}cqw`, marginTop: `${calW * 0.05}cqw` }}>{language !== 'zh' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()] : `週${weekday}`}</span>
         </span>
 
         {/* 相框:日常時光的照片 */}

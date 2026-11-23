@@ -7,7 +7,7 @@ const CHECK_EVERY = 30 * 60 * 1000; // 每 30 分鐘檢查一次是否有新版�
 // 網頁版:偵測到新版本時,在畫面上方提示「更新」
 export default function UpdatePrompt() {
   const { language } = useLanguage();
-  const en = language === 'en';
+  const en = language !== 'zh';
   const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW({
     onRegisteredSW(_url, reg) {
       if (!reg) return;

@@ -13,13 +13,13 @@ export const HELPLINES = {
 
 export const COUNTRY_CODES = Object.keys(HELPLINES);
 
-export const countryName = (code, lang) => HELPLINES[code]?.name[lang === 'en' ? 'en' : 'zh'] || '';
+export const countryName = (code, lang) => HELPLINES[code]?.name[lang !== 'zh' ? 'en' : 'zh'] || '';
 
 // 回傳「國別・專線名稱 號碼(24 小時)」;國別不在清單內時回傳 null(整列不顯示)
 export function helplineText(code, lang) {
   const h = HELPLINES[code || 'TW'];
   if (!h) return null;
-  const l = lang === 'en' ? 'en' : 'zh';
+  const l = lang !== 'zh' ? 'en' : 'zh';
   const hours = h.h24 ? (l === 'en' ? ' (24h)' : '(24 小時)') : '';
   return `${h.name[l]}・${h.line[l]} ${h.number}${hours}`;
 }

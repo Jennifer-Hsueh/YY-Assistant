@@ -6,7 +6,7 @@ export const ROUND_SRCSET = '/round-logo-128.png 128w, /round-logo-192.png 192w,
 export function BetaTag({ lang = 'zh' }) {
   return (
     <span className="whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium" style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }}>
-      {lang === 'en' ? 'Beta' : '測試版'}
+      {lang !== 'zh' ? 'Beta' : '測試版'}
     </span>
   );
 }

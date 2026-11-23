@@ -14,7 +14,7 @@ const TEXT = {
     unnamed: 'No name', from: (n, t, d) => `${n || 'A friend'} invited you to "${t}" ${d}`, join: 'Join', decline: 'Decline',
   },
 };
-const useT = () => { const { language } = useLanguage(); return [TEXT[language] || TEXT.zh, language]; };
+const useT = () => { const { language } = useLanguage(); return [TEXT[language] || TEXT.en, language]; };
 
 let friendsCache = null;
 function useFriends() {
@@ -84,7 +84,7 @@ export function EventInvites({ onChanged }) {
   if (!invites.length) return null;
   const when = (iso) => {
     const d = new Date(iso);
-    const date = d.toLocaleDateString(language === 'en' ? 'en-US' : 'zh-TW', { month: 'numeric', day: 'numeric' });
+    const date = d.toLocaleDateString(language !== 'zh' ? 'en-US' : 'zh-TW', { month: 'numeric', day: 'numeric' });
     const t = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     return t === '00:00' ? date : `${date} ${t}`;
   };

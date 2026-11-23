@@ -158,7 +158,7 @@ function Posts({ items, tx, lang }) {
   if (!items.length) return <p className="bk-empty">{tx.noPosts}</p>;
   return items.map((p, i) => (
     <div key={i} className="bk-post">
-      <div className="bk-t">{md(p.date)} {moodEmoji(p.mood) || ''} {BOARD[lang]?.[p.board] ? `· ${BOARD[lang][p.board]}` : ''}</div>
+      <div className="bk-t">{md(p.date)} {moodEmoji(p.mood) || ''} {(BOARD[lang] || BOARD.en)?.[p.board] ? `· ${(BOARD[lang] || BOARD.en)[p.board]}` : ''}</div>
       {p.title && <p style={{ fontWeight: 600 }}>{p.title}</p>}
       <p>{p.content}</p>
       {p.images?.length > 0 && (
@@ -366,7 +366,7 @@ const POEM = {
 
 // 一頁書(page 來自 paginate)
 export default function BookPage({ book, page, no, lang = 'zh' }) {
-  const tx = T[lang] || T.zh;
+  const tx = T[lang] || T.en;
   const { data } = book;
   const cover = book.cover || book.default_cover || 1;
   const isYear = data.kind === 'year';
@@ -382,7 +382,7 @@ export default function BookPage({ book, page, no, lang = 'zh' }) {
   if (page.type === 'back') {
     return (
       <div className="bk-page bk-back">
-        <div className="bk-poem">{(isYear ? YEAR_POEM : POEM)[lang === 'en' ? 'en' : 'zh'].map((l, i) => (l ? <div key={i}>{l}</div> : <br key={i} />))}</div>
+        <div className="bk-poem">{(isYear ? YEAR_POEM : POEM)[lang !== 'zh' ? 'en' : 'zh'].map((l, i) => (l ? <div key={i}>{l}</div> : <br key={i} />))}</div>
         <div className="bk-heart">— ♥ —</div>
         <div className="bk-en">Thank you for walking with light.</div>
         <div className="bk-line"><i /><span>YY手帳 · {ymLabel(data.ym)}</span></div>

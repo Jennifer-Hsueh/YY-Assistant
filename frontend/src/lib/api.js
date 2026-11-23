@@ -54,7 +54,7 @@ export async function downloadFile(path) {
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   // 英文介面:後端錯誤訊息改回英文
-  try { if (localStorage.getItem('language') === 'en') headers['X-Lang'] = 'en'; } catch { /* ignore */ }
+  try { const l = localStorage.getItem('language'); if (l === 'en' || l === 'ja') headers['X-Lang'] = 'en'; } catch { /* ignore */ } // 後端還沒有日文,日文介面先回英文訊息
   if (auth) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;

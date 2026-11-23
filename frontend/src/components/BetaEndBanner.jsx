@@ -10,7 +10,7 @@ export default function BetaEndBanner() {
   const d = beta.ends_at.replace(/-/g, '/');
   return (
     <div className="mx-4 mt-3 rounded-lg px-3 py-2 text-sm md:mx-8" style={{ background: 'color-mix(in srgb, var(--primary) 14%, var(--card))', color: 'var(--foreground)' }}>
-      {language === 'en'
+      {language !== 'zh'
         ? <>The beta ends on {d}. Please download a backup in <Link to="/settings" className="underline">Settings</Link> before then.</>
         : <>測試版將於 {d} 結束，請在結束前到<Link to="/settings" className="mx-0.5 underline">設定</Link>下載備份。</>}
     </div>

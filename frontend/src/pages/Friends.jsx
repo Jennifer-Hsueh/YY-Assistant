@@ -67,7 +67,7 @@ const TEXT = {
 
 export function useFriendText() {
   const { language } = useLanguage();
-  return TEXT[language] || TEXT.zh;
+  return TEXT[language] || TEXT.en;
 }
 
 export const formatCode = (c) => (c ? `${c.slice(0, 4)}-${c.slice(4)}` : '');
@@ -234,7 +234,7 @@ export default function Friends({ onOpen }) {
     QRCode.toDataURL(inviteLink(myCode), { margin: 1, width: 360, color: { dark: '#33415c', light: '#ffffff' } }).then(setQr).catch(() => setQr(null));
   }, [myCode]);
 
-  const fmtDay = (iso) => new Date(iso).toLocaleDateString(language === 'en' ? 'en-US' : 'zh-TW');
+  const fmtDay = (iso) => new Date(iso).toLocaleDateString(language !== 'zh' ? 'en-US' : 'zh-TW');
 
   async function act(fn, after) {
     setBusy(true); setError(''); setMsg('');

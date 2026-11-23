@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Settings as SettingsIcon, Wallet, Calendar, User, Bug, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, LANGS } from '../context/LanguageContext';
 import { requestPushToken, pushPermissionGranted } from '../lib/firebase';
 import { api } from '../lib/api';
 import { applyTheme, getStoredTheme } from '../lib/theme';
@@ -23,7 +23,7 @@ import { PlanCard, LockedArea, askUpgrade } from '../components/PlanNotice';
 
 export default function Settings() {
   const { user } = useAuth();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { can } = usePlan();
   const [pushStatus, setPushStatus] = useState('idle');
   // 通知偏好存在伺服器(換手機或重新安裝也會保留)
@@ -200,8 +200,8 @@ export default function Settings() {
             <p className="text-sm font-medium">{t('settings_account')}</p>
             <p className="flex gap-4 text-xs text-muted-foreground">
               <Link to="/help" className="underline">{t('nav_help')}</Link>
-              <Link to="/terms" className="underline">{language === 'en' ? 'Terms' : '使用條款'}</Link>
-              <Link to="/privacy" className="underline">{language === 'en' ? 'Privacy' : '隱私權政策'}</Link>
+              <Link to="/terms" className="underline">{{ zh: '使用條款', en: 'Terms', ja: '利用規約' }[language] || 'Terms'}</Link>
+              <Link to="/privacy" className="underline">{{ zh: '隱私權政策', en: 'Privacy', ja: 'プライバシーポリシー' }[language] || 'Privacy'}</Link>
             </p>
           </div>
           <ChangeEmailCard t={t} language={language} />
@@ -246,11 +246,11 @@ export default function Settings() {
                     {[
                       { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
                       { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
-                      { name: 'morandi', swatch: '#DDD0C8', label: language === 'en' ? 'Morandi' : '莫蘭迪' },
-                      { name: 'sport', swatch: '#163A80', label: language === 'en' ? 'Ocean' : '海洋' },
-                      { name: 'macaron', swatch: '#E8B4C6', label: language === 'en' ? 'Sweetheart' : '少女心' },
-                      { name: 'lemon', swatch: '#E8D27A', label: language === 'en' ? 'Lemon' : '黃檸檬' },
-                      { name: 'beaver', swatch: '#F4C95D', label: language === 'en' ? 'Beaver' : '小河狸' },
+                      { name: 'morandi', swatch: '#DDD0C8', label: { zh: '莫蘭迪', en: 'Morandi', ja: 'モランディ' }[language] || 'Morandi' },
+                      { name: 'sport', swatch: '#163A80', label: { zh: '海洋', en: 'Ocean', ja: 'オーシャン' }[language] || 'Ocean' },
+                      { name: 'macaron', swatch: '#E8B4C6', label: { zh: '少女心', en: 'Sweetheart', ja: 'スイートハート' }[language] || 'Sweetheart' },
+                      { name: 'lemon', swatch: '#E8D27A', label: { zh: '黃檸檬', en: 'Lemon', ja: 'レモン' }[language] || 'Lemon' },
+                      { name: 'beaver', swatch: '#F4C95D', label: { zh: '小河狸', en: 'Beaver', ja: 'ビーバー' }[language] || 'Beaver' },
                     ].map(({ name, swatch, label }) => (
                       <SelectItem key={name} value={name}>
                         <span className="flex items-center gap-1.5">
@@ -259,6 +259,16 @@ export default function Settings() {
                         </span>
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <span className="shrink-0 text-muted-foreground">{t('settings_language')}</span>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-8 w-auto min-w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LANGS.map(([k, name]) => <SelectItem key={k} value={k}>{name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

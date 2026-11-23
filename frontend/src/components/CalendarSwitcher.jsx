@@ -29,7 +29,7 @@ const TEXT = {
     empty: 'No shared calendars yet. Create one and invite friends; everyone can see, add and edit its events.', unnamed: 'No name', color: 'Color',
   },
 };
-const useT = () => { const { language } = useLanguage(); return TEXT[language] || TEXT.zh; };
+const useT = () => { const { language } = useLanguage(); return TEXT[language] || TEXT.en; };
 export const CAL_COLORS = ['#C1666B', '#6E8B5D', '#4C7A9E', '#B08238', '#8E6BA8', '#D9822B', '#3F8F8B', '#9A6B4F'];
 
 function Members({ c, run, busy }) {

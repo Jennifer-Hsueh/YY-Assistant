@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBeta } from '../lib/useBeta';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, HTML_LANG } from '../context/LanguageContext';
+import LanguageMenu from '../components/LanguageMenu';
 import './landingBook.css';
 
 // 入口頁(未登入的網頁訪客看到;已登入直接進手帳首頁,APP 版直接到登入頁)
@@ -166,11 +167,11 @@ function CTA({ T, full, className = '' }) {
 }
 
 export default function Landing() {
-  const { language, toggleLanguage } = useLanguage();
+  const { language } = useLanguage();
   const beta = useBeta();
   const full = !!beta?.full;
-  const en = language === 'en';
-  const T = COPY[language] || COPY.zh;
+  const en = language !== 'zh';
+  const T = COPY[language] || COPY.en;
   const shot = (name) => `/landing/book/${en ? 'en/' : ''}${name}.webp`;
 
   const [page, setPage] = useState(0);
@@ -200,12 +201,12 @@ export default function Landing() {
       l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap';
       document.head.appendChild(l);
     }
-    return () => { document.title = 'YY手帳'; document.documentElement.lang = 'zh-Hant'; };
+    return () => { document.title = 'YY手帳'; };
   }, []);
   useEffect(() => {
     document.title = T.docTitle;
-    document.documentElement.lang = en ? 'en' : 'zh-Hant';
-  }, [T, en]);
+    document.documentElement.lang = HTML_LANG[language] || 'zh-Hant';
+  }, [T, language]);
 
   // 鍵盤:左右鍵翻頁,Esc 關閉放大
   useEffect(() => {
@@ -346,11 +347,11 @@ export default function Landing() {
   const turn = dir === 'b' ? 'yb-turn-b' : 'yb-turn-f';
 
   return (
-    <div className="ybook" lang={en ? 'en' : 'zh-Hant'}>
+    <div className="ybook" lang={COPY[language] ? HTML_LANG[language] : 'en'}>
       <header className="yb-head">
         <button type="button" className="yb-brand" onClick={() => go(0)} aria-label="YY手帳"><b>YY手帳</b><i className="num">Assistant</i></button>
         <nav className="yb-nav">
-          <button type="button" className="yb-btn" onClick={toggleLanguage} lang={en ? 'zh-Hant' : 'en'} style={{ border: 0, background: 'none', padding: '0 8px', color: '#C9B994' }}>{T.langSwitch}</button>
+          <LanguageMenu className="yb-btn" style={{ border: 0, background: 'none', padding: '0 8px', color: '#C9B994' }} />
           <Link to="/login" className="yb-btn">{T.login}</Link>
           <CTA T={T} full={full} />
         </nav>

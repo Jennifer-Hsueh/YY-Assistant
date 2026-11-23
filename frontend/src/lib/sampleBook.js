@@ -30,7 +30,7 @@ const TEXT = {
 };
 
 export function sampleBook(lang = 'zh') {
-  const tx = TEXT[lang] || TEXT.zh;
+  const tx = TEXT[lang] || TEXT.en;
   const expense = tx.top.reduce((s, x) => s + x[2], 0);
   const data = {
     ym: YM,

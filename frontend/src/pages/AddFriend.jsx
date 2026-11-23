@@ -29,7 +29,7 @@ export default function AddFriend() {
   const [params] = useSearchParams();
   const code = (params.get('code') || '').toUpperCase();
   const { language } = useLanguage();
-  const T = TEXT[language] || TEXT.zh;
+  const T = TEXT[language] || TEXT.en;
   const [info, setInfo] = useState(null); // { user, relation } | 'notfound'
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');

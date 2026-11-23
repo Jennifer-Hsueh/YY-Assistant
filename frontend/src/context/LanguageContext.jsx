@@ -1,4 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { JA } from '../content/i18n.ja';
+
+// 支援的語言(下拉選單的順序);日文沒有的字先用英文,再沒有才用中文
+export const LANGS = [['zh', '中文'], ['en', 'English'], ['ja', '日本語']];
+const FALLBACK = { zh: ['zh'], en: ['en', 'zh'], ja: ['ja', 'en', 'zh'] };
+const VALID = new Set(LANGS.map(([k]) => k));
+export const HTML_LANG = { zh: 'zh-Hant', en: 'en', ja: 'ja' };
 
 const dictionary = {
   zh: {
@@ -50,6 +57,7 @@ const dictionary = {
     settings_profile: '個人資訊',
     settings_username: '帳號名稱',
     settings_interface: '介面設定',
+    settings_language: '語言',
     settings_interface_placeholder: '更多主題即將推出',
     settings_role: '身份',
     settings_role_user: '一般使用者',
@@ -697,6 +705,7 @@ const dictionary = {
     settings_profile: 'Profile',
     settings_username: 'Username',
     settings_interface: 'Interface',
+    settings_language: 'Language',
     settings_interface_placeholder: 'More themes coming soon',
     settings_role: 'Role',
     settings_role_user: 'Regular user',
@@ -1292,27 +1301,37 @@ const dictionary = {
     cat_error_delete: 'Delete failed',
     cat_error_load: 'Failed to load categories',
   },
+  ja: JA,
 };
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'zh');
+  const [language, setLang] = useState(() => {
+    try { const l = localStorage.getItem('language'); return VALID.has(l) ? l : 'zh'; } catch { return 'zh'; }
+  });
 
   useEffect(() => {
-    localStorage.setItem('language', language);
+    try { localStorage.setItem('language', language); } catch { /* 無痕模式 */ }
+    document.documentElement.lang = HTML_LANG[language] || 'zh-Hant';
   }, [language]);
 
+  const setLanguage = (l) => { if (VALID.has(l)) setLang(l); };
+  // 舊的切換按鈕:中文 ↔ English
   function toggleLanguage() {
-    setLanguage((prev) => (prev === 'zh' ? 'en' : 'zh'));
+    setLang((prev) => (prev === 'zh' ? 'en' : 'zh'));
   }
 
   function t(key) {
-    return dictionary[language]?.[key] ?? dictionary.zh[key] ?? key;
+    for (const l of FALLBACK[language] || FALLBACK.en) {
+      const v = dictionary[l]?.[key];
+      if (v !== undefined) return v;
+    }
+    return key;
   }
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

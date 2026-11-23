@@ -277,7 +277,7 @@ export default function Help() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
   const beta = useBeta();
   const { language } = useLanguage();
-  const lang = language === 'en' ? 'en' : 'zh';
+  const lang = language !== 'zh' ? 'en' : 'zh';
   const T = UI[lang];
   const sections = SECTIONS[lang].filter((s) => !(s.web && isNative) && !(s.beta && !beta?.active));
 

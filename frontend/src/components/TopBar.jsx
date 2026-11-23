@@ -1,5 +1,6 @@
 import { ROUND_SRCSET } from './BrandMark';
-import { LogOut, Languages, Armchair, Images } from 'lucide-react';
+import { LogOut, Armchair, Images } from 'lucide-react';
+import LanguageMenu from './LanguageMenu';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -7,7 +8,7 @@ import AnnouncementBell from './AnnouncementBell';
 
 export default function TopBar() {
   const { logout } = useAuth();
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur md:hidden" style={{ paddingTop: 'var(--sat, 0px)' }}>
@@ -23,14 +24,7 @@ export default function TopBar() {
           <Link to="/moments" aria-label={t('nav_moments')} className="flex items-center text-muted-foreground"><Images className="h-5 w-5" /></Link>
           <Link to="/room" aria-label={t('nav_room')} className="flex items-center text-muted-foreground"><Armchair className="h-5 w-5" /></Link>
           <AnnouncementBell />
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground"
-          >
-            <Languages className="h-3.5 w-3.5" />
-            {language === 'zh' ? 'EN' : '中文'}
-          </button>
+          <LanguageMenu className="text-xs text-muted-foreground" />
           <button
             type="button"
             onClick={logout}
@@ -39,7 +33,7 @@ export default function TopBar() {
           >
             <LogOut className="h-3.5 w-3.5" />
             {/* 英文版窄螢幕只留圖示,避免頂部列擠成兩行 */}
-            <span className={language === 'en' ? 'max-[400px]:sr-only' : ''}>{t('logout')}</span>
+            <span className={language !== 'zh' ? 'max-[400px]:sr-only' : ''}>{t('logout')}</span>
           </button>
         </div>
       </div>
