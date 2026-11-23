@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBeta } from '../lib/useBeta';
 import { useLanguage, HTML_LANG } from '../context/LanguageContext';
@@ -235,6 +235,9 @@ const COPY = {
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 const LAST = 9; // 0 = 封面,1～9 = 跨頁
+const LAST_POS = LAST * 2; // 以「頁」計:0 = 封面,1～18 = 內頁(手機一次一頁)
+const NARROW = '(max-width: 760px)';
+const BOOK_H = 720; // 內頁原始高度,整本書依螢幕等比例縮放,不用捲動
 
 function CTA({ T, full, className = '' }) {
   if (full) return <span className={`yb-btn is-off ${className}`}>{T.ctaFull}</span>;
@@ -250,22 +253,49 @@ export default function Landing() {
   const T = COPY[language] || COPY.en;
   const shot = (name) => `/landing/book/${en ? 'en/' : ''}${name}.webp`;
 
-  const [page, setPage] = useState(0);
+  const [pos, setPos] = useState(0); // 第幾頁(0 = 封面)
   const [dir, setDir] = useState('f');
   const [zoom, setZoom] = useState(null); // 放大中的截圖 [src, 說明]
-  const bookRef = useRef(null);
+  const [single, setSingle] = useState(() => typeof window !== 'undefined' && window.matchMedia(NARROW).matches); // 手機:一次一頁
+  const [fit, setFit] = useState({ w: 1100, h: 800 }); // 書可以用的寬高
+  const headRef = useRef(null);
+  const betaRef = useRef(null);
+  const pagerRef = useRef(null);
   const touch = useRef(null);
 
-  const go = (n) => {
-    const to = Math.max(0, Math.min(LAST, n));
-    if (to === page) return;
-    setDir(to > page ? 'f' : 'b');
-    setPage(to);
+  const page = pos === 0 ? 0 : Math.ceil(pos / 2); // 第幾個跨頁
+  const goTo = (p) => {
+    const to = Math.max(0, Math.min(LAST_POS, p));
+    if (to === pos) return;
+    setDir(to > pos ? 'f' : 'b');
+    setPos(to);
     setZoom(null);
-    // 手機上一頁很長:翻頁後回到書的開頭
-    const top = bookRef.current?.getBoundingClientRect().top;
-    if (top !== undefined && top < 0) bookRef.current.scrollIntoView({ block: 'start' });
   };
+  // 電腦一次翻一個跨頁(停在左頁),手機一次翻一頁
+  const step = (d) => (single ? goTo(pos + d) : goTo(Math.max(0, Math.min(LAST, page + d)) * 2 - 1));
+  const atEnd = single ? pos === LAST_POS : page === LAST;
+
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW);
+    const on = () => setSingle(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+
+  // 量出頂部列、測試提示、翻頁列以外剩下的高度,讓整頁放得下
+  useLayoutEffect(() => {
+    const measure = () => {
+      const used = [headRef, betaRef, pagerRef].reduce((n, r) => n + (r.current?.offsetHeight || 0), 0);
+      const narrow = window.matchMedia(NARROW).matches;
+      const gaps = (narrow ? 14 : 22) * (betaRef.current ? 3 : 2) + (narrow ? 12 + 16 : 20 + 36) + 4;
+      setFit({ w: window.innerWidth - 32, h: window.innerHeight - used - gaps });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    [headRef, betaRef, pagerRef].forEach((r) => r.current && ro?.observe(r.current));
+    return () => { window.removeEventListener('resize', measure); ro?.disconnect(); };
+  }, [beta?.active, language]);
 
   useEffect(() => {
     // 書用的字型只在入口頁載入
@@ -299,8 +329,8 @@ export default function Landing() {
     const onKey = (e) => {
       if (e.target.closest?.('input, textarea, select')) return;
       if (zoom) { if (e.key === 'Escape') setZoom(null); return; }
-      if (e.key === 'ArrowRight') go(page + 1);
-      if (e.key === 'ArrowLeft') go(page - 1);
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -320,7 +350,7 @@ export default function Landing() {
     const dx = t.clientX - touch.current[0];
     const dy = t.clientY - touch.current[1];
     touch.current = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(page + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
   };
 
   let fig = 0;
@@ -429,15 +459,20 @@ export default function Landing() {
     ],
   ];
 
-  const label = page === 0 ? T.coverLabel : page === LAST ? T.backLabel : `${page} / ${LAST - 1}`;
+  const label = pos === 0 ? T.coverLabel
+    : single ? (pos === LAST_POS ? T.backLabel : `${pos} / ${LAST_POS - 1}`)
+      : (page === LAST ? T.backLabel : `${page} / ${LAST - 1}`);
+  // 等比例縮放:電腦是兩頁 1100 寬,手機一頁 440 寬,封面 500 寬
+  const baseW = pos === 0 ? 500 : single ? 440 : 1100;
+  const scale = Math.max(0.45, Math.min(1, fit.w / baseW, fit.h / BOOK_H));
   const turn = dir === 'b' ? 'yb-turn-b' : 'yb-turn-f';
 
   return (
     <div className="ybook" lang={COPY[language] ? HTML_LANG[language] : 'en'}>
-      <header className="yb-head">
+      <header ref={headRef} className="yb-head">
         <div className="yb-headl">
-          <button type="button" className="yb-btn yb-totoc" onClick={() => go(1)} disabled={page === 1} style={page === 1 ? { visibility: 'hidden' } : undefined}>{T.toToc}</button>
-          <button type="button" className="yb-brand" onClick={() => go(0)} aria-label="YY手帳"><b>YY手帳</b><i className="num">Assistant</i></button>
+          <button type="button" className="yb-btn yb-totoc" onClick={() => goTo(1)} disabled={page <= 1} style={page <= 1 ? { visibility: 'hidden' } : undefined}>{T.toToc}</button>
+          <button type="button" className="yb-brand" onClick={() => goTo(0)} aria-label="YY手帳"><b>YY手帳</b><i className="num">Assistant</i></button>
         </div>
         <nav className="yb-nav">
           <LanguageMenu className="yb-btn" style={{ border: 0, background: 'none', padding: '0 8px', color: '#C9B994' }} />
@@ -447,16 +482,17 @@ export default function Landing() {
       </header>
 
       {beta?.active && (
-        <div className="yb-beta">
+        <div ref={betaRef} className="yb-beta">
           <div>{full ? T.betaFullLine(beta.limit) : T.betaLine(beta.limit, beta.remaining)}</div>
           {!full && <div>{T.foundingLine}</div>}
         </div>
       )}
 
-      <main ref={bookRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ scrollMarginTop: 12 }}>
-        {page === 0 ? (
+      <main onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="yb-fit" style={{ width: baseW * scale, height: BOOK_H * scale }}>
+        <div className="yb-scale" style={{ width: baseW, transform: `scale(${scale})` }}>
+        {pos === 0 ? (
           <div key="cover" className={turn}>
-            <button type="button" className="yb-cover" onClick={() => go(1)} aria-label={T.cover.aria}>
+            <button type="button" className="yb-cover" onClick={() => goTo(1)} aria-label={T.cover.aria}>
               <span className="yb-cover-shade" aria-hidden="true" />
               <span className="yb-cover-frame" aria-hidden="true" />
               <span className="yb-cover-in">
@@ -472,14 +508,17 @@ export default function Landing() {
             </button>
           </div>
         ) : (
-          <div key={page} className={`yb-spread ${turn}`}>{spreads[page - 1]}</div>
+          single
+            ? <div key={pos} className={`yb-spread is-single ${turn}`}>{spreads[page - 1][(pos - 1) % 2]}</div>
+            : <div key={page} className={`yb-spread ${turn}`}>{spreads[page - 1]}</div>
         )}
+        </div>
       </main>
 
-      <div className="yb-pager">
-        <button type="button" className="yb-btn" onClick={() => go(page - 1)} disabled={page === 0}>{T.prev}</button>
+      <div ref={pagerRef} className="yb-pager">
+        <button type="button" className="yb-btn" onClick={() => step(-1)} disabled={pos === 0}>{T.prev}</button>
         <span className="num" aria-live="polite">{label}</span>
-        <button type="button" className="yb-btn" onClick={() => go(page + 1)} disabled={page === LAST}>{T.next}</button>
+        <button type="button" className="yb-btn" onClick={() => step(1)} disabled={atEnd}>{T.next}</button>
       </div>
 
       {zoom && (

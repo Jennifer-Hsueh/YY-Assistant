@@ -145,22 +145,34 @@
 .ybook:lang(ja) .yb-pnote dd { font-size: 14.5px; line-height: 1.8; }
 .ybook:lang(ja) .yb-h { font-size: 34px; }
 
+/* 整本書等比例縮放到螢幕裡,不用捲動 */
+.yb-fit { margin: 0 auto; position: relative; flex: none; }
+.yb-scale { transform-origin: top left; }
+.yb-cover { width: 500px; }
+/* 手機:一次一頁 */
+.yb-spread.is-single { width: 440px; }
+.yb-spread.is-single .yb-page { flex-basis: 440px; border-radius: 4px; padding: 52px 36px 48px; }
+.yb-spread.is-single .yb-page.l .yb-folio { left: 36px; }
+.yb-spread.is-single .yb-page.r .yb-folio { right: 36px; }
+.yb-spread.is-single .yb-pair { gap: 14px; }
+.yb-spread.is-single .yb-pair .yb-zoom { width: 160px; }
+.yb-spread.is-single .yb-toc-art { right: 30px; width: 130px; height: 130px; }
+.yb-spread.is-single .yb-pref .yb-h { font-size: 32px; margin-bottom: 12px; }
+.yb-spread.is-single .yb-pref .yb-body, .ybook:lang(ja) .yb-spread.is-single .yb-pref .yb-body { font-size: 14.5px; line-height: 1.8; }
+.yb-spread.is-single .yb-feat li { font-size: 14px; line-height: 1.75; }
+.yb-spread.is-single .yb-ptab td { padding: 6px 0; }
+.yb-spread.is-single .yb-ptab .d { font-size: 12px; line-height: 1.5; }
+.yb-spread.is-single .yb-phead { height: 132px; }
+.yb-spread.is-single .yb-pnote dt { margin-top: 12px; }
+.yb-spread.is-single .yb-pnote dd, .ybook:lang(ja) .yb-spread.is-single .yb-pnote dd { font-size: 14px; line-height: 1.75; }
+
 @media (max-width: 760px) {
-  .yb-page { padding: 44px 24px 56px; height: auto; min-height: 560px; }
-  .yb-page.l .yb-folio { left: 24px; }
-  .yb-page.r .yb-folio { right: 24px; }
-  .yb-h { font-size: 30px; }
-  .yb-pair { gap: 14px; }
-  .yb-pair .yb-zoom { width: 140px; }
-  .yb-toc-art { position: static; margin: 20px 0 0 auto; width: 120px; height: 120px; }
-  .yb-phead { height: auto; margin-bottom: 18px; }
-  .yb-cover-in { padding: 48px 36px 40px 52px; }
-  .yb-cover-title { font-size: 52px; }
-  .yb-cover-title.is-en { font-size: 40px; }
+  .ybook { padding: 12px 16px 16px; gap: 14px; }
   .yb-pager { flex-wrap: nowrap; gap: 8px; }
   .yb-pager .yb-btn { padding: 0 14px; }
   .yb-pager .num { min-width: 64px; }
   .yb-headl { gap: 10px; }
   .yb-brand b { font-size: 20px; }
   .yb-brand i { display: none; }
+  .yb-beta { font-size: 12.5px; line-height: 1.6; margin-top: -4px; }
 }

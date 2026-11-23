@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-23', short: ['介紹書不用捲動', 'Intro fits the screen'], detail: ['介紹書會依螢幕大小縮放，每頁完整顯示；手機一次翻一頁。', 'The intro book scales to fit your screen; phones show one page at a time.'] },
   { date: '2026-11-23', short: ['介紹書日文版', 'Intro book in Japanese'], detail: ['介紹書選日本語時改為日文內容。', 'The intro book now has a Japanese version.'] },
   { date: '2026-11-23', short: ['介紹書回目錄', 'Back to contents'], detail: ['介紹書左上角可以直接回到目錄頁，價格數字更清楚。', 'The intro book has a back-to-contents button, and clearer price digits.'] },
   { date: '2026-11-20', short: ['新增日文', 'Japanese'], detail: ['語言可選中文、English、日本語；日文會陸續補齊。', 'Choose 中文, English or 日本語; more Japanese is on the way.'] },
