@@ -9,6 +9,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useLedger } from '../context/LedgerContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import AmountInput from './AmountInput';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { ymd } from '../lib/recurrence';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind, remindMinutes, endAtIso } from '../lib/eventRemind';
@@ -162,14 +163,11 @@ export default function FloatingAddButton() {
                       </button>
                     ))}
                   </div>
-                  <Input
+                  <AmountInput
                     ref={amountRef}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
                     placeholder={`${t('tx_amount')} (${currency})`}
                     value={tx.amount}
-                    onChange={(e) => setTx({ ...tx, amount: e.target.value })}
+                    onChange={(v) => setTx({ ...tx, amount: v })}
                     className="min-w-0 flex-1"
                     required
                   />

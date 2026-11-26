@@ -8,6 +8,7 @@ import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import AmountInput from '../components/AmountInput';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
@@ -309,7 +310,7 @@ export default function RecurringMoney() {
                 <Input type="text" placeholder={t('rec_title_placeholder')} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               <div className="flex gap-2">
-                <Input type="number" placeholder={t('rec_amount_placeholder')} className="min-w-0 flex-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <AmountInput placeholder={t('rec_amount_placeholder')} className="min-w-0 flex-1" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} />
                 <Select value={form.account_id || 'none'} onValueChange={(v) => setForm({ ...form, account_id: v === 'none' ? '' : v })}>
                   <SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder={t('tx_account_placeholder')} /></SelectTrigger>
                   <SelectContent>

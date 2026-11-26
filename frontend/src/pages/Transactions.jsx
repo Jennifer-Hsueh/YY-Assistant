@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLedger } from '../context/LedgerContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import AmountInput from '../components/AmountInput';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import LedgerSubNav from '../components/LedgerSubNav';
@@ -489,7 +490,7 @@ export default function Transactions() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input type="number" placeholder={t('tx_transfer_amount')} required value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
+              <AmountInput placeholder={t('tx_transfer_amount')} required value={transfer.amount} onChange={(v) => setTransfer({ ...transfer, amount: v })} />
               {(() => {
                 const fromAcc = accounts.find((a) => a.id === transfer.from);
                 const toAcc = accounts.find((a) => a.id === transfer.to);
@@ -571,7 +572,7 @@ export default function Transactions() {
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
                 />
-                <Input type="number" placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required className="min-w-0 flex-1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                <AmountInput placeholder={`${t('tx_amount')} (${accounts.find((a) => a.id === form.account_id)?.currency || 'TWD'})`} required className="min-w-0 flex-1" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} />
               </div>
               {actionMode === 'edit' && activeId ? (
                 <div className="flex gap-2">

@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from './PlanNotice';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+import AmountInput from './AmountInput';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 // 每月預算(帳戶管理裡):總預算一筆+各分類各自的預算,都可以新增、修改、刪除
@@ -63,7 +63,7 @@ export default function BudgetSettings({ t }) {
   }
 
   const amountInput = (value, onChange) => (
-    <Input autoFocus type="number" inputMode="decimal" min="1" placeholder={t('budget_amount_short')} value={value} onChange={(e) => onChange(e.target.value)} className="h-8 min-w-0 flex-1" />
+    <AmountInput autoFocus placeholder={t('budget_amount_short')} value={value} onChange={onChange} className="min-w-0 flex-1" inputClassName="h-8" />
   );
 
   // 一列預算:顯示/修改/刪除確認(用函式呼叫,不當元件,輸入時才不會失去焦點)
