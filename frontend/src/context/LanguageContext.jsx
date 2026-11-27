@@ -502,7 +502,7 @@ const dictionary = {
     cal_remind_960: '前一天早上 8 點',
     acc_color: '卡片顏色',
     acc_color_auto: '自動',
-    settings_theme_default: '米紙',
+    settings_theme_default: '日暖米杏',
     settings_theme_grey: '石墨灰',
 
     // 帳戶
@@ -1163,7 +1163,7 @@ const dictionary = {
     cal_remind_960: 'Day before, 8 AM',
     acc_color: 'Card color',
     acc_color_auto: 'Auto',
-    settings_theme_default: 'Paper',
+    settings_theme_default: 'Warm Beige',
     settings_theme_grey: 'Graphite',
 
     acc_pageTitle: 'Accounts',

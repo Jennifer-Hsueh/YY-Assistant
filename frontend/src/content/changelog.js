@@ -1,6 +1,7 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-27', short: ['11 種新配色', '11 new color styles'], detail: ['介面配色換成 11 種，包含兩種深色；原本的主題會自動換到最接近的配色。', 'Pick from 11 color styles, two of them dark; your old theme switches to the closest one.'] },
   { date: '2026-11-26', short: ['小河狸貼圖回應', 'Beaver sticker reactions'], detail: ['社群回應換成 12 張小河狸貼圖：點一下送出，長按放大看看。', 'Reply with 12 beaver stickers: tap to send, press and hold to see it bigger.'] },
   { date: '2026-11-26', short: ['新的 logo', 'New logo'], detail: ['App 圖示、網站圖示和開機畫面都換成新的 logo。', 'The app icon, site icon and splash screen use the new logo.'] },
   { date: '2026-11-25', short: ['金額計算機', 'Amount calculator'], detail: ['輸入金額時會跳出數字視窗，可以直接算 120+85。', 'Entering an amount opens a number pad that can do sums like 120+85.'] },

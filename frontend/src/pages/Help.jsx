@@ -110,7 +110,7 @@ const SECTIONS = {
       '看到不當內容請按文章下方的「檢舉」，並選擇原因。心情低落需要協助時，請撥打安心專線。',
     ] },
     { title: '主題與語言', items: [
-      '到「設定 → 介面設定」切換七種風格：米紙、石墨灰（深色模式）、莫蘭迪、海洋、少女心、黃檸檬、小河狸。設定會跟著帳號，換裝置也一樣。',
+      '到「設定 → 介面設定」切換十一種配色：日暖米杏、櫻花粉霧、春芽嫩綠、湖水晴藍、薰衣草紫、檸檬奶黃、海風青綠、暮秋磚紅、霧柔暖灰，以及深色的午夜靛藍、墨夜時光。設定會跟著帳號，換裝置也一樣。',
       '畫面上方的「EN／中文」可以切換介面語言。',
     ] },
     { title: '通知', items: [
@@ -238,7 +238,7 @@ const SECTIONS = {
       'Report inappropriate posts with the Report link below them. If you are feeling low and need help, please call a helpline.',
     ] },
     { title: 'Themes and language', items: [
-      'Go to Settings → Interface to choose one of seven styles: Rice paper, Graphite (dark mode), Morandi, Ocean, Sweetheart, Lemon or Beaver. It follows your account on every device.',
+      'Go to Settings → Interface to choose one of eleven color styles: Warm Beige, Cherry Blossom, Fresh Green, Lake Blue, Lavender, Lemon Cream, Ocean Breeze, Terracotta Red, Gentle Gray, or the dark Midnight Indigo and Midnight Ink. It follows your account on every device.',
       'Use EN / 中文 at the top to switch the language.',
     ] },
     { title: 'Notifications', items: [

@@ -41,8 +41,11 @@ async function updateProfile(req, res) {
     const updates = {};
     if (username !== undefined) updates.username = username;
     if (theme !== undefined) {
-      if (!['default', 'grey', 'morandi', 'sport', 'macaron', 'lemon', 'beaver'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
-      updates.theme = theme;
+      // 2026-11-27 換成 11 種配色;舊代碼換成最接近的新配色
+      const LEGACY = { grey: 'ink', morandi: 'mist', sport: 'lake', macaron: 'sakura', beaver: 'default' };
+      const next = LEGACY[theme] || theme;
+      if (!['default', 'sakura', 'sprout', 'lake', 'lavender', 'lemon', 'breeze', 'terracotta', 'mist', 'indigo', 'ink'].includes(next)) return res.status(400).json({ error: 'Invalid theme' });
+      updates.theme = next;
     }
     if (country !== undefined) {
       if (country !== null && !COUNTRIES.includes(country)) return res.status(400).json({ error: 'Invalid country' });

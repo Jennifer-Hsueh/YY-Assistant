@@ -23,47 +23,51 @@
   --radius-lg: var(--radius);
 }
 
+/* ───────── 介面主題(2026-11-27,11 種;沒有 data-theme 時是日暖米杏) ───────── */
+/* 日暖米杏 Warm Beige */
 :root {
-  /* 米紙白 — 加深一點,不要太蒼白 */
-  --background: #F5EFE3;
-  /* 深炭灰 */
-  --foreground: #2A2622;
-  --card: #FFFCF6;
-  --card-foreground: #2A2622;
-  /* 赤陶紅褐 — 主要 CTA 按鈕色 */
-  --primary: #C4553F;
-  --primary-foreground: #FBF8F2;
-  /* 淡靛藍色調 — 次要按鈕 */
-  --secondary: #DDE3EC;
-  --secondary-foreground: #33415C;
-  --muted: #EDE6D6;
-  --muted-foreground: #8A8578;
-  --accent: #F0EAE0;
-  --accent-foreground: #33415C;
-  --destructive: #B23A3A;
-  --destructive-foreground: #FBF8F2;
-  --border: rgba(51, 65, 92, 0.16);
-  --input: rgba(51, 65, 92, 0.16);
-  --ring: #33415C;
-  --radius: 0.75rem;
+  --background: #FDF7EF;
+  --foreground: #513C30;
+  --card: #FFFCF8;
+  --card-foreground: #513C30;
+  --primary: #956440;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E9C39B;
+  --secondary-foreground: #513C30;
+  --muted: #F7E6D4;
+  --muted-foreground: #7D6D61;
+  --accent: #F8EBDC;
+  --accent-foreground: #513C30;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(81, 60, 48, 0.16);
+  --input: rgba(81, 60, 48, 0.22);
+  --ring: #956440;
+  --radius: .75rem;
+  --ink: #956440;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #CE7C6B;
+  --module-notes: #87584A;
+  --nav-active: #956440;
+  --acc-1: #956440;
+  --acc-2: #4E8A55;
+  --acc-3: #D17E6C;
+  --acc-4: #C0503F;
+  --acc-5: #9D8066;
+  --pastel-1: #F4E0CA;
+  --pastel-2: #F4D7CF;
+  --pastel-3: #EEE4DB;
+  --pastel-4: #F9ECDE;
+  --pastel-5: #F8E6E0;
+  --pastel-6: #F3EFEA;
+  --dot-pattern: rgba(81, 60, 48, 0.09);
   color-scheme: light;
 
-  /* 手帳風格基礎色票 */
-  --ink: #2F3E5C;
-  --income: #5F8A4C;
-  --expense: #C4553F;
-  /* 琥珀棕金 — 原本的向日葵黃太亮,對比度不夠,改柔和一點 */
-  --highlight: #C4962C;
-
-  /* 各色的淡色底,用 color-mix 動態調淡,方便統一微調濃淡 */
   --income-bg: color-mix(in srgb, var(--income) 12%, white);
   --expense-bg: color-mix(in srgb, var(--expense) 12%, white);
   --highlight-bg: color-mix(in srgb, var(--highlight) 14%, white);
-
-  /* 各模組專屬色 — 首頁與底部導覽依此呼應 */
   --module-transactions: var(--expense);
-  /* 左側選單/底部導覽:目前所在功能的文字顏色,所有功能一致 */
-  --nav-active: var(--module-transactions);
   --module-transactions-bg: color-mix(in srgb, var(--expense) 10%, white);
   --module-accounts: var(--income);
   --module-accounts-bg: color-mix(in srgb, var(--income) 10%, white);
@@ -71,530 +75,461 @@
   --module-calendar-bg: color-mix(in srgb, var(--ink) 8%, white);
   --module-recurring: var(--highlight);
   --module-recurring-bg: color-mix(in srgb, var(--highlight) 12%, white);
-  /* 墨箋絮語:墨色偏暖的棕 */
-  --module-notes: #8A6A54;
-
-  /* 帳戶卡片預設色(使用者沒自訂顏色時輪流使用) */
-  --acc-1: var(--income);
-  --acc-2: #2F3E5C;
-  --acc-3: #C4962C;
-  --acc-4: #C4553F;
-  --acc-5: #7A5C8E;
-
-  /* 行事曆有行程日期的淡色底 */
-  --pastel-1: #F6E0D9;
-  --pastel-2: #E2ECD9;
-  --pastel-3: #DEE4EF;
-  --pastel-4: #F5EACB;
-  --pastel-5: #ECE2D5;
-  --pastel-6: #E7E0EC;
-
-  --dot-pattern: rgba(47, 62, 92, 0.1);
 }
 
-/* ───────── 石墨灰主題 ─────────
-   除了使用者自選的分類/帳戶顏色外,只用四種顏色:
-   炭黑 #2E3135 · 石灰 #7D8085 · 霧灰 #DCDCD9 · 紙灰 #F3F3F1
-   (邊框、陰影用炭黑的透明度,不另算一色) */
-:root[data-theme="grey"] {
-  /* 石墨灰:深色模式。炭灰底、暖金色重點,收支用柔和的綠與珊瑚紅 */
-  color-scheme: dark;
-  --background: #1D1F22;
-  --foreground: #ECEAE6;
-  --card: #272A2E;
-  --card-foreground: #ECEAE6;
-  --primary: #E0B566;
-  --primary-foreground: #1D1F22;
-  --secondary: #32363B;
-  --secondary-foreground: #ECEAE6;
-  --muted: #2F3237;
-  --muted-foreground: #A0A5AB;
-  --accent: #33373C;
-  --accent-foreground: #ECEAE6;
-  --destructive: #EF8A7A;
-  --destructive-foreground: #1D1F22;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.18);
-  --ring: #E0B566;
+/* 櫻花粉霧 Cherry Blossom */
+:root[data-theme="sakura"] {
+  --background: #FFF5F7;
+  --foreground: #65404E;
+  --card: #FFFCFD;
+  --card-foreground: #65404E;
+  --primary: #A85473;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FAD9E3;
+  --secondary-foreground: #65404E;
+  --muted: #FDECF1;
+  --muted-foreground: #866872;
+  --accent: #FEF1F5;
+  --accent-foreground: #65404E;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(101, 64, 78, 0.16);
+  --input: rgba(101, 64, 78, 0.22);
+  --ring: #A85473;
+  --radius: .75rem;
+  --ink: #A85473;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #CE7A92;
+  --module-notes: #995D70;
+  --nav-active: #A85473;
+  --acc-1: #A85473;
+  --acc-2: #4E8A55;
+  --acc-3: #D07C94;
+  --acc-4: #C0503F;
+  --acc-5: #AE8A97;
+  --pastel-1: #FCEAF0;
+  --pastel-2: #F8D9E2;
+  --pastel-3: #F1E1E7;
+  --pastel-4: #FEF2F6;
+  --pastel-5: #FBE7ED;
+  --pastel-6: #F4EFF1;
+  --dot-pattern: rgba(101, 64, 78, 0.09);
+  color-scheme: light;
+}
 
-  --ink: #C9D3E0;
+/* 春芽嫩綠 Fresh Green */
+:root[data-theme="sprout"] {
+  --background: #F6FBF3;
+  --foreground: #394D34;
+  --card: #FDFFF9;
+  --card-foreground: #394D34;
+  --primary: #57794D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #C7E6B5;
+  --secondary-foreground: #394D34;
+  --muted: #E7F4DF;
+  --muted-foreground: #667661;
+  --accent: #EDF8E5;
+  --accent-foreground: #394D34;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(57, 77, 52, 0.16);
+  --input: rgba(57, 77, 52, 0.22);
+  --ring: #57794D;
+  --radius: .75rem;
+  --ink: #57794D;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #A29359;
+  --module-notes: #79774A;
+  --nav-active: #57794D;
+  --acc-1: #57794D;
+  --acc-2: #4E8A55;
+  --acc-3: #A29359;
+  --acc-4: #C0503F;
+  --acc-5: #809A74;
+  --pastel-1: #E2F2D7;
+  --pastel-2: #F2E9CF;
+  --pastel-3: #E2EADD;
+  --pastel-4: #EEF8E6;
+  --pastel-5: #F6F2E0;
+  --pastel-6: #EFF3EB;
+  --dot-pattern: rgba(57, 77, 52, 0.09);
+  color-scheme: light;
+}
+
+/* 湖水晴藍 Lake Blue */
+:root[data-theme="lake"] {
+  --background: #F1F9FD;
+  --foreground: #344E60;
+  --card: #FCFEFF;
+  --card-foreground: #344E60;
+  --primary: #42799D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #B7DDF3;
+  --secondary-foreground: #344E60;
+  --muted: #DEF0FA;
+  --muted-foreground: #5D7382;
+  --accent: #E7F4FB;
+  --accent-foreground: #344E60;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(52, 78, 96, 0.16);
+  --input: rgba(52, 78, 96, 0.22);
+  --ring: #42799D;
+  --radius: .75rem;
+  --ink: #42799D;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #A19177;
+  --module-notes: #76766F;
+  --nav-active: #42799D;
+  --acc-1: #42799D;
+  --acc-2: #4E8A55;
+  --acc-3: #A19177;
+  --acc-4: #C0503F;
+  --acc-5: #7696AA;
+  --pastel-1: #DAEEF9;
+  --pastel-2: #F6EADB;
+  --pastel-3: #DEE9EF;
+  --pastel-4: #E9F5FC;
+  --pastel-5: #F9F2E9;
+  --pastel-6: #EEF2F4;
+  --dot-pattern: rgba(52, 78, 96, 0.09);
+  color-scheme: light;
+}
+
+/* 薰衣草紫 Lavender */
+:root[data-theme="lavender"] {
+  --background: #F8F5FE;
+  --foreground: #4F4266;
+  --card: #FEFCFF;
+  --card-foreground: #4F4266;
+  --primary: #7862A5;
+  --primary-foreground: #FFFFFF;
+  --secondary: #D3C2F2;
+  --secondary-foreground: #4F4266;
+  --muted: #ECE5FA;
+  --muted-foreground: #766B89;
+  --accent: #F1EBFB;
+  --accent-foreground: #4F4266;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(79, 66, 102, 0.16);
+  --input: rgba(79, 66, 102, 0.22);
+  --ring: #7862A5;
+  --radius: .75rem;
+  --ink: #7862A5;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #AB87A1;
+  --module-notes: #886C8B;
+  --nav-active: #7862A5;
+  --acc-1: #7862A5;
+  --acc-2: #4E8A55;
+  --acc-3: #AE89A3;
+  --acc-4: #C0503F;
+  --acc-5: #9182AC;
+  --pastel-1: #E8DFF8;
+  --pastel-2: #F8E7EF;
+  --pastel-3: #E9E3F1;
+  --pastel-4: #F2ECFB;
+  --pastel-5: #FAEFF5;
+  --pastel-6: #F2EFF4;
+  --dot-pattern: rgba(79, 66, 102, 0.09);
+  color-scheme: light;
+}
+
+/* 檸檬奶黃 Lemon Cream */
+:root[data-theme="lemon"] {
+  --background: #FFFDE7;
+  --foreground: #504B26;
+  --card: #FFFFF8;
+  --card-foreground: #504B26;
+  --primary: #E6CB45;
+  --primary-foreground: #504B26;
+  --secondary: #FFF0A3;
+  --secondary-foreground: #504B26;
+  --muted: #FFF9D1;
+  --muted-foreground: #797453;
+  --accent: #FFFADE;
+  --accent-foreground: #504B26;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(80, 75, 38, 0.16);
+  --input: rgba(80, 75, 38, 0.22);
+  --ring: #807430;
+  --radius: .75rem;
+  --ink: #807430;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #90994F;
+  --module-notes: #777A3E;
+  --nav-active: #807430;
+  --acc-1: #807430;
+  --acc-2: #4E8A55;
+  --acc-3: #90994F;
+  --acc-4: #C0503F;
+  --acc-5: #9F965E;
+  --pastel-1: #FFF8CE;
+  --pastel-2: #E9EFCD;
+  --pastel-3: #FBF7DB;
+  --pastel-4: #FFFBE0;
+  --pastel-5: #F2F5DE;
+  --pastel-6: #F3F2E9;
+  --dot-pattern: rgba(80, 75, 38, 0.09);
+  color-scheme: light;
+}
+
+:root[data-theme="lemon"] .text-primary { color: var(--ink); }
+
+/* 海風青綠 Ocean Breeze */
+:root[data-theme="breeze"] {
+  --background: #F1F9F7;
+  --foreground: #34564F;
+  --card: #FCFFFE;
+  --card-foreground: #34564F;
+  --primary: #397F76;
+  --primary-foreground: #FFFFFF;
+  --secondary: #B9E1D9;
+  --secondary-foreground: #34564F;
+  --muted: #DFF1ED;
+  --muted-foreground: #597670;
+  --accent: #E8F6F3;
+  --accent-foreground: #34564F;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(52, 86, 79, 0.16);
+  --input: rgba(52, 86, 79, 0.22);
+  --ring: #397F76;
+  --radius: .75rem;
+  --ink: #397F76;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #999579;
+  --module-notes: #6C7966;
+  --nav-active: #397F76;
+  --acc-1: #397F76;
+  --acc-2: #4E8A55;
+  --acc-3: #999579;
+  --acc-4: #C0503F;
+  --acc-5: #769C94;
+  --pastel-1: #DAF0EC;
+  --pastel-2: #F6EEE0;
+  --pastel-3: #DDEBE8;
+  --pastel-4: #E9F7F4;
+  --pastel-5: #F9F5EC;
+  --pastel-6: #EEF3F2;
+  --dot-pattern: rgba(52, 86, 79, 0.09);
+  color-scheme: light;
+}
+
+/* 暮秋磚紅 Terracotta Red */
+:root[data-theme="terracotta"] {
+  --background: #FAEFEB;
+  --foreground: #60332F;
+  --card: #FFF9F6;
+  --card-foreground: #60332F;
+  --primary: #A4473D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #D69A8E;
+  --secondary-foreground: #60332F;
+  --muted: #EED4CD;
+  --muted-foreground: #886460;
+  --accent: #F3DCD7;
+  --accent-foreground: #60332F;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(96, 51, 47, 0.16);
+  --input: rgba(96, 51, 47, 0.22);
+  --ring: #A4473D;
+  --radius: .75rem;
+  --ink: #A4473D;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #C66A58;
+  --module-notes: #89493F;
+  --nav-active: #A4473D;
+  --acc-1: #A4473D;
+  --acc-2: #4E8A55;
+  --acc-3: #C66A58;
+  --acc-4: #C0503F;
+  --acc-5: #9B665E;
+  --pastel-1: #EACAC2;
+  --pastel-2: #EECEC7;
+  --pastel-3: #F0DDD8;
+  --pastel-4: #F4DED9;
+  --pastel-5: #F5DFDA;
+  --pastel-6: #F4EBE8;
+  --dot-pattern: rgba(96, 51, 47, 0.09);
+  color-scheme: light;
+}
+
+/* 霧柔暖灰 Gentle Gray */
+:root[data-theme="mist"] {
+  --background: #F7F7F9;
+  --foreground: #41434A;
+  --card: #FFFFFF;
+  --card-foreground: #41434A;
+  --primary: #666C79;
+  --primary-foreground: #FFFFFF;
+  --secondary: #D3D5DD;
+  --secondary-foreground: #41434A;
+  --muted: #EBECF0;
+  --muted-foreground: #6F7076;
+  --accent: #F2F2F5;
+  --accent-foreground: #41434A;
+  --destructive: #B8463C;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(65, 67, 74, 0.16);
+  --input: rgba(65, 67, 74, 0.22);
+  --ring: #666C79;
+  --radius: .75rem;
+  --ink: #666C79;
+  --income: #4E8A55;
+  --expense: #C0503F;
+  --highlight: #A88F7E;
+  --module-notes: #766A65;
+  --nav-active: #666C79;
+  --acc-1: #666C79;
+  --acc-2: #4E8A55;
+  --acc-3: #A88F7E;
+  --acc-4: #C0503F;
+  --acc-5: #8A8C94;
+  --pastel-1: #E9EAEE;
+  --pastel-2: #EEE4DD;
+  --pastel-3: #E7E7EA;
+  --pastel-4: #F3F3F5;
+  --pastel-5: #F5EFEA;
+  --pastel-6: #F2F2F2;
+  --dot-pattern: rgba(65, 67, 74, 0.09);
+  color-scheme: light;
+}
+
+/* 午夜靛藍 Midnight Indigo（深色） */
+:root[data-theme="indigo"] {
+  --background: #151D36;
+  --foreground: #EDF1FF;
+  --card: #222E4B;
+  --card-foreground: #EDF1FF;
+  --primary: #A6B9EF;
+  --primary-foreground: #151D36;
+  --secondary: #344268;
+  --secondary-foreground: #EDF1FF;
+  --muted: #263152;
+  --muted-foreground: #9BA0B3;
+  --accent: #2D3A5C;
+  --accent-foreground: #EDF1FF;
+  --destructive: #EF8A7A;
+  --destructive-foreground: #151D36;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.2);
+  --ring: #A6B9EF;
+  --radius: .75rem;
+  --ink: #A6B9EF;
   --income: #7CC49A;
   --expense: #EF8A7A;
-  --highlight: #E0B566;
-  --income-bg: #24322B;
-  --expense-bg: #3A2A28;
-  --highlight-bg: #3A3222;
-
+  --highlight: #E3C27A;
+  --income-bg: #2F4356;
+  --expense-bg: #3F3B52;
+  --highlight-bg: #3D4352;
   --module-transactions: #EF8A7A;
-  --nav-active: #E0B566;
-  --module-transactions-bg: #33292A;
+  --module-transactions-bg: #3B3951;
   --module-accounts: #7CC49A;
-  --module-accounts-bg: #26302B;
-  --module-calendar: #8DB6E8;
-  --module-calendar-bg: #262D37;
-  --module-recurring: #E0B566;
-  --module-recurring-bg: #332E24;
-  --module-notes: #C3A9E3;
-
+  --module-accounts-bg: #2D4054;
+  --module-calendar: #A6B9EF;
+  --module-calendar-bg: #323F5F;
+  --module-recurring: #E3C27A;
+  --module-recurring-bg: #394051;
+  --module-notes: #C9B4E6;
+  --nav-active: #A6B9EF;
   --acc-1: #3E6E57;
   --acc-2: #3D5878;
   --acc-3: #8A6A35;
   --acc-4: #8A4A42;
   --acc-5: #5E4B7D;
-
-  --pastel-1: #262D37;
-  --pastel-2: #26302B;
-  --pastel-3: #332E24;
-  --pastel-4: #33292A;
-  --pastel-5: #2E2A35;
-  --pastel-6: #2A3032;
+  --pastel-1: #344162;
+  --pastel-2: #2D4054;
+  --pastel-3: #394051;
+  --pastel-4: #3B3951;
+  --pastel-5: #363E5E;
+  --pastel-6: #2E3A56;
   --dot-pattern: rgba(255, 255, 255, 0.05);
   --color-green-600: #7CC49A;
   --color-red-500: #EF8A7A;
   --color-red-600: #EF8A7A;
+  --bar: #394B87;
+  --field: #1C2640;
+  color-scheme: dark;
 }
-/* 深色模式:程式裡寫死白色、黑字的地方改用主題顏色 */
-:root[data-theme="grey"] .bg-white { background-color: var(--card); }
-:root[data-theme="grey"] .text-black { color: var(--foreground); }
-:root[data-theme="grey"] [data-slot="input"],
-:root[data-theme="grey"] textarea,
-:root[data-theme="grey"] select { background-color: #1F2225; color: var(--foreground); }
 
-/* ───────── 莫蘭迪主題 ─────────
-   燕麥奶茶底(#DDD0C8)＋淺灰(#BEBEBE)主色與細框線 */
-:root[data-theme="morandi"] {
-  --mr-rose: #BEBEBE;
-  --mr-blush: #DDD0C8;
-  --mr-line: #BEBEBE;
-
-  --background: var(--mr-blush);
-  --foreground: #4A3B3A;
-  --card: #FAF4F3;
-  --card-foreground: #4A3B3A;
-  --primary: var(--mr-rose);
-  --primary-foreground: #3F3A37;
-  --secondary: #F1E3E1;
-  --secondary-foreground: #6E5756;
-  --muted: #F1E3E1;
-  --muted-foreground: #8C7574;
-  --accent: #F4E8E6;
-  --accent-foreground: #4A3B3A;
-  --destructive: #A85A5E;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(150, 150, 150, 0.3);
-  --input: var(--mr-line);
-  --ring: var(--mr-rose);
-
-  --ink: #7A5F5E;
-  --income: #7A8F72;
-  --expense: #B0666A;
-  --highlight: #A88A5E;
-
-  --module-transactions: #B0666A;
-  --nav-active: #8E4F56;
-  --module-accounts: #7A8F72;
-  --module-calendar: #7A6F8C;
-  --module-calendar-bg: color-mix(in srgb, #7A6F8C 10%, white);
-  --module-recurring: #A88A5E;
-  --module-notes: #7A7472;
-
-  --acc-1: #9E9E9E;
-  --acc-2: #7A6F8C;
-  --acc-3: #7A8F72;
-  --acc-4: #B0666A;
-  --acc-5: #A88A5E;
-
-  --pastel-1: #F3E4E2;
-  --pastel-2: #EDE7DF;
-  --pastel-3: #F5E9E7;
-  --pastel-4: #EADCDB;
-  --pastel-5: #F2E7E3;
-  --pastel-6: #EFE2E0;
-  --dot-pattern: rgba(122, 95, 94, 0.1);
-  --color-green-600: #6E8466;
-  --color-red-500: #B0666A;
-  --color-red-600: #9C585C;
+/* 墨夜時光 Midnight Ink（深色） */
+:root[data-theme="ink"] {
+  --background: #000000;
+  --foreground: #F5F5F5;
+  --card: #212121;
+  --card-foreground: #F5F5F5;
+  --primary: #D4D4D4;
+  --primary-foreground: #000000;
+  --secondary: #383838;
+  --secondary-foreground: #F5F5F5;
+  --muted: #1F1F1F;
+  --muted-foreground: #989898;
+  --accent: #2F2F2F;
+  --accent-foreground: #F5F5F5;
+  --destructive: #EF8A7A;
+  --destructive-foreground: #000000;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.2);
+  --ring: #D4D4D4;
+  --radius: .75rem;
+  --ink: #D4D4D4;
+  --income: #7CC49A;
+  --expense: #EF8A7A;
+  --highlight: #E3C27A;
+  --income-bg: #2E3832;
+  --expense-bg: #3E302D;
+  --highlight-bg: #3C382D;
+  --module-transactions: #EF8A7A;
+  --module-transactions-bg: #3A2E2C;
+  --module-accounts: #7CC49A;
+  --module-accounts-bg: #2C3530;
+  --module-calendar: #D4D4D4;
+  --module-calendar-bg: #363636;
+  --module-recurring: #E3C27A;
+  --module-recurring-bg: #38342C;
+  --module-notes: #C9B4E6;
+  --nav-active: #D4D4D4;
+  --acc-1: #3E6E57;
+  --acc-2: #3D5878;
+  --acc-3: #8A6A35;
+  --acc-4: #8A4A42;
+  --acc-5: #5E4B7D;
+  --pastel-1: #3A3A3A;
+  --pastel-2: #2C3530;
+  --pastel-3: #38342C;
+  --pastel-4: #3A2E2C;
+  --pastel-5: #353339;
+  --pastel-6: #2E2E2E;
+  --dot-pattern: rgba(255, 255, 255, 0.05);
+  --color-green-600: #7CC49A;
+  --color-red-500: #EF8A7A;
+  --color-red-600: #EF8A7A;
+  --bar: #121212;
+  --field: #101010;
+  color-scheme: dark;
 }
-/* 莫蘭迪:跟小河狸一樣的貼紙框線(粗框＋下方實心陰影、膠囊按鈕),顏色用暖灰褐 */
-:root[data-theme="morandi"] { --mr-stroke: #8F7F77; }
-:root[data-theme="morandi"] [data-slot="card"] {
-  border: 2.5px solid var(--mr-stroke);
-  box-shadow: 1px 3px 0 var(--mr-stroke);
-}
-:root[data-theme="morandi"] .border.bg-card { border-width: 2px; border-color: var(--mr-stroke); }
-:root[data-theme="morandi"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--mr-stroke); }
-:root[data-theme="morandi"] [data-slot="button"] {
-  border-radius: 9999px;
-  border: 2px solid var(--mr-stroke);
-  box-shadow: 1px 1.5px 0 var(--mr-stroke);
-  font-weight: 700;
-  transition: transform .08s, box-shadow .08s;
-}
-:root[data-theme="morandi"] [data-slot="button"][data-variant="ghost"],
-:root[data-theme="morandi"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="morandi"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--mr-stroke); }
-:root[data-theme="morandi"] [data-slot="input"] { border: 2px solid var(--mr-stroke); border-radius: 0.9rem; }
-:root[data-theme="morandi"] header.bg-card\/95,
-:root[data-theme="morandi"] [data-slot="bottom-nav"],
-:root[data-theme="morandi"] [data-slot="sidebar"] { background: #C9B8AE; --muted-foreground: #66574F; }
-:root[data-theme="morandi"] header.bg-card\/95 { border-bottom: 2.5px solid var(--mr-stroke); }
-:root[data-theme="morandi"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--mr-stroke); }
-:root[data-theme="morandi"] [data-slot="sidebar"] { border-right: 2.5px solid var(--mr-stroke); }
 
-/* ───────── 海洋主題(原「運動風」,代碼仍為 sport) ─────────
-   深海藍＋向日葵黃點綴,卡片藍色框線,上下列白色 */
-:root[data-theme="sport"] {
-  --sp-blue: #163A80;
-  --sp-yellow: #FFC233;
-
-  --background: #DCE6F5;
-  --foreground: #0F1E3D;
-  --card: #FFFFFF;
-  --card-foreground: #0F1E3D;
-  --primary: var(--sp-blue);
-  --primary-foreground: #FFFFFF;
-  --secondary: #E3EBF7;
-  --secondary-foreground: var(--sp-blue);
-  --muted: #E6EDF8;
-  --muted-foreground: #4F5F7E;
-  --accent: #FFF4D6;
-  --accent-foreground: var(--sp-blue);
-  --destructive: #D63A4A;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(22, 58, 128, 0.18);
-  --input: var(--sp-blue);
-  --ring: var(--sp-blue);
-  --radius: 0.6rem;
-
-  --ink: var(--sp-blue);
-  --income: #1F8A5B;
-  --expense: #D63A4A;
-  --highlight: #E0A100;
-
-  --module-transactions: #D63A4A;
-  --nav-active: var(--sp-blue);
-  --module-accounts: #1F8A5B;
-  --module-calendar: var(--sp-blue);
-  --module-calendar-bg: color-mix(in srgb, #163A80 9%, white);
-  --module-recurring: #E0A100;
-  --module-notes: #3D5FA8;
-
-  --acc-1: #163A80;
-  --acc-2: #2F64C4;
-  --acc-3: #E0A100;
-  --acc-4: #5B86D6;
-  --acc-5: #0F2A5C;
-
-  --pastel-1: #E2EBFA;
-  --pastel-2: #FFF3D1;
-  --pastel-3: #D9E5F8;
-  --pastel-4: #FFF0C2;
-  --pastel-5: #E6EEFB;
-  --pastel-6: #FFF6DC;
-  --dot-pattern: rgba(22, 58, 128, 0.08);
-  --color-green-600: #1F8A5B;
-  --color-red-500: #D63A4A;
-  --color-red-600: #C02F3F;
-}
-:root[data-theme="sport"] body { background-image: none; }
-:root[data-theme="sport"] [data-slot="card"],
-:root[data-theme="sport"] .border.bg-card {
-  border: 1px solid var(--sp-blue);
-}
-:root[data-theme="sport"] [data-slot="input"] { border: 1px solid var(--sp-blue); }
-:root[data-theme="sport"] header.bg-card\/95,
-:root[data-theme="sport"] [data-slot="bottom-nav"],
-:root[data-theme="sport"] [data-slot="sidebar"] { background: #EEF4FC; }
-
-/* ───────── 少女心主題(代碼 macaron) ─────────
-   霧粉紅底與上下列、淡紫卡片、天空藍文字;跟小河狸一樣的貼紙框線(粗框＋下方實心陰影),區塊像按鍵 */
-:root[data-theme="macaron"] {
-  --mc-pink: #FFE3EC;
-  --mc-mint: #D9A3B5;
-  --mc-sky: #DDF0FC;
-  --mc-lemon: #FFF1BC;
-  --mc-purple: #B48CF0;
-  --mc-line: #FFFFFF;
-
-  --background: #F6E5EA;
-  --foreground: #3B6F94;
-  --card: #F1ECF5;
-  --card-foreground: #3B6F94;
-  --primary: #C9708F;
-  --primary-foreground: #FFFFFF;
-  --secondary: #DCE8F2;
-  --secondary-foreground: #3B6F94;
-  --muted: #F4E9C6;
-  --muted-foreground: #7895AA;
-  --accent: #DCE8F2;
-  --accent-foreground: #3B6F94;
-  --destructive: #E0557F;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.9);
-  --input: #FFFFFF;
-  --ring: #C9708F;
-  --radius: 1.25rem;
-
-  --ink: #3B6F94;
-  --income: #3E9A74;
-  --expense: #C9668A;
-  --highlight: #B58E22;
-
-  --module-transactions: #C9668A;
-  --nav-active: #3E8E6C;
-  --module-transactions-bg: #F5E1E7;
-  --module-accounts: #3E9A74;
-  --module-accounts-bg: #DCEEE5;
-  --module-calendar: #3F80B3;
-  --module-calendar-bg: #DCE8F2;
-  --module-recurring: #B58E22;
-  --module-recurring-bg: #F4E9C6;
-  --module-notes: #8C74B8;
-
-  --acc-1: #F59AB9;
-  --acc-2: #7FD9B5;
-  --acc-3: #8CCBF2;
-  --acc-4: #F5D25E;
-  --acc-5: #B985FF;
-
-  --pastel-1: #F5E1E7;
-  --pastel-2: #DCEEE5;
-  --pastel-3: #DCE8F2;
-  --pastel-4: #F4E9C6;
-  --pastel-5: #E8E1F2;
-  --pastel-6: #F1ECF5;
-  --dot-pattern: rgba(201, 112, 143, 0.1);
-  --color-green-600: #1E8E66;
-  --color-red-500: #E0557F;
-  --color-red-600: #CC4670;
-}
-:root[data-theme="macaron"] { --stk: #C27A93; }
-:root[data-theme="macaron"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 1px 3px 0 var(--stk); }
-:root[data-theme="macaron"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
-:root[data-theme="macaron"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--stk); }
-:root[data-theme="macaron"] [data-slot="button"] {
-  border-radius: 9999px;
-  border: 2px solid var(--stk);
-  box-shadow: 1px 1.5px 0 var(--stk);
-  font-weight: 700;
-  transition: transform .08s, box-shadow .08s;
-}
-:root[data-theme="macaron"] [data-slot="button"][data-variant="ghost"],
-:root[data-theme="macaron"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="macaron"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--stk); }
-:root[data-theme="macaron"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
-:root[data-theme="macaron"] header.bg-card\/95,
-:root[data-theme="macaron"] [data-slot="bottom-nav"],
-:root[data-theme="macaron"] [data-slot="sidebar"] { background: #EDCBD6; --muted-foreground: #4E3346; --ink: #4E3346; --nav-active: #1F6E4D; color: #4E3346; }
-:root[data-theme="macaron"] header.bg-card\/95 { border-bottom: 2.5px solid var(--stk); }
-:root[data-theme="macaron"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--stk); }
-:root[data-theme="macaron"] [data-slot="sidebar"] { border-right: 2.5px solid var(--stk); }
-
-/* ───────── 黃檸檬主題 ─────────
-   奶油檸檬底與上下列、淡紫卡片、天空藍文字、薄荷綠選中分頁;貼紙框線同小河狸 */
-:root[data-theme="lemon"] {
-  --mc-pink: #FFFFFF;
-  --mc-mint: #F0D25A;
-  --mc-sky: #DDF0FC;
-  --mc-lemon: #FFF1BC;
-  --mc-purple: #B48CF0;
-  --mc-line: #FFFFFF;
-
-  --home-tint-transactions: #FFFFFF;
-  --background: #FFF8D9;
-  --foreground: #3B6F94;
-  --card: #FFFFFF;
-  --card-foreground: #3B6F94;
-  --primary: #F2C230;
-  --primary-foreground: #4A3B12;
-  --secondary: #DCE8F2;
-  --secondary-foreground: #3B6F94;
-  --muted: #FFEB99;
-  --muted-foreground: #7895AA;
-  --accent: #DCE8F2;
-  --accent-foreground: #3B6F94;
-  --destructive: #E0557F;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.9);
-  --input: #FFFFFF;
-  --ring: #E0AE1A;
-  --radius: 1.25rem;
-
-  --ink: #3B6F94;
-  --income: #3E9A74;
-  --expense: #C9668A;
-  --highlight: #B58E22;
-
-  --module-transactions: #C9668A;
-  --nav-active: #C2557F;
-  --module-transactions-bg: #FFFFFF;
-  --module-accounts: #3E9A74;
-  --module-accounts-bg: #DCEEE5;
-  --module-calendar: #B8862B;
-  --module-calendar-bg: #FFF6DA;
-  --module-recurring: #B58E22;
-  --module-recurring-bg: #F4E9C6;
-  --module-notes: #8C74B8;
-
-  --acc-1: #F59AB9;
-  --acc-2: #7FD9B5;
-  --acc-3: #8CCBF2;
-  --acc-4: #F5D25E;
-  --acc-5: #B985FF;
-
-  --pastel-1: #FFFFFF;
-  --pastel-2: #DCEEE5;
-  --pastel-3: #DCE8F2;
-  --pastel-4: #FFF1B8;
-  --pastel-5: #E8E1F2;
-  --pastel-6: #F1ECF5;
-  --dot-pattern: rgba(224, 174, 26, 0.12);
-  --color-green-600: #1E8E66;
-  --color-red-500: #E0557F;
-  --color-red-600: #CC4670;
-}
-:root[data-theme="lemon"] { --stk: #D2A21F; }
-:root[data-theme="lemon"] [data-slot="card"] { border: 2.5px solid var(--stk); box-shadow: 1px 3px 0 var(--stk); }
-:root[data-theme="lemon"] .border.bg-card { border-width: 2px; border-color: var(--stk); }
-:root[data-theme="lemon"] .border.bg-card.shadow-sm { box-shadow: 1px 2px 0 var(--stk); }
-:root[data-theme="lemon"] [data-slot="button"] {
-  border-radius: 9999px;
-  border: 2px solid var(--stk);
-  box-shadow: 1px 1.5px 0 var(--stk);
-  font-weight: 700;
-  transition: transform .08s, box-shadow .08s;
-}
-:root[data-theme="lemon"] [data-slot="button"][data-variant="ghost"],
-:root[data-theme="lemon"] [data-slot="button"][data-variant="link"] { border-color: transparent; box-shadow: none; }
-:root[data-theme="lemon"] [data-slot="button"]:active { transform: translateY(2px); box-shadow: 0.5px 0 0 var(--stk); }
-:root[data-theme="lemon"] [data-slot="input"] { border: 2px solid var(--stk); border-radius: 0.9rem; background: #FFFFFF; }
-:root[data-theme="lemon"] header.bg-card\/95,
-:root[data-theme="lemon"] [data-slot="bottom-nav"],
-:root[data-theme="lemon"] [data-slot="sidebar"] { background: #FFE98A; --muted-foreground: #45391F; --ink: #45391F; --nav-active: #B0386A; color: #45391F; }
-:root[data-theme="lemon"] header.bg-card\/95 { border-bottom: 2.5px solid var(--stk); }
-:root[data-theme="lemon"] [data-slot="bottom-nav"] { border-top: 2.5px solid var(--stk); }
-:root[data-theme="lemon"] [data-slot="sidebar"] { border-right: 2.5px solid var(--stk); }
-
-/* ───────── 小河狸主題 ─────────
-   像貼紙的可愛風:奶油底、深棕粗框線、圓角、按鈕下方一條實心陰影;
-   蜂蜜黃主色,天空藍、薄荷綠、珊瑚粉當輔色;頁面標題前有小河狸 */
-:root[data-theme="beaver"] {
-  --bv-line: #4A3426;
-  --bv-honey: #F4C95D;
-  --bv-sky: #CFE6F5;
-  --bv-mint: #CFE8C9;
-  --bv-coral: #F6C9C0;
-
-  --background: #FBF3E2;
-  --foreground: #3E2C21;
-  --card: #FFFDF7;
-  --card-foreground: #3E2C21;
-  --primary: var(--bv-honey);
-  --primary-foreground: #3E2C21;
-  --secondary: var(--bv-sky);
-  --secondary-foreground: #2F4B63;
-  --muted: #F4E9D3;
-  --muted-foreground: #8C7866;
-  --accent: #F8EBCD;
-  --accent-foreground: #3E2C21;
-  --destructive: #D9685A;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(74, 52, 38, 0.22);
-  --input: var(--bv-line);
-  --ring: var(--bv-line);
-  --radius: 1.1rem;
-
-  --ink: #6B4A33;
-  --income: #5E9F5E;
-  --expense: #D9685A;
-  --highlight: #D79A2B;
-
-  --module-transactions: #D9685A;
-  --nav-active: #B8562F;
-  --module-transactions-bg: #FCE8E3;
-  --module-accounts: #5E9F5E;
-  --module-accounts-bg: #E9F4E5;
-  --module-calendar: #4F86B0;
-  --module-calendar-bg: #E6F1F9;
-  --module-recurring: #D79A2B;
-  --module-recurring-bg: #FCF0D3;
-  --module-notes: #8A6A54;
-
-  --acc-1: #E8A93A;
-  --acc-2: #6FA8D0;
-  --acc-3: #79B26F;
-  --acc-4: #E58C7C;
-  --acc-5: #A88BCB;
-
-  --pastel-1: #FCEFC8;
-  --pastel-2: #DDEEF8;
-  --pastel-3: #E2F1DD;
-  --pastel-4: #FBE1DB;
-  --pastel-5: #ECE3F6;
-  --pastel-6: #F8E7CF;
-
-  --dot-pattern: rgba(74, 52, 38, 0.1);
-  --color-green-600: #4E8C4E;
-  --color-red-500: #D9685A;
-  --color-red-600: #D9685A;
-}
-/* 卡片:粗框線＋下方實心陰影,像貼紙 */
-:root[data-theme="beaver"] [data-slot="card"] {
-  border: 2.5px solid var(--bv-line);
-  box-shadow: 1px 3px 0 var(--bv-line);
-}
-/* 按鈕:圓滾滾的膠囊、框線、按下去會往下沉 */
-:root[data-theme="beaver"] [data-slot="button"] {
-  border-radius: 9999px;
-  border: 2px solid var(--bv-line);
-  box-shadow: 1px 1.5px 0 var(--bv-line);
-  font-weight: 700;
-  transition: transform .08s, box-shadow .08s;
-}
-:root[data-theme="beaver"] [data-slot="button"][data-variant="ghost"],
-:root[data-theme="beaver"] [data-slot="button"][data-variant="link"] {
-  border-color: transparent;
-  box-shadow: none;
-}
-:root[data-theme="beaver"] [data-slot="button"]:active {
-  transform: translateY(2px);
-  box-shadow: 0.5px 0 0 var(--bv-line);
-}
-/* 輸入框:粗框、圓角、奶油白底 */
-:root[data-theme="beaver"] [data-slot="input"] {
-  border: 2px solid var(--bv-line);
-  border-radius: 0.9rem;
-  background: #FFFDF7;
-}
-/* 頁面標題前的小河狸 */
-:root[data-theme="beaver"] .page-title::before {
-  content: "";
-  display: inline-block;
-  width: 1.9em;
-  height: 1.5em;
-  margin-right: 0.35em;
-  vertical-align: -0.35em;
-  background: url("/logo-mark-144.png") center / contain no-repeat;
-}
-:root[data-theme="beaver"] .border.bg-card {
-  border-width: 2px;
-  border-color: var(--bv-line);
-}
-:root[data-theme="beaver"] .border.bg-card.shadow-sm {
-  box-shadow: 1px 2px 0 var(--bv-line);
-}
-:root[data-theme="beaver"] header.bg-card\/95 {
-  background: #FFF8E8;
-  border-bottom: 2.5px solid var(--bv-line);
-}
-:root[data-theme="beaver"] [data-slot="sidebar"] {
-  background: #FFF8E8;
-  border-right: 2.5px solid var(--bv-line);
-}
-:root[data-theme="beaver"] [data-slot="bottom-nav"] {
-  background: #FFF8E8;
-  border-top: 2.5px solid var(--bv-line);
-}
+/* 深色主題共用:程式裡寫死白色、黑字的地方改用主題顏色;上下列與側欄用主色 */
+:root:is([data-theme="indigo"], [data-theme="ink"]) .bg-white { background-color: var(--card); }
+:root:is([data-theme="indigo"], [data-theme="ink"]) .text-black { color: var(--foreground); }
+:root:is([data-theme="indigo"], [data-theme="ink"]) [data-slot="input"],
+:root:is([data-theme="indigo"], [data-theme="ink"]) textarea,
+:root:is([data-theme="indigo"], [data-theme="ink"]) select { background-color: var(--field); color: var(--foreground); }
+:root:is([data-theme="indigo"], [data-theme="ink"]) header.bg-card\/95,
+:root:is([data-theme="indigo"], [data-theme="ink"]) [data-slot="bottom-nav"],
+:root:is([data-theme="indigo"], [data-theme="ink"]) [data-slot="sidebar"] { background: var(--bar); }
 
 html {
   /* 全站文字/圖示等比縮放 —— 目前為 99%(上一版 110% 的 90%)。
@@ -817,36 +752,6 @@ input[type="time"] {
 .room-ping { width: 1.6cqw; height: 1.6cqw; min-width: 8px; min-height: 8px; transform: translate(-50%, -150%); border-radius: 9999px; background: #FFD66B; box-shadow: 0 0 0 0 rgba(255, 214, 107, .7); animation: room-ping 2.2s ease-out infinite; }
 @keyframes room-ping { 0% { box-shadow: 0 0 0 0 rgba(255, 214, 107, .7); } 80%, 100% { box-shadow: 0 0 0 10px rgba(255, 214, 107, 0); } }
 @media (prefers-reduced-motion: reduce) { .room-sun, .room-rain, .room-w-storm, .room-ping { animation: none; } }
-
-/* ───────── 框線一致(小河狸、莫蘭迪、少女心、黃檸檬、海洋) ─────────
-   輸入框、下拉選單、多行文字框用同一種框線;點選時不再多出一圈外框(避免雙框線);
-   不能填的欄位框線、底色都不變,只把字變淡 */
-:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea) {
-  border: 2px solid var(--stk, var(--mr-stroke, var(--bv-line)));
-  border-radius: 0.9rem;
-  background: #FFFFFF;
-  box-shadow: none;
-}
-:root[data-theme="sport"] :is([data-slot="input"], [data-slot="select-trigger"], textarea) {
-  border: 1px solid var(--sp-blue);
-  box-shadow: none;
-}
-:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):focus,
-:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-:root:is([data-theme="beaver"], [data-theme="morandi"], [data-theme="macaron"], [data-theme="lemon"], [data-theme="sport"]) :is([data-slot="input"], [data-slot="select-trigger"], textarea):disabled {
-  opacity: 1;
-  background: #FFFFFF;
-  color: var(--muted-foreground);
-  cursor: not-allowed;
-}
-/* 黃檸檬:主要按鍵改白底深色字(靠芥末黃粗框與陰影看出是按鍵) */
-:root[data-theme="lemon"] [data-slot="button"]:is([data-variant="default"], [data-variant="secondary"]) {
-  background: #FFFFFF;
-  color: #6B4E12;
-}
 
 /* ───────── 介紹頁:活潑版(2026-11-13) ───────── */
 .landing { overflow-x: hidden; }

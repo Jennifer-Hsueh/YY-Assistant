@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage, LANGS } from '../context/LanguageContext';
 import { requestPushToken, pushPermissionGranted } from '../lib/firebase';
 import { api } from '../lib/api';
-import { applyTheme, getStoredTheme } from '../lib/theme';
+import { applyTheme, getStoredTheme, THEME_LIST } from '../lib/theme';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -243,19 +243,11 @@ export default function Settings() {
                 <Select value={theme} onValueChange={selectTheme}>
                   <SelectTrigger className="h-8 w-auto min-w-36 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {[
-                      { name: 'default', swatch: '#F5EFE3', label: t('settings_theme_default') },
-                      { name: 'grey', swatch: '#2E3135', label: t('settings_theme_grey') },
-                      { name: 'morandi', swatch: '#DDD0C8', label: { zh: '莫蘭迪', en: 'Morandi', ja: 'モランディ' }[language] || 'Morandi' },
-                      { name: 'sport', swatch: '#163A80', label: { zh: '海洋', en: 'Ocean', ja: 'オーシャン' }[language] || 'Ocean' },
-                      { name: 'macaron', swatch: '#E8B4C6', label: { zh: '少女心', en: 'Sweetheart', ja: 'スイートハート' }[language] || 'Sweetheart' },
-                      { name: 'lemon', swatch: '#E8D27A', label: { zh: '黃檸檬', en: 'Lemon', ja: 'レモン' }[language] || 'Lemon' },
-                      { name: 'beaver', swatch: '#F4C95D', label: { zh: '小河狸', en: 'Beaver', ja: 'ビーバー' }[language] || 'Beaver' },
-                    ].map(({ name, swatch, label }) => (
+                    {THEME_LIST.map(({ name, swatch, label }) => (
                       <SelectItem key={name} value={name}>
                         <span className="flex items-center gap-1.5">
                           <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: swatch }} />
-                          {label}
+                          {label[language] || label.en}
                         </span>
                       </SelectItem>
                     ))}

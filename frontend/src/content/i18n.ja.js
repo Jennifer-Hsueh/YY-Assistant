@@ -493,7 +493,7 @@ export const JA = {
   cal_remind_960: '前日の午前 8 時',
   acc_color: 'カードの色',
   acc_color_auto: '自動',
-  settings_theme_default: '和紙',
+  settings_theme_default: 'ぬくもりベージュ',
   settings_theme_grey: 'グラファイト',
 
   acc_pageTitle: '口座',
