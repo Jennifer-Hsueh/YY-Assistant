@@ -12,6 +12,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { PostImages, ImagePicker } from '../components/PostImages';
+import StickerReactions from '../components/StickerReactions';
 
 const TABS = [
   { key: 'mood', emoji: '🌦️' },
@@ -29,8 +30,6 @@ const MOODS = [
   { key: 'rainbow', emoji: '🌈' },
 ];
 const MOOD_EMOJI = Object.fromEntries(MOODS.map((m) => [m.key, m.emoji]));
-// 心情回應:小河狸圖(public/reactions/*.webp)
-const MOOD_REACTIONS = ['hug', 'cheer', 'understand', 'laugh', 'approve'].map((key) => ({ key, src: `/reactions/${key}.webp` }));
 const WISH_STATUSES = ['considering', 'planned', 'done'];
 // 公開範圍三選一 → { visibility, anonymous }
 const SCOPES = [
@@ -641,17 +640,7 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
         {post.hidden && <p className="mt-2 text-xs text-muted-foreground">{t('cm_post_hidden')}</p>}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {isMoodPublic && MOOD_REACTIONS.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              onClick={() => react(r.key)}
-              title={t(`cm_r_${r.key}`)}
-              className={`inline-flex items-center gap-1 rounded-full border py-0.5 pl-1 pr-2.5 text-xs transition-colors ${post.my_reaction === r.key ? 'border-foreground bg-muted text-foreground' : 'border-border text-muted-foreground hover:bg-muted/60'}`}
-            >
-              <img src={r.src} alt="" className="h-6 w-6" /> {t(`cm_r_${r.key}`)} {post.reactions[r.key] || 0}
-            </button>
-          ))}
+          {isMoodPublic && <StickerReactions reactions={post.reactions} mine={post.my_reaction} onReact={react} t={t} />}
           {!isPrivate && post.board !== 'mood' && (
             <button
               type="button"

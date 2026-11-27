@@ -1,4 +1,5 @@
 const zlib = require('zlib');
+const { normalizeReaction } = require('../lib/reactions');
 const supabase = require('../config/supabase');
 const { buildSnapshot, ensureBucket, TABLES, BUCKET } = require('./backupService');
 
@@ -61,7 +62,9 @@ function userCounts(backup, userId) {
   return counts;
 }
 
-async function insertRows(table, rows) {
+async function insertRows(table, rowsIn) {
+  // 舊備份的回應種類換成新的貼圖(laugh → happy 等)
+  const rows = table === 'yy_post_reactions' ? rowsIn.map((r) => ({ ...r, type: normalizeReaction(r.type) })) : rowsIn;
   for (let i = 0; i < rows.length; i += CHUNK) {
     const { error } = await supabase.from(table).insert(rows.slice(i, i + CHUNK));
     if (error) throw new Error(`${table}: ${error.message}`);

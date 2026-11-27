@@ -1,6 +1,8 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
+  { date: '2026-11-26', short: ['小河狸貼圖回應', 'Beaver sticker reactions'], detail: ['社群回應換成 12 張小河狸貼圖：點一下送出，長按放大看看。', 'Reply with 12 beaver stickers: tap to send, press and hold to see it bigger.'] },
+  { date: '2026-11-26', short: ['新的 logo', 'New logo'], detail: ['App 圖示、網站圖示和開機畫面都換成新的 logo。', 'The app icon, site icon and splash screen use the new logo.'] },
   { date: '2026-11-25', short: ['金額計算機', 'Amount calculator'], detail: ['輸入金額時會跳出數字視窗，可以直接算 120+85。', 'Entering an amount opens a number pad that can do sums like 120+85.'] },
   { date: '2026-11-23', short: ['介紹書不用捲動', 'Intro fits the screen'], detail: ['介紹書會依螢幕大小縮放，每頁完整顯示；手機一次翻一頁。', 'The intro book scales to fit your screen; phones show one page at a time.'] },
   { date: '2026-11-23', short: ['介紹書日文版', 'Intro book in Japanese'], detail: ['介紹書選日本語時改為日文內容。', 'The intro book now has a Japanese version.'] },

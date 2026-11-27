@@ -8,7 +8,7 @@ const F = require('../lib/friends');
 // 被檢舉隱藏的文章不出現在板上;回傳資料不含其他人的 user_id / email。
 const BOARDS = ['mood', 'finance', 'wish'];
 const MOODS = ['sunny', 'cloudy', 'rainy', 'storm', 'rainbow'];
-const MOOD_REACTIONS = ['hug', 'cheer', 'understand', 'laugh', 'approve'];
+const { MOOD_REACTIONS } = require('../lib/reactions');
 const WISH_STATUSES = ['considering', 'planned', 'done'];
 const REPORT_HIDE_THRESHOLD = 3;
 const MAX_CONTENT = 2000;

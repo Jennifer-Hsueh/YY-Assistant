@@ -218,7 +218,7 @@ create index if not exists yy_post_comments_post_idx on yy_post_comments (post_i
 create table if not exists yy_post_reactions (
   post_id uuid not null references yy_posts(id) on delete cascade,
   user_id uuid not null references yy_users(id) on delete cascade,
-  type text not null check (type in ('hug', 'cheer', 'understand', 'laugh', 'approve', 'like')),
+  type text not null constraint yy_post_reactions_type_check check (type in ('like', 'surprise', 'confused', 'angry', 'cry', 'hug', 'happy', 'touched', 'excited', 'cheer', 'no', 'thanks')),
   created_at timestamptz not null default now(),
   primary key (post_id, user_id)
 );
