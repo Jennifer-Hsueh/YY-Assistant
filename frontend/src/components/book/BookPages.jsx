@@ -1,7 +1,7 @@
 // 月刊書本的每一頁(固定 420×594)
 import '@fontsource/cormorant-garamond/latin-600.css';
 import './book.css';
-import { BOARD, MOOD_LEVEL, beaverWords, coverSrc, monthCells, moodRank, ymLabel } from '../../lib/book';
+import { BOARD, MOOD_LEVEL, beaverWords, monthCells, moodRank, ymLabel } from '../../lib/book';
 import { moodEmoji } from '../../lib/moods';
 
 const T = {
@@ -368,14 +368,18 @@ const POEM = {
 export default function BookPage({ book, page, no, lang = 'zh' }) {
   const tx = T[lang] || T.en;
   const { data } = book;
-  const cover = book.cover || book.default_cover || 1;
   const isYear = data.kind === 'year';
   if (page.type === 'cover') {
+    // 封面(暫時版,等正式封面圖):只有正面,不含書背(PDF 每頁剛好 A5)
     return (
       <div className="bk-page bk-cover">
-        <img src={coverSrc(cover)} alt="" />
-        {isYear && <div className="bk-cover-ym" style={{ bottom: 72, fontSize: 11, letterSpacing: '.5em' }}>{tx.yearbook}</div>}
-        <div className="bk-cover-ym">{ymLabel(data.ym)}</div>
+        <div className="bk-cover-main" style={{ left: 0 }}>
+          <img src="/round-logo-256.png" alt="" crossOrigin="anonymous" />
+          <div className="bk-cover-title">YY手帳</div>
+          <i />
+          <div className="bk-cover-ym">{ymLabel(data.ym)}</div>
+          {isYear && <div className="bk-cover-sub">{tx.yearbook}</div>}
+        </div>
       </div>
     );
   }

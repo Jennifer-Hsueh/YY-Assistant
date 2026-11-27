@@ -1,39 +1,39 @@
-// 月刊書櫃:每月一本書,放在書櫃上;點書打開閱讀,草稿可以挑封面、寫一句話、按完成;定稿後可下載 PDF
+// 月刊書櫃:每月一本書(書背依月份固定),從小書櫃開始放、放滿自動換大的;點書打開閱讀,草稿可以寫一句話、按完成;定稿後可下載 PDF
 import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import '@fontsource/eb-garamond/latin-700.css';
 import { LibraryBig, ChevronLeft, ChevronRight, X, Download, Loader2, PencilLine } from 'lucide-react';
 import { api } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
-import { SHELVES, layoutBooks, shelfCapacity } from '../lib/bookshelf';
-import { COVERS, MESSAGE_MAX, YEAR_MESSAGE_MAX, coverSrc, isYearKey, paginateAny, spineColor, viewsOf, ymLabel } from '../lib/book';
+import { fillShelves, layoutBooks } from '../lib/bookshelf';
+import { MESSAGE_MAX, YEAR_MESSAGE_MAX, isYearKey, paginateAny, spineColor, viewsOf, ymLabel } from '../lib/book';
 import { isNative } from '../lib/platform';
 import BookPage from '../components/book/BookPages';
+import Spine from '../components/book/Spine';
 import { Button } from '../components/ui/button';
 
 const TEXT = {
   zh: {
     title: '月刊書櫃', empty: '每個月 1 號，小河狸會把上個月整理成一本書放上書櫃。',
-    draftNote: (m, d) => `${m} 月的書還是草稿，${d} 以前可以挑封面、寫一句話。`, open: '打開',
+    draftNote: (m, d) => `${m} 月的書還是草稿，${d} 以前可以寫一句話。`, open: '打開',
     draft: '草稿', final: '已定稿', until: (d) => `${d} 以前可以修改，之後自動定稿`,
-    edit: '挑封面・寫一句話', cover: '封面', say: '我想對這個月說（選填）', save: '儲存', saving: '儲存中…',
+    edit: '寫一句話', say: '我想對這個月說（選填）', save: '儲存', saving: '儲存中…',
     finish: '完成', finishAsk: '完成後就不能再修改了，確定嗎？', finishYes: '確定完成', cancel: '取消',
     pdf: '下載 PDF', making: '製作中…', pdfDraft: '完成後可以下載 PDF', pdfApp: 'PDF 請在網頁版下載',
     loadFail: '讀取失敗，請稍後再試', page: (a, b) => `${a} / ${b}`,
     bookTitle: (ym) => (isYearKey(ym) ? `${ym} 年鑑` : `${ym.slice(0, 4)} 年 ${Number(ym.slice(5, 7))} 月`),
-    yearDraftNote: (y, d) => `${y} 年鑑還是草稿，${d} 以前可以挑封面、寫給自己的話。`, sayYear: '給自己的話（選填）',
+    yearDraftNote: (y, d) => `${y} 年鑑還是草稿，${d} 以前可以寫給自己的話。`, sayYear: '給自己的話（選填）',
   },
   en: {
     title: 'Monthly Bookshelf', empty: 'On the 1st of each month, Beaver turns last month into a book and puts it here.',
-    draftNote: (m, d) => `Your ${m} book is still a draft. Pick a cover and add a note before ${d}.`, open: 'Open',
+    draftNote: (m, d) => `Your ${m} book is still a draft. Add a note before ${d}.`, open: 'Open',
     draft: 'Draft', final: 'Final', until: (d) => `Editable until ${d}, then it’s finalized`,
-    edit: 'Cover & note', cover: 'Cover', say: 'A note to this month (optional)', save: 'Save', saving: 'Saving…',
+    edit: 'Add a note', say: 'A note to this month (optional)', save: 'Save', saving: 'Saving…',
     finish: 'Finish', finishAsk: 'You can’t edit it after finishing. Continue?', finishYes: 'Finish', cancel: 'Cancel',
     pdf: 'Download PDF', making: 'Making…', pdfDraft: 'PDF is available after finishing', pdfApp: 'Please download the PDF on the web',
     loadFail: 'Couldn’t load. Please try again later.', page: (a, b) => `${a} / ${b}`,
     bookTitle: (ym) => (isYearKey(ym) ? `${ym} Yearbook` : new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', { year: 'numeric', month: 'long' })),
-    yearDraftNote: (y, d) => `Your ${y} yearbook is still a draft. Pick a cover and write to yourself before ${d}.`, sayYear: 'A note to myself (optional)',
+    yearDraftNote: (y, d) => `Your ${y} yearbook is still a draft. Write to yourself before ${d}.`, sayYear: 'A note to myself (optional)',
   },
 };
 const MONTH_EN = (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en', { month: 'long' });
@@ -43,65 +43,33 @@ const deadlineLabel = (iso, lang) => {
   return lang !== 'zh' ? d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) : `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
-const readShelf = () => { try { return Number(localStorage.getItem('yy_shelf')) || 1; } catch { return 1; } };
-const SHELF_NAME = { zh: { 1: '樹屋', 2: '單櫃', 3: '高櫃' }, en: { 1: 'Treehouse', 2: 'Classic', 3: 'Tall' } };
-const CAP = Object.fromEntries(SHELVES.map((s) => [s.id, shelfCapacity(s)]));
-const PICK_TEXT = {
-  zh: {
-    first: '選一個書櫃', next: '書櫃放滿了！選下一個書櫃吧', rule: '一次只能選一個書櫃，放滿了才能再選下一個。',
-    cap: (n) => `可放 ${n} 本`, use: '就用這個', ask: (name, n) => `選了「${name}」之後，要放滿 ${n} 本書才能再選下一個，確定嗎？`,
-    yes: '確定', saving: '儲存中…', fail: '選擇失敗，請稍後再試', waiting: '還沒放上書櫃的書',
-    tab: (i) => `書櫃 ${i}`, newTab: '＋ 下一個書櫃', count: (a, b) => `已放 ${a} / ${b} 本`,
-  },
-  en: {
-    first: 'Choose a bookshelf', next: 'This shelf is full! Choose your next one', rule: 'You use one shelf at a time and choose the next once it’s full.',
-    cap: (n) => `Holds ${n}`, use: 'Use this one', ask: (name, n) => `After choosing “${name}”, you’ll fill all ${n} spots before choosing the next. Continue?`,
-    yes: 'Confirm', saving: 'Saving…', fail: 'Couldn’t save. Please try again later.', waiting: 'Books waiting for a shelf',
-    tab: (i) => `Shelf ${i}`, newTab: '+ Next shelf', count: (a, b) => `${a} / ${b} books`,
-  },
+const SHELF_TEXT = {
+  zh: { tab: (i) => `書櫃 ${i}`, count: (a) => `已放 ${a} 本`, note: '放滿了會換一個更大的書櫃', full: '放滿了，下一本會放到更大的書櫃' },
+  en: { tab: (i) => `Shelf ${i}`, count: (a) => `${a} books`, note: 'When it’s full, Beaver brings a bigger shelf', full: 'Full! The next book goes on a bigger shelf' },
 };
 
 export default function Bookshelf() {
   const { language } = useLanguage();
   const lang = language !== 'zh' ? 'en' : 'zh';
   const T = TEXT[lang];
-  const P = PICK_TEXT[lang];
+  const P = SHELF_TEXT[lang];
   const [books, setBooks] = useState(null);
-  const [shelves, setShelves] = useState([]);
   const [error, setError] = useState('');
-  const [page, setPage] = useState(null); // 第幾個書櫃(0 起);'new' = 選下一個書櫃
-  const [choice, setChoice] = useState(readShelf);
-  const [asking, setAsking] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(null); // 第幾個書櫃(0 起),null = 最新的
   const [openYm, setOpenYm] = useState(null);
   const boxRef = useRef(null);
   const [boxW, setBoxW] = useState(0);
 
-  const load = useCallback(() => api.listBooks().then(({ books, shelves }) => {
-    setBooks(books); setShelves((shelves || []).map(Number)); setError('');
+  const load = useCallback(() => api.listBooks().then(({ books }) => {
+    setBooks(books); setError('');
   }).catch(() => setError(T.loadFail)), [T.loadFail]);
   useEffect(() => { load(); }, [load]);
 
-  // 書依月份順序放進選過的書櫃:第 1 個放滿才放第 2 個(年鑑比較胖,一個書櫃放的本數會少一點)
-  const { groups, waiting, full } = useMemo(() => {
-    const all = books || [];
-    let at = 0;
-    const g = shelves.map((id) => {
-      const shelfDef = SHELVES.find((s) => s.id === id) || SHELVES[0];
-      const placed = layoutBooks(shelfDef, all.slice(at).map((b) => isYearKey(b.ym))).length;
-      const part = all.slice(at, at + placed);
-      at += placed;
-      return { id, cap: CAP[id] || 0, books: part, shelfDef };
-    });
-    const last = g[g.length - 1];
-    // 放滿 = 還有書沒地方放,或最後一個書櫃再放一本也放不下
-    const lastFull = last ? layoutBooks(last.shelfDef, [...last.books.map((b) => isYearKey(b.ym)), false]).length <= last.books.length : false;
-    return { groups: g, waiting: all.slice(at), full: g.length > 0 && (all.length > at || lastFull) };
-  }, [books, shelves]);
-  const canPick = groups.length === 0 || full;
-  const autoPage = groups.length === 0 || waiting.length > 0 ? 'new' : groups.length - 1;
-  const shown = page === 'new' ? (canPick ? 'new' : autoPage) : (page !== null && groups[page] ? page : autoPage);
-  const group = shown === 'new' ? null : groups[shown];
+  // 書依月份順序放:從最小的書櫃開始,放滿了自動換下一個比較大的
+  const groups = useMemo(() => fillShelves(books || [], (b) => isYearKey(b.ym)), [books]);
+  const shown = page !== null && groups[page] ? page : groups.length - 1;
+  const group = groups[shown];
+  const shelf = group.shelf;
 
   useEffect(() => {
     const el = boxRef.current;
@@ -111,33 +79,16 @@ export default function Bookshelf() {
     return () => ro.disconnect();
   }, [books, shown]);
 
-  const shelf = group ? (SHELVES.find((s) => s.id === group.id) || SHELVES[0]) : null;
-  const shelfBooks = group ? group.books : [];
-  const spots = shelf ? layoutBooks(shelf, shelfBooks.map((b) => isYearKey(b.ym))) : [];
-  const k = boxW / 1024;
+  const k = boxW / shelf.W;
+  // 再放一本一般的書也放不下 = 這個書櫃滿了(年鑑佔 2 個位置)
+  const isFull = layoutBooks(shelf, [...group.books.map((b) => isYearKey(b.ym)), false]).length <= group.books.length;
   const drafts = (books || []).filter((b) => b.status === 'draft');
-  const coverOf = (b) => b.cover || (isYearKey(b.ym) ? 1 : ((Number(b.ym.slice(5, 7)) - 1) % 3) + 1);
-
-  const confirmPick = async () => {
-    setSaving(true);
-    try {
-      const { shelves: next } = await api.pickShelf(choice);
-      setShelves(next.map(Number));
-      setPage(next.length - 1);
-      setAsking(false);
-      setError('');
-    } catch (e) {
-      setError(e?.message || P.fail);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const chips = (list) => (
     <div className="flex flex-wrap justify-center gap-1.5">
       {list.map((b) => (
         <button key={b.ym} type="button" onClick={() => setOpenYm(b.ym)}
-          className="rounded-full border border-border bg-card px-2.5 py-1 text-xs" style={{ borderColor: spineColor(coverOf(b)) }}>
+          className="rounded-full border bg-card px-2.5 py-1 text-xs" style={{ borderColor: spineColor(b.ym) }}>
           {ymLabel(b.ym)}{b.status === 'draft' ? ` · ${T.draft}` : ''}
         </button>
       ))}
@@ -154,16 +105,12 @@ export default function Bookshelf() {
         </h1>
       </div>
 
-      {(groups.length > 1 || (full && groups.length > 0)) && (
+      {groups.length > 1 && (
         <div className="mb-3 flex flex-wrap gap-1.5">
           {groups.map((g, i) => (
             <button key={i} type="button" onClick={() => setPage(i)}
               className={`rounded-full px-3 py-1 text-sm ${i === shown ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{P.tab(i + 1)}</button>
           ))}
-          {full && (
-            <button type="button" onClick={() => setPage('new')}
-              className={`rounded-full px-3 py-1 text-sm ${shown === 'new' ? 'bg-muted font-medium' : 'text-muted-foreground'}`}>{P.newTab}</button>
-          )}
         </div>
       )}
 
@@ -179,64 +126,25 @@ export default function Bookshelf() {
 
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
-      {books && shown === 'new' && (
-        <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div>
-            <p className="font-medium">{groups.length ? P.next : P.first}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{P.rule}</p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 md:gap-4">
-            {SHELVES.map((s) => (
-              <button key={s.id} type="button" onClick={() => { setChoice(s.id); setAsking(false); }}
-                className={`overflow-hidden rounded-lg border-2 bg-background text-center ${s.id === choice ? 'border-[var(--ink)]' : 'border-transparent opacity-75'}`}>
-                <img src={s.src} alt="" className="aspect-square w-full object-cover" />
-                <span className="block py-1.5 text-xs">{SHELF_NAME[lang][s.id]}<span className="block text-muted-foreground">{P.cap(CAP[s.id])}</span></span>
-              </button>
-            ))}
-          </div>
-          {asking ? (
-            <div className="space-y-2 rounded-lg bg-muted/60 p-3 text-sm">
-              <p>{P.ask(SHELF_NAME[lang][choice], CAP[choice])}</p>
-              <div className="flex justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={() => setAsking(false)} disabled={saving}>{T.cancel}</Button>
-                <Button size="sm" onClick={confirmPick} disabled={saving}>{saving ? P.saving : P.yes}</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-end"><Button size="sm" onClick={() => setAsking(true)}>{P.use}</Button></div>
-          )}
-          {waiting.length > 0 && (
-            <div className="space-y-2 border-t border-border pt-3">
-              <p className="text-center text-xs text-muted-foreground">{P.waiting}</p>
-              {chips(waiting)}
-            </div>
-          )}
-        </div>
-      )}
-
-      {shelf && (
+      {books && (
         <>
-          <div ref={boxRef} className="relative mx-auto aspect-square w-full max-w-[640px] overflow-hidden rounded-xl">
+          <div ref={boxRef} className="relative mx-auto w-full" style={{ maxWidth: Math.round(shelf.W * 1.45), aspectRatio: `${shelf.W} / ${shelf.H}` }}>
             <img src={shelf.src} alt="" className="absolute inset-0 h-full w-full select-none" draggable={false} />
-            {boxW > 0 && spots.map((s, i) => {
-              const b = shelfBooks[i];
+            {boxW > 0 && group.spots.map((s, i) => {
+              const b = group.books[i];
               return (
-                <button key={b.ym} type="button" onClick={() => setOpenYm(b.ym)} title={T.bookTitle(b.ym)}
-                  className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''} ${isYearKey(b.ym) ? 'bk-year' : ''}`}
+                <button key={b.ym} type="button" onClick={() => setOpenYm(b.ym)} title={T.bookTitle(b.ym)} aria-label={T.bookTitle(b.ym)}
+                  className={`bk-spine ${b.status === 'draft' ? 'bk-draft' : ''}`}
                   style={{ left: s.x * k, top: s.y * k, width: s.w * k, height: s.h * k }}>
-                  <img src={`/bookshelf/book-${coverOf(b)}.webp`} alt="" draggable={false} />
-                  {/* 年鑑只有 4 個字(2026)、書也比較胖,年份字放大 */}
-                  <span style={{ fontSize: isYearKey(b.ym)
-                    ? Math.max(7, Math.min(s.w * k * 0.62, (s.h * k * 0.56) / 2.3))
-                    : Math.max(5, Math.min(s.w * k * 0.55, (s.h * k * 0.5) / 3.7)) }}>{ymLabel(b.ym)}</span>
+                  <Spine ym={b.ym} w={s.w * k} h={s.h * k} small />
                 </button>
               );
             })}
           </div>
-          <p className="mt-2 text-center text-xs text-muted-foreground">{P.count(shelfBooks.length, group.cap)}</p>
-          {books && books.length === 0 && <p className="mt-2 text-center text-sm text-muted-foreground">{T.empty}</p>}
-          {/* 手機版書背很小:下面再列一排月份,方便點 */}
-          {shelfBooks.length > 0 && <div className="mt-3 md:hidden">{chips(shelfBooks)}</div>}
+          <p className="mt-2 text-center text-xs text-muted-foreground">{P.count(group.books.length)}・{isFull ? P.full : P.note}</p>
+          {books.length === 0 && <p className="mt-2 text-center text-sm text-muted-foreground">{T.empty}</p>}
+          {/* 書背很窄:下面再列一排月份,方便點 */}
+          {group.books.length > 0 && <div className="mt-3">{chips(group.books)}</div>}
         </>
       )}
 
@@ -384,7 +292,6 @@ function BookViewer({ ym, lang, T, onClose, onChanged }) {
 }
 
 function DraftEditor({ book, T, onClose, onSaved, onFinished }) {
-  const [cover, setCover] = useState(book.cover || book.default_cover || 1);
   const [message, setMessage] = useState(book.message || '');
   const yearBook = isYearKey(book.ym);
   const max = yearBook ? YEAR_MESSAGE_MAX : MESSAGE_MAX;
@@ -396,7 +303,7 @@ function DraftEditor({ book, T, onClose, onSaved, onFinished }) {
     setBusy(true);
     setErr('');
     try {
-      const { book: saved } = await api.updateBook(book.ym, { cover, message });
+      const { book: saved } = await api.updateBook(book.ym, { message });
       onSaved(saved);
       if (andFinish) {
         await api.finalizeBook(book.ym);
@@ -414,17 +321,6 @@ function DraftEditor({ book, T, onClose, onSaved, onFinished }) {
   return (
     <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/40 md:items-center" onClick={onClose}>
       <div className="w-full max-w-md space-y-3 rounded-t-2xl bg-card p-4 text-foreground shadow-xl md:rounded-2xl" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 'calc(1rem + var(--sab, 0px))' }}>
-        <div>
-          <p className="mb-1.5 text-xs text-muted-foreground">{T.cover}</p>
-          <div className="flex gap-2">
-            {COVERS.map((c) => (
-              <button key={c.id} type="button" onClick={() => setCover(c.id)}
-                className={`w-1/3 overflow-hidden rounded-md border-2 ${cover === c.id ? 'border-[var(--ink)]' : 'border-transparent opacity-70'}`}>
-                <img src={coverSrc(c.id, true)} alt="" className="aspect-[1/1.414] w-full object-cover" />
-              </button>
-            ))}
-          </div>
-        </div>
         <div>
           <p className="mb-1.5 flex justify-between text-xs text-muted-foreground"><span>{yearBook ? T.sayYear : T.say}</span><span>{[...message].length}/{max}</span></p>
           <textarea rows={yearBook ? 5 : 3} value={message} onChange={(e) => setMessage([...e.target.value].slice(0, max).join(''))}

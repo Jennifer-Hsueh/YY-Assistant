@@ -15,32 +15,19 @@ async function rowOf(uid, ym) {
 }
 
 const brief = (r) => ({
-  ym: r.ym, status: r.status, cover: r.cover || null, message: r.message || '',
+  ym: r.ym, status: r.status, message: r.message || '',
   deadline: B.deadlineOf(r.ym).toISOString(), finalized_at: r.finalized_at || null,
 });
 
-// 書櫃樣式與容量(與前端 lib/bookshelf.js 的 shelfCapacity 一致:樹屋 21、單櫃 16、高櫃 24;只放月刊時)
-// 使用者一次只能選一個書櫃,放滿了才能選下一個;選過的依序存在 yy_users.shelf_styles
-const SHELF_CAPS = { 1: 21, 2: 16, 3: 24 };
-// 有年鑑(比較胖)時實際放得下的本數會少一點:依 lib/shelfLayout.js 的排法判斷是否放滿
-const { shelvesFull } = require('../lib/shelfLayout');
-
-async function shelfStyles(uid) {
-  const { data, error } = await supabase.from('yy_users').select('shelf_styles').eq('id', uid).single();
-  if (error) throw error;
-  return (data.shelf_styles || []).map(Number);
-}
-
-// GET /books:書櫃上的書(新的在後)+已選的書櫃
+// GET /books:書櫃上的書(新的在後);書櫃由前端依本數自動排(從小書櫃開始,放滿換大的)
 async function list(req, res) {
   try {
     await B.ensureBooks(req.user.id);
     const { data, error } = await supabase.from('yy_monthly_books').select('ym, status, cover, message, finalized_at')
       .eq('user_id', req.user.id);
     if (error) throw error;
-    const shelves = await shelfStyles(req.user.id);
     const sorted = (data || []).sort((a, b) => B.sortKey(a.ym).localeCompare(B.sortKey(b.ym)));
-    return res.json({ books: sorted.map(brief), shelves });
+    return res.json({ books: sorted.map(brief) });
   } catch (err) {
     return fail(res, 'list', err, '讀取書櫃失敗');
   }
@@ -60,7 +47,7 @@ async function get(req, res) {
     const photoDays = Object.entries(data.photos || {});
     const signedPhotos = photoDays.length ? await signPosts(photoDays.map(([date, key]) => ({ date, images: [key] }))) : [];
     const photo_urls = Object.fromEntries(signedPhotos.filter((p) => p.images[0]).map((p) => [p.date, p.images[0].thumb]));
-    return res.json({ book: { ...brief(row), cover: row.cover || null, default_cover: B.defaultCover(ym), data: { ...data, posts, photo_urls } } });
+    return res.json({ book: { ...brief(row), data: { ...data, posts, photo_urls } } });
   } catch (err) {
     return fail(res, 'get', err, '讀取這本書失敗');
   }
@@ -75,17 +62,12 @@ async function editable(req, res) {
   return row;
 }
 
-// PATCH /books/:ym { cover, message }:草稿才能改
+// PATCH /books/:ym { message }:草稿才能改(2026-11-27 起不用挑封面,書背依月份固定)
 async function update(req, res) {
   try {
     const row = await editable(req, res);
     if (!row) return undefined;
     const patch = {};
-    if (req.body.cover !== undefined) {
-      const c = Number(req.body.cover);
-      if (!Number.isInteger(c) || c < 1 || c > B.COVERS) return res.status(400).json({ error: '封面不正確' });
-      patch.cover = c;
-    }
     if (req.body.message !== undefined) {
       const m = String(req.body.message || '').replace(/\r\n/g, '\n').trim();
       const max = B.messageMax(row.ym);
@@ -112,25 +94,4 @@ async function finalize(req, res) {
   }
 }
 
-// POST /books/shelves { style }:選書櫃。還沒選過,或目前的書櫃都放滿了,才能選下一個
-async function pickShelf(req, res) {
-  try {
-    const style = Number(req.body.style);
-    if (!SHELF_CAPS[style]) return res.status(400).json({ error: '書櫃不正確' });
-    const styles = await shelfStyles(req.user.id);
-    const { data: rows, error: cErr } = await supabase.from('yy_monthly_books').select('ym').eq('user_id', req.user.id);
-    if (cErr) throw cErr;
-    const fats = (rows || []).map((r) => r.ym).sort((a, b) => B.sortKey(a).localeCompare(B.sortKey(b))).map(B.isYear);
-    if (styles.length && !shelvesFull(styles, fats)) {
-      return res.status(409).json({ error: '目前的書櫃還沒放滿，放滿後才能選下一個', code: 'SHELF_NOT_FULL' });
-    }
-    const next = [...styles, style];
-    const { error } = await supabase.from('yy_users').update({ shelf_styles: next }).eq('id', req.user.id);
-    if (error) throw error;
-    return res.json({ shelves: next });
-  } catch (err) {
-    return fail(res, 'pickShelf', err, '選擇書櫃失敗');
-  }
-}
-
-module.exports = { list, get, update, finalize, pickShelf };
+module.exports = { list, get, update, finalize };

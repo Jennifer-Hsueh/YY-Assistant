@@ -1,18 +1,17 @@
-// 月刊書櫃:書本的分頁、海狸的話、封面資料
+// 月刊書櫃:書本的分頁、海狸的話、書背
 import { moodEmoji } from './moods';
 
-// 封面(public/bookshelf/covers/cover-N.webp)與書背顏色
-export const COVERS = [
-  { id: 1, spine: '#C9A77C' },
-  { id: 2, spine: '#8FAE8A' },
-  { id: 3, spine: '#8E9DB3' },
-];
-export const coverSrc = (id, small = false) => `/bookshelf/covers/cover-${id}${small ? '-s' : ''}.webp`;
-export const spineColor = (id) => COVERS.find((c) => c.id === id)?.spine || COVERS[0].spine;
+// 書背(public/bookshelf/spine/01–12.webp、year.webp):每個月固定一款,年鑑另一款(2026-11-27 起不用挑封面)
+export const isYearKey = (k) => /^\d{4}$/.test(k || '');
+export const SPINE_W = 177 / 2480; // 書背寬:高
+export const spineKey = (ym) => (isYearKey(ym) ? 'year' : ym.slice(5, 7));
+export const spineSrc = (ym, small = false) => `/bookshelf/spine/${spineKey(ym)}${small ? '-s' : ''}.webp`;
+// 每款書背的代表色(手機版月份按鈕的框線)
+const SPINE_COLOR = { '01': '#9DB8E0', '02': '#E9A3B5', '03': '#EBB3C3', '04': '#A9C98A', '05': '#E5C04A', '06': '#B9A6DE',
+  '07': '#7FB6DE', '08': '#E5C35E', '09': '#E7A35F', 10: '#9B82C9', 11: '#E2B47F', 12: '#9CCFCB', year: '#2F4A8C' };
+export const spineColor = (ym) => SPINE_COLOR[spineKey(ym)];
 export const MESSAGE_MAX = 60;
 export const YEAR_MESSAGE_MAX = 200; // 年鑑「給自己的話」
-export const isYearKey = (k) => /^\d{4}$/.test(k || '');
-
 export const ymLabel = (ym) => ym.replace('-', '.');
 export const BOARD = {
   zh: { mood: '晴空與雨天', finance: '養豬小能手', wish: '小編許願池' },

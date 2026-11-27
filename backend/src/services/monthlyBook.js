@@ -316,8 +316,8 @@ async function runMonthlyBooks(now = new Date()) {
         created += (row ? 1 : 0) + (yearRow ? 1 : 0);
         const m = Number(ym.slice(5, 7));
         const body = yearRow
-          ? `你的${row ? ` ${m} 月月刊和` : ''} ${ym.slice(0, 4)} 年鑑整理好了，7 號以前可以挑封面、寫給自己的話`
-          : `你的 ${m} 月月刊整理好了，7 號以前可以挑封面、寫一句話`;
+          ? `你的${row ? ` ${m} 月月刊和` : ''} ${ym.slice(0, 4)} 年鑑整理好了，7 號以前可以寫給自己的話`
+          : `你的 ${m} 月月刊整理好了，7 號以前可以寫一句話`;
         pushes.push(sendPushToUser(u.id, { title: '📚 月刊書櫃', body, data: { url: '/bookshelf' } })
           .catch((err) => ({ sent: false, reason: err.message })));
       }

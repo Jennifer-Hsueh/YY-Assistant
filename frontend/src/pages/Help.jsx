@@ -69,10 +69,10 @@ const SECTIONS = {
     ] },
     { title: '月刊書櫃', items: [
       '每個月 1 號，小河狸會把上個月的記帳、行程、紀念日、心情、墨箋絮語和你發的文章整理成一本書，放上書櫃。書櫃在「小河狸的家」裡（網頁版在左側選單，手機版點右上角的沙發圖示），點房間裡的書櫃就能打開。',
-      '7 號以前是草稿：可以挑封面、寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
+      '每個月的書背都不一樣（例如 1 月雪人、10 月萬聖節），年鑑是深藍色的書背。7 號以前是草稿：可以寫一句「我想對這個月說」，按「完成」就定稿；沒按的話 8 號會自動定稿。定稿後內容固定，不再變動。',
       { text: '定稿後可以下載 PDF（A5 大小）。', web: true },
-      '第一次打開時選一個書櫃（樹屋可放 21 本、單櫃 16 本、高櫃 24 本）。一次只能用一個書櫃，放滿了才能再選下一個，舊的書櫃會留著，可以切換查看。',
-      '每年 1 月 1 日，還會把去年整理成一本「年鑑」，和 12 月的月刊放在同一個書櫃（比較胖的那本）：年度收支與分類圓餅圖、每月支出、每個月的心情折線圖、每月一張日常時光、每月一句話、紀念日與行程、這一年發的所有文章，最後一頁寫給自己的話。1/7 以前可以挑封面、寫給自己的話，1/8 自動定稿。',
+      '書會從最小的書櫃開始放，放滿了小河狸會自動換一個更大的書櫃（共 6 款），舊的書櫃會留著，可以切換查看。',
+      '每年 1 月 1 日，還會把去年整理成一本「年鑑」，和 12 月的月刊放在一起（比較胖的那本）：年度收支與分類圓餅圖、每月支出、每個月的心情折線圖、每月一張日常時光、每月一句話、紀念日與行程、這一年發的所有文章，最後一頁寫給自己的話。1/7 以前可以寫給自己的話，1/8 自動定稿。',
     ] },
     { title: '小河狸的家', items: [
       '網頁版在左側選單，手機版點右上角的沙發圖示。房間裡的東西都可以點：',
@@ -197,10 +197,10 @@ const SECTIONS = {
     ] },
     { title: 'Monthly Bookshelf', items: [
       'On the 1st of each month, Beaver gathers last month’s spending, events, anniversaries, moods, Ink Notes and your posts into a book on your shelf. The shelf is in Beaver’s home (left menu on the web, the armchair icon at the top right on mobile); tap the bookshelf in the room to open it.',
-      'Until the 7th it’s a draft: pick a cover, write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
+      'Each month has its own spine design (a snowman in January, Halloween in October), and the Yearbook has a navy spine. Until the 7th it’s a draft: write a note to the month, and tap Finish. Otherwise it’s finalized automatically on the 8th, and its content stays fixed after that.',
       { text: 'Finalized books can be downloaded as an A5 PDF.', web: true },
-      'Choose a bookshelf the first time you open it (Treehouse holds 21 books, Classic 16, Tall 24). You use one shelf at a time and choose the next once it’s full; earlier shelves stay and you can switch between them.',
-      'On January 1st, Beaver also makes a Yearbook of the past year and puts it on the same shelf (the thicker one): yearly income and spending with a category pie chart, monthly spending, a mood line for each month, a moment photo for each month, your monthly notes, anniversaries and events, every post you wrote that year, and a last page with a note to yourself. Pick a cover and write your note until Jan 7; it’s finalized on Jan 8.',
+      'Books start on the smallest shelf. When it’s full, Beaver brings a bigger one (6 designs in all); earlier shelves stay and you can switch between them.',
+      'On January 1st, Beaver also makes a Yearbook of the past year and puts it next to December’s book (the thicker one): yearly income and spending with a category pie chart, monthly spending, a mood line for each month, a moment photo for each month, your monthly notes, anniversaries and events, every post you wrote that year, and a last page with a note to yourself. Write your note until Jan 7; it’s finalized on Jan 8.',
     ] },
     { title: "Beaver's home", items: [
       'Find it in the left menu on the web, or tap the armchair icon at the top right on mobile. Everything in the room can be tapped:',

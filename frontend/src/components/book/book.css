@@ -25,10 +25,13 @@
 .bk-empty { font-size: 12px; color: var(--bk-muted); text-align: center; margin-top: 60px; }
 
 /* 封面 */
-.bk-cover { padding: 0; background: #F7F1E3; }
-.bk-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.bk-cover-ym { position: absolute; left: 0; right: 0; bottom: 47px; text-align: center; color: #8B7559; line-height: 1;
-  font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 21px; letter-spacing: .32em; font-variant-numeric: lining-nums; }
+.bk-cover { padding: 0; background: #FBF6EC; }
+.bk-cover-main { position: absolute; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #5A3B2B; }
+.bk-cover-main img { width: 92px; height: 92px; }
+.bk-cover-title { font-family: "Noto Serif TC", serif; font-weight: 700; font-size: 30px; letter-spacing: .12em; }
+.bk-cover-main i { width: 64px; height: 1px; background: #B89A7A; }
+.bk-cover-ym { font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 30px; letter-spacing: .2em; font-variant-numeric: lining-nums; color: #8B6A4E; line-height: 1; }
+.bk-cover-sub { font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 12px; letter-spacing: .5em; color: #8B6A4E; }
 
 /* 月曆 */
 .bk-cal { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--bk-line); border-left: 1px solid var(--bk-line); }
@@ -61,13 +64,9 @@
 .bk-line span { font-size: 8.5px; color: #9A8466; letter-spacing: .1em; }
 
 /* 書背:書本圖(book-N.webp)+年月 */
-.bk-spine { position: absolute; display: block; cursor: pointer; padding: 0; transition: transform .15s; filter: drop-shadow(2px 1px 1px rgba(40, 20, 5, .35)); }
+.bk-spine { position: absolute; display: block; cursor: pointer; padding: 0; transition: transform .15s; filter: drop-shadow(1px 1px 1px rgba(40, 20, 5, .35)); }
 .bk-spine:hover { transform: translateY(-3px); }
-.bk-spine img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-.bk-spine span { position: absolute; left: 0; right: 0; top: 24%; bottom: 22%; display: flex; align-items: center; justify-content: center;
-  writing-mode: vertical-rl; color: #fff; font-family: "EB Garamond", serif; font-weight: 700; letter-spacing: .04em; font-variant-numeric: lining-nums;
-  text-shadow: 0 0 2px rgba(0, 0, 0, .45); white-space: nowrap; line-height: 1; }
-.bk-spine.bk-draft img { opacity: .75; }
+.bk-spine.bk-draft { opacity: .8; }
 
 /* 心情頁:日常時光的照片放在當天格子裡 */
 .bk-photo { position: relative; padding: 0 !important; overflow: hidden; }
@@ -76,4 +75,3 @@
 .bk-photo-mood { position: absolute; right: 2px; bottom: 1px; z-index: 1; font-size: 13px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
 
 /* 年鑑:比較胖的書,書背加一條金色帶 */
-.bk-spine.bk-year::after { content: ""; position: absolute; left: 8%; right: 8%; top: 16%; height: 4%; background: rgba(214, 178, 102, .85); border-radius: 2px; }
