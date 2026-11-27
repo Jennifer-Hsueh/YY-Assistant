@@ -10,6 +10,8 @@ import { useLedger } from '../context/LedgerContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import AmountInput from './AmountInput';
+import VoiceEntry from './VoiceEntry';
+import { parseSpoken, rememberCategory } from '../lib/voiceParse';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { ymd } from '../lib/recurrence';
 import { REMIND_TIMED, REMIND_ALL_DAY, normalizeRemind, remindMinutes, endAtIso } from '../lib/eventRemind';
@@ -36,6 +38,7 @@ export default function FloatingAddButton() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
   const amountRef = useRef(null);
+  const [voiceUsed, setVoiceUsed] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +51,7 @@ export default function FloatingAddButton() {
   function close() {
     setOpen(false);
     setTx(emptyTx());
+    setVoiceUsed(false);
     setEv(emptyEv());
     setNoteText('');
   }
@@ -72,6 +76,7 @@ export default function FloatingAddButton() {
         note: tx.note || null,
         occurred_at: new Date(`${tx.date}T12:00:00`).toISOString(),
       });
+      if (voiceUsed) rememberCategory(tx.note, tx.category); // 下次說同一個詞,直接帶這個分類
       done(t('qa_tx_saved'));
     } catch (err) {
       if (err.code !== 'NEGATIVE_BALANCE') console.error(err); // 會變負數時由提醒視窗說明
@@ -155,6 +160,13 @@ export default function FloatingAddButton() {
             {tab === 'tx' ? (
               <form onSubmit={saveTx} className="space-y-2">
                 {ledgers.length > 1 && current && <p className="text-xs text-muted-foreground">📒 {current.name}</p>}
+                <VoiceEntry onParse={(said) => {
+                  // 一句話帶入:沒聽出來的欄位保留原本的值;使用者確認後才按「新增」
+                  const p = parseSpoken(said, { categories, accounts });
+                  setTx((prev) => ({ ...prev, type: p.type, amount: p.amount || prev.amount, date: p.date,
+                    category: p.category || (p.type === prev.type ? prev.category : ''), account_id: p.account_id || prev.account_id, note: p.note || prev.note }));
+                  setVoiceUsed(true);
+                }} />
                 <div className="flex gap-2">
                   <div className="flex rounded-lg border border-border p-1">
                     {['expense', 'income'].map((ty) => (

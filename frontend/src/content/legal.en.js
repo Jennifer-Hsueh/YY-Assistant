@@ -167,6 +167,7 @@ export const PRIVACY_EN = {
         ['Sentry', 'Error logs', 'United States'],
       ],
     } },
+    { p: 'Speak-to-add in Quick add uses the speech recognition built into your browser or phone. Your voice is turned into text by that provider (for example Google or Apple); we never receive or keep the recording. The text is read on your device to find the amount and category, and is saved like any other record only after you tap Add record.' },
     { p: 'Exchange rate lookups send only currency codes, never personal data. Apart from the cases above and where required by law, we do not share, rent, or sell your data.' },
     { h: '3. How long we keep data' },
     { ul: [
