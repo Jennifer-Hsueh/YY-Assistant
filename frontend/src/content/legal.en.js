@@ -73,6 +73,7 @@ export const TERMS_EN = {
       'Anonymous posts do not show your identity to other users, but administrators can see the posting account to handle reports and violations.',
       'When posting, you can hide a post from all or some of your friends. "Friends only" and hiding from friends only limit who can see a post. They do not make it fully private (for example, people who can see it may take screenshots), so please do not post anything you would not want shared.',
       'Your friends can see your friends-only posts and public posts with your nickname on their Friends page. Anonymous posts and posts hidden from them do not appear.',
+      'When you post publicly with your nickname, other members can tap your nickname to see your friend code and your public posts with your nickname, and send you a friend request. If you prefer not to be found, post anonymously or to friends only, or get a new friend code on the Friends page.',
       'To protect yourself, do not share your personal details (phone number, address, ID number, workplace, and so on) or account details (bank accounts, passwords, or any logins) in the community or in little notes.',
       'These guidelines also apply to little notes. If you receive an inappropriate note, you can tear it off, and block the sender or tell us through Report a problem.',
       'You are responsible for what you post (including photos) and must have the right to share it. Please respect others: discuss ideas, do not attack people.',

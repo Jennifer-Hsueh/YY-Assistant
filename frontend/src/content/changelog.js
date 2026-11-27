@@ -1,7 +1,8 @@
 // 更新紀錄:每次部署時在最上面加一筆(新的在前)
 // short:收起時顯示(約 10 字內);detail:展開時顯示(約 30 字內)
 export const CHANGELOG = [
-  { date: '2026-11-27', short: ['新書背與書櫃', 'New spines and shelves'], detail: ['每個月有自己的書背，不用再挑封面；書會從小書櫃開始放，放滿自動換更大的。', 'Each month has its own spine, no cover to pick. Books start on a small shelf and move to a bigger one when it’s full.'] },
+  { date: '2026-11-27', short: ['社群作者頁', 'Author page'], detail: ['公開・暱稱的文章可以點作者名字，看好友碼和他公開的文章，也能直接加好友。', 'Tap the author of a public post with a nickname to see their friend code and posts, and add them as a friend.'] },
+  { date: '2026-11-27', short: ['新書背與書櫃', 'New spines and shelves'], detail: ['每個月有自己的封面和書背，不用再挑；書會從小書櫃開始放，放滿自動換更大的。', 'Each month has its own cover and spine, nothing to pick. Books start on a small shelf and move to a bigger one when it’s full.'] },
   { date: '2026-11-27', short: ['11 種新配色', '11 new color styles'], detail: ['介面配色換成 11 種，包含兩種深色；原本的主題會自動換到最接近的配色。', 'Pick from 11 color styles, two of them dark; your old theme switches to the closest one.'] },
   { date: '2026-11-26', short: ['小河狸貼圖回應', 'Beaver sticker reactions'], detail: ['社群回應換成 12 張小河狸貼圖：點一下送出，長按放大看看。', 'Reply with 12 beaver stickers: tap to send, press and hold to see it bigger.'] },
   { date: '2026-11-26', short: ['新的 logo', 'New logo'], detail: ['App 圖示、網站圖示和開機畫面都換成新的 logo。', 'The app icon, site icon and splash screen use the new logo.'] },

@@ -7,6 +7,7 @@ router.use(requireAuth);
 
 router.get('/posts', c.listPosts);
 router.get('/stats', c.myStats);
+router.get('/posts/:id/author', c.authorPage);
 // 社群為加購功能:沒有時只能瀏覽、刪除自己的內容
 const member = requireFeature('community');
 router.post('/posts', member, c.createPost);

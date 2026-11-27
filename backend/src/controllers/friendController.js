@@ -247,4 +247,5 @@ async function seen(req, res) {
   }
 }
 
-module.exports = { seen, overview, regenerateCode, lookup, request, accept, remove, block, unblock, report };
+module.exports = {
+  ensureCode, seen, overview, regenerateCode, lookup, request, accept, remove, block, unblock, report };

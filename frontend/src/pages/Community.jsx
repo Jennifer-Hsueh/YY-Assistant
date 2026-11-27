@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePlan } from '../context/PlanContext';
 import { askUpgrade } from '../components/PlanNotice';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Lock, MessageCircle, ThumbsUp, Users } from 'lucide-react';
+import { Check, Copy, Lock, MessageCircle, ThumbsUp, UserPlus, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../lib/api';
 import Friends from './Friends';
@@ -130,8 +130,10 @@ export default function Community() {
   // /community(沒有版名)先顯示社群使用規則,點版名後才顯示內容
   const tab = TABS.some((x) => x.key === board) ? board : null;
   const [friendView, setFriendView] = useState(null);
+  // 作者頁:點「公開・暱稱」文章的作者名字
+  const [authorView, setAuthorView] = useState(null);
   const [rulesOpen, setRulesOpen] = useState(false);
-  useEffect(() => { setFriendView(null); }, [tab]);
+  useEffect(() => { setFriendView(null); setAuthorView(null); }, [tab]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -330,6 +332,7 @@ export default function Community() {
                 </button>
               ))}
             </div>
+            {draft.scope === 'named' && <p className="mt-1.5 text-xs text-muted-foreground">{t('cm_named_hint')}</p>}
             <HidePicker t={t} scopeKey={draft.scope} value={draft.hide} onChange={(hide) => setDraft((d) => ({ ...d, hide }))} />
           </div>
           <Button type="submit" className="w-full" disabled={posting || uploading || !draft.content.trim()}>{t('cm_publish')}</Button>
@@ -384,6 +387,8 @@ export default function Community() {
         friendView
           ? <FriendPosts friend={friendView} t={t} isAdmin={isAdmin} onBack={() => setFriendView(null)} />
           : <Friends onOpen={setFriendView} />
+      ) : authorView ? (
+        <AuthorPosts view={authorView} t={t} isAdmin={isAdmin} onBack={() => setAuthorView(null)} />
       ) : (<>
       <div className="md:hidden">{boardIntro}</div>
 
@@ -453,7 +458,8 @@ export default function Community() {
           ) : (
             <div className="space-y-3">
               {posts.map((p) => (
-                <PostCard key={p.id} post={p} t={t} inMine={tab === 'mine'} isAdmin={isAdmin} onChange={replacePost} onRemove={removePost} onError={(err) => setError(errText(err))} />
+                <PostCard key={p.id} post={p} t={t} inMine={tab === 'mine'} isAdmin={isAdmin} onChange={replacePost} onRemove={removePost} onError={(err) => setError(errText(err))}
+                  onAuthor={(x) => { setAuthorView({ postId: x.id, name: x.author_name }); window.scrollTo(0, 0); }} />
               ))}
               {hasMore && (
                 <button type="button" onClick={() => load({ append: true })} className="w-full py-2 text-sm text-muted-foreground underline">
@@ -512,7 +518,84 @@ function FriendPosts({ friend, t, isAdmin, onBack }) {
   );
 }
 
-function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
+// 作者頁:暱稱、好友碼(可加好友)、他「公開・暱稱」的文章(是好友的話再加上僅好友可見)
+function AuthorPosts({ view, t, isAdmin, onBack }) {
+  const [author, setAuthor] = useState(null);
+  const [posts, setPosts] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  async function load(append = false) {
+    try {
+      const before = append && posts?.length ? posts[posts.length - 1].created_at : undefined;
+      const res = await api.getAuthor(view.postId, before);
+      setAuthor(res.author);
+      setPosts((prev) => (append ? [...(prev || []), ...res.posts] : res.posts));
+      setHasMore(!!res.has_more);
+    } catch (err) {
+      setError(err?.status === 404 ? t('cm_author_gone') : t('cm_error'));
+      setPosts((p) => p || []);
+    }
+  }
+  useEffect(() => { load(); }, [view.postId]);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(author.code); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+  };
+  const addFriend = async () => {
+    setBusy(true);
+    try {
+      const r = await api.requestFriend(author.code);
+      setAuthor((a) => ({ ...a, relation: r.status === 'friend' ? 'friend' : 'outgoing' }));
+    } catch (err) {
+      setError(err?.message || t('cm_error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const fmt = (c) => (c && c.length === 8 ? `${c.slice(0, 4)}-${c.slice(4)}` : c);
+  const rel = author?.relation;
+  return (
+    <div className="mx-auto max-w-2xl">
+      <button type="button" onClick={onBack} className="mb-3 text-sm text-muted-foreground underline">← {t('cm_author_back')}</button>
+      <Card className="mb-3">
+        <CardContent className="flex flex-wrap items-center gap-3 p-4 text-sm">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-semibold">{author?.name || view.name}</p>
+            {author?.code && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                {t('cm_author_code')} <span className="font-mono text-sm tracking-wider text-foreground">{fmt(author.code)}</span>
+                <button type="button" onClick={copy} aria-label={t('cm_author_copy')} className="rounded p-1 hover:bg-muted">
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </p>
+            )}
+          </div>
+          {rel === 'none' && <Button size="sm" disabled={busy} onClick={addFriend}><UserPlus className="mr-1 h-4 w-4" />{t('cm_author_add')}</Button>}
+          {rel === 'incoming' && <Button size="sm" disabled={busy} onClick={addFriend}><UserPlus className="mr-1 h-4 w-4" />{t('cm_author_accept')}</Button>}
+          {rel === 'outgoing' && <span className="text-xs text-muted-foreground">{t('cm_author_sent')}</span>}
+          {rel === 'friend' && <span className="text-xs text-muted-foreground">{t('cm_author_friend')}</span>}
+        </CardContent>
+      </Card>
+      {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+      {!posts ? <p className="text-sm text-muted-foreground">{t('loading')}</p> : posts.length === 0 ? (
+        !error && <p className="py-6 text-center text-sm text-muted-foreground">{t('cm_friend_posts_empty')}</p>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} t={t} inMine={false} isAdmin={isAdmin} byAuthor
+              onChange={(np) => setPosts((list) => list.map((x) => (x.id === np.id ? np : x)))}
+              onRemove={(id) => setPosts((list) => list.filter((x) => x.id !== id))}
+              onError={() => setError(t('cm_error'))} />
+          ))}
+          {hasMore && <button type="button" onClick={() => load(true)} className="w-full py-2 text-sm text-muted-foreground underline">{t('cm_load_more')}</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError, onAuthor, byAuthor }) {
   const member = usePlan().can('community');
   const [confirm, setConfirm] = useState(null); // 'delete' | 'report' | 'reported'
   const [reportReason, setReportReason] = useState(null);
@@ -599,6 +682,11 @@ function PostCard({ post, t, inMine, isAdmin, onChange, onRemove, onError }) {
                   <span>· {post.hide_friends ? t('cm_hidden_all') : t('cm_hidden_n').replace('{n}', post.hidden_from.length)}</span>
                 )}
               </>
+            ) : byAuthor ? (
+              <span>{BOARD_EMOJI[post.board]} {t(`cm_board_${post.board}`)}{post.visibility === 'friends' ? ` · ${t('cm_friends_only')}` : ''}</span>
+            ) : onAuthor && post.visibility === 'public' && !post.anonymous && post.author_name && !post.is_mine ? (
+              // 公開・暱稱:點名字看作者頁(好友碼、他公開的文章)
+              <button type="button" onClick={() => onAuthor(post)} className="truncate font-medium text-foreground underline decoration-dotted underline-offset-2">{displayName}</button>
             ) : (
               <span>{displayName}</span>
             )}

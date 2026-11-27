@@ -148,6 +148,47 @@ async function listPosts(req, res) {
   }
 }
 
+// GET /community/posts/:id/author?before=ISO — 作者頁(2026-11-27)
+// 只有「公開・暱稱」的文章能點進去:回傳作者暱稱、好友碼、和我的關係,以及他看得到的文章
+// 不回傳作者 id;匿名、僅好友、僅自己、被隱藏的文章點不進來;任一方封鎖或作者停用也一律「找不到」
+async function authorPage(req, res) {
+  try {
+    const uid = req.user.id;
+    const post = await fetchPost(req.params.id);
+    if (!post || post.visibility !== 'public' || post.anonymous || !(await canRead(post, uid, false))) return res.status(404).json({ error: 'Not found' });
+    const aid = post.user_id;
+    const { data: author, error: aErr } = await supabase.from('yy_users').select('id, username, email, is_disabled').eq('id', aid).maybeSingle();
+    if (aErr) throw aErr;
+    if (!author || author.is_disabled) return res.status(404).json({ error: 'Not found' });
+    if (aid !== uid && (await F.isBlockedEither(uid, aid))) return res.status(404).json({ error: 'Not found' });
+
+    const self = aid === uid;
+    const row = self ? null : await F.pairRow(uid, aid);
+    const friend = row?.status === 'accepted';
+    const relation = self ? 'self' : !row ? 'none' : friend ? 'friend' : row.requester_id === uid ? 'outgoing' : 'incoming';
+    const { friend_code: code } = await require('./friendController').ensureCode(aid);
+
+    // 文章:公開・暱稱(好友再加上僅好友可見);不含匿名、被隱藏、對我隱藏的;好友看不到作者設定「不讓好友看到」的
+    let q = supabase.from('yy_posts').select('*').eq('user_id', aid).eq('hidden', false)
+      .order('created_at', { ascending: false }).limit(PAGE_SIZE);
+    q = friend || self
+      ? q.or('and(visibility.eq.public,anonymous.eq.false),visibility.eq.friends')
+      : q.eq('visibility', 'public').eq('anonymous', false);
+    if (req.query.before) q = q.lt('created_at', req.query.before);
+    const { data, error } = await q;
+    if (error) throw error;
+    const rows = (data || []).filter((p) => self || (!hiddenFor(p, uid) && !(friend && p.hide_friends)));
+    return res.json({
+      author: { name: author.username || author.email?.split('@')[0] || '', code, relation },
+      posts: await decorate(rows, uid),
+      has_more: (data || []).length === PAGE_SIZE,
+    });
+  } catch (err) {
+    console.error('[communityController.authorPage]', err);
+    return res.status(500).json({ error: 'Failed to fetch author' });
+  }
+}
+
 // GET /community/stats — 「我的」統計
 async function myStats(req, res) {
   try {
@@ -456,6 +497,7 @@ async function uploadImage(req, res) {
 }
 
 module.exports = {
+  authorPage,
   uploadImage,
   listPosts, myStats, createPost, updatePost, deletePost,
   listComments, createComment, deleteComment, react, report, setWishStatus,

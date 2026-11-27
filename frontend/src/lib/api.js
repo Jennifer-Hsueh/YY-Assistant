@@ -242,6 +242,7 @@ getExchangeRate: (from, to) => request(`/exchange-rate?from=${from}&to=${to}`),
   leaveLedger: (id) => request(`/ledgers/${id}/leave`, { method: 'POST' }),
   hideLedger: (id) => request(`/ledgers/${id}/hide`, { method: 'POST' }),
   // 好友
+  getAuthor: (postId, before) => request(`/community/posts/${postId}/author${before ? `?before=${encodeURIComponent(before)}` : ''}`),
   getFriends: () => request('/friends'),
   newFriendCode: () => request('/friends/code', { method: 'POST' }),
   lookupFriend: (code) => request(`/friends/lookup?code=${encodeURIComponent(code)}`),
